@@ -3,15 +3,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send } from 'lucide-react';
-import { Message } from './ChatInterface.types';
+
+export interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'zena' | 'zeno';
+  timestamp: Date;
+  emotion?: string;
+}
 
 interface ChatInterfaceProps {
   messages: Message[];
   onSendMessage: (text: string) => void;
   isProcessing: boolean;
+  gender: 'female' | 'male'; // ← on ajoute le genre actif
 }
 
-const ChatInterface = ({ messages, onSendMessage, isProcessing }: ChatInterfaceProps) => {
+const ChatInterface = ({ messages, onSendMessage, isProcessing, gender }: ChatInterfaceProps) => {
   const [inputText, setInputText] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +37,14 @@ const ChatInterface = ({ messages, onSendMessage, isProcessing }: ChatInterfaceP
     }
   };
 
-  // --- Déterminer les couleurs selon l’émotion détectée ---
+  // 🎨 Palette selon le genre actif
+  const palette = {
+    primary: gender === 'female' ? '#5B4B8A' : '#4B5E8A',
+    secondary: gender === 'female' ? '#4FD1C5' : '#64B5F6',
+    label: gender === 'female' ? 'ZENA' : 'ZENO',
+  };
+
+  // 🎭 Style selon émotion
   const getEmotionStyle = (emotion?: string) => {
     switch (emotion) {
       case 'positive':
@@ -43,19 +58,42 @@ const ChatInterface = ({ messages, onSendMessage, isProcessing }: ChatInterfaceP
     }
   };
 
+  // 🎤 Voix IA dynamique
+  const speak = (text: string) => {
+    const voice = new SpeechSynthesisUtterance(text);
+    voice.lang = 'fr-FR';
+    voice.pitch = gender === 'female' ? 1.1 : 0.9;
+    voice.rate = 0.96;
+    voice.volume = 1;
+    speechSynthesis.speak(voice);
+  };
+
+  // Parler lors de nouveaux messages de ZENA/ZENO
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (last && (last.sender === 'zena' || last.sender === 'zeno')) {
+      speak(last.text);
+    }
+  }, [messages]);
+
   return (
     <div className="flex flex-col h-full bg-card/60 backdrop-blur-md rounded-2xl shadow-soft border border-border overflow-hidden animate-slide-up">
-      {/* En-tête */}
-      <div className="p-4 border-b border-border bg-gradient-emotion flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-primary-foreground tracking-wide">
-          Conversation avec ZENA
+      {/* Header dynamique */}
+      <div
+        className="p-4 border-b border-border flex items-center justify-between"
+        style={{
+          background: `linear-gradient(90deg, ${palette.primary}, ${palette.secondary})`,
+        }}
+      >
+        <h3 className="text-lg font-semibold text-white tracking-wide">
+          Conversation avec {palette.label}
         </h3>
-        <span className="text-xs text-primary-foreground/70">
-          Votre bulle d’écoute
+        <span className="text-xs text-white/80">
+          Votre bulle d’écoute personnalisée
         </span>
       </div>
 
-      {/* Zone de messages */}
+      {/* Zone de chat */}
       <ScrollArea ref={scrollRef} className="flex-1 p-4 space-y-4 overflow-y-auto scroll-smooth">
         {messages.map((message) => (
           <div
@@ -65,45 +103,53 @@ const ChatInterface = ({ messages, onSendMessage, isProcessing }: ChatInterfaceP
             } animate-slide-up`}
           >
             <div
-              className={`relative max-w-[80%] px-4 py-3 rounded-2xl transition-smooth
-              ${message.sender === 'user'
-                ? 'bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] text-white shadow-glow'
-                : getEmotionStyle(message.emotion)
+              className={`relative max-w-[80%] px-4 py-3 rounded-2xl transition-smooth ${
+                message.sender === 'user'
+                  ? 'bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] text-white shadow-glow'
+                  : getEmotionStyle(message.emotion)
               }`}
             >
-              {/* Message text */}
               <p className="text-sm leading-relaxed">{message.text}</p>
-
-              {/* Heure */}
-              <span className={`text-[10px] mt-1 block text-right opacity-70`}>
+              <span className="text-[10px] mt-1 block text-right opacity-70">
                 {message.timestamp.toLocaleTimeString('fr-FR', {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
               </span>
 
-              {/* Halo animé autour de ZENA quand elle parle */}
-              {message.sender === 'zena' && (
-                <div className="absolute inset-0 rounded-2xl pointer-events-none animate-halo opacity-30" />
+              {/* Halo doux pour les messages IA */}
+              {(message.sender === 'zena' || message.sender === 'zeno') && (
+                <div
+                  className="absolute inset-0 rounded-2xl pointer-events-none animate-halo opacity-25"
+                  style={{
+                    boxShadow: `0 0 40px ${palette.secondary}60`,
+                  }}
+                />
               )}
             </div>
           </div>
         ))}
 
-        {/* Animation “ZENA écrit...” */}
+        {/* ZENA/ZENO “réfléchit…” */}
         {isProcessing && (
           <div className="flex justify-start animate-slide-up">
-            <div className="bg-secondary/20 border border-secondary/30 rounded-2xl px-4 py-3">
+            <div
+              className="border rounded-2xl px-4 py-3 bg-secondary/20 border-secondary/30"
+              style={{ borderColor: `${palette.secondary}60` }}
+            >
               <div className="flex gap-1 items-center">
                 {[0, 1, 2].map((i) => (
                   <div
                     key={i}
-                    className="w-2 h-2 bg-secondary rounded-full animate-bounce"
-                    style={{ animationDelay: `${i * 0.15}s` }}
+                    className="w-2 h-2 rounded-full animate-bounce"
+                    style={{
+                      backgroundColor: palette.secondary,
+                      animationDelay: `${i * 0.15}s`,
+                    }}
                   />
                 ))}
                 <span className="ml-2 text-xs text-muted-foreground">
-                  ZENA réfléchit...
+                  {palette.label} réfléchit...
                 </span>
               </div>
             </div>
@@ -117,7 +163,7 @@ const ChatInterface = ({ messages, onSendMessage, isProcessing }: ChatInterfaceP
           <Input
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Écrivez un message ou partagez une émotion..."
+            placeholder={`Exprimez-vous avec ${palette.label}...`}
             className="flex-1 rounded-full border-border focus-visible:ring-secondary"
             disabled={isProcessing}
           />
@@ -125,7 +171,11 @@ const ChatInterface = ({ messages, onSendMessage, isProcessing }: ChatInterfaceP
             type="submit"
             size="icon"
             disabled={!inputText.trim() || isProcessing}
-            className="rounded-full bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] hover:opacity-90 shadow-glow"
+            className="rounded-full shadow-glow"
+            style={{
+              background: `linear-gradient(90deg, ${palette.primary}, ${palette.secondary})`,
+              color: '#fff',
+            }}
           >
             <Send className="w-4 h-4" />
           </Button>
