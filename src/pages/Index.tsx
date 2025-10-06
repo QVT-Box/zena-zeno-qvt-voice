@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import AvatarDisplay from '@/components/AvatarDisplay';
 import AvatarGenderSelector from '@/components/AvatarGenderSelector';
 import RoleSelector, { RoleType } from '@/components/RoleSelector';
-import VoiceControl from '@/components/VoiceControl';
 import ChatInterface, { Message } from '@/components/ChatInterface';
 import BoxRecommendation, { QVTBox } from '@/components/BoxRecommendation';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock QVT Boxes data
+// --- Mock QVT Boxes data ---
 const qvtBoxes: QVTBox[] = [
   {
     id: '1',
@@ -33,6 +32,14 @@ const qvtBoxes: QVTBox[] = [
     emoji: '🏡',
     color: 'secondary',
   },
+  {
+    id: '4',
+    name: 'Box Énergie & Focus',
+    description: 'Routines et produits pour booster votre concentration et énergie au travail.',
+    category: 'Performance',
+    emoji: '⚡',
+    color: 'accent',
+  },
 ];
 
 const Index = () => {
@@ -45,7 +52,7 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: `Bonjour ! Je suis ${avatarName}, votre coach bien-être. Comment puis-je vous accompagner aujourd'hui ?`,
+      text: `Bonjour ! Je suis ${avatarName}, votre compagnon QVT. Comment vous sentez-vous aujourd'hui ?`,
       sender: 'zena',
       timestamp: new Date(),
     },
@@ -56,76 +63,91 @@ const Index = () => {
   const [recommendedBoxes, setRecommendedBoxes] = useState<QVTBox[]>([]);
   const { toast } = useToast();
 
+  // --- Speech Recognition & Synthesis setup ---
   useEffect(() => {
     localStorage.setItem('avatar-gender', gender);
   }, [gender]);
 
-  const handleGenderChange = (newGender: 'female' | 'male') => {
-    setGender(newGender);
-    const newName = newGender === 'female' ? 'ZENA' : 'ZENO';
-    const message: Message = {
-      id: Date.now().toString(),
-      text: `Bonjour ! Je suis ${newName}. Je suis là pour vous accompagner.`,
-      sender: 'zena',
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, message]);
+  const speak = (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'fr-FR';
+    utterance.pitch = 1.05;
+    utterance.rate = 0.98;
+    utterance.voice = speechSynthesis.getVoices().find((v) =>
+      gender === 'female' ? v.name.toLowerCase().includes('f') : v.name.toLowerCase().includes('m')
+    );
+    setIsSpeaking(true);
+    speechSynthesis.speak(utterance);
+    utterance.onend = () => setIsSpeaking(false);
   };
 
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({
+        title: "Micro non supporté",
+        description: "Votre navigateur ne supporte pas la reconnaissance vocale.",
+      });
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'fr-FR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.start();
+    recognition.onresult = (event: any) => {
+      const text = event.results[0][0].transcript;
+      handleSendMessage(text);
+    };
+  };
+
+  // --- Emotion analysis ---
   const analyzeEmotion = (text: string): string => {
     const lowerText = text.toLowerCase();
-    
-    // Negative emotions
-    if (lowerText.match(/stress|anxieux|fatigué|épuisé|débordé|triste|difficile/)) {
-      return 'negative';
-    }
-    
-    // Positive emotions
-    if (lowerText.match(/bien|heureux|motivé|content|satisfait|enthousiaste/)) {
-      return 'positive';
-    }
-    
+    if (lowerText.match(/stress|anxieux|fatigué|épuisé|débordé|triste|colère|inquiet|angoissé/)) return 'negative';
+    if (lowerText.match(/bien|heureux|motivé|content|reconnu|enthousiaste|fier/)) return 'positive';
+    if (lowerText.match(/seul|isolé|incompris|perdu/)) return 'lonely';
     return 'neutral';
   };
 
   const getRecommendations = (emotion: string, role: RoleType): QVTBox[] => {
-    if (emotion === 'negative') {
-      return [qvtBoxes[0]]; // Relax & Sérénité
-    } else if (emotion === 'positive') {
-      return [qvtBoxes[1]]; // Cohésion
+    switch (emotion) {
+      case 'negative':
+        return [qvtBoxes[0]]; // Relax & Sérénité
+      case 'positive':
+        return [qvtBoxes[1]]; // Cohésion
+      case 'lonely':
+        return [qvtBoxes[3]]; // Energie & Focus
+      default:
+        return [qvtBoxes[2]]; // Parent Zen par défaut
     }
-    return [];
   };
 
   const generateResponse = (userMessage: string, emotion: string, role: RoleType): string => {
-    const responses: Record<RoleType, Record<string, string>> = {
-      coach: {
-        negative: `Je comprends que vous traversez un moment difficile. La Box Relax & Sérénité pourrait vous aider à retrouver votre équilibre. Voulez-vous en savoir plus ?`,
-        positive: `C'est merveilleux de vous sentir si bien ! Et si on célébrait cette belle énergie avec la Box Cohésion ?`,
-        neutral: `Je suis là pour vous écouter. Que souhaitez-vous améliorer dans votre quotidien ?`,
-      },
-      manager: {
-        negative: `Je note que le niveau de stress est élevé. Avez-vous pensé à des moments de pause réguliers ? La Box Relax pourrait être un bon outil pour votre équipe.`,
-        positive: `Excellente progression ! Cette dynamique positive mériterait d'être partagée avec l'équipe.`,
-        neutral: `Comment puis-je vous aider à optimiser le bien-être de votre équipe ?`,
-      },
-      parent: {
-        negative: `Être parent tout en travaillant peut être intense. Vous faites de votre mieux. La Box Parent Zen propose des pistes concrètes.`,
-        positive: `C'est inspirant de voir votre énergie ! Continuez à prendre soin de vous et de votre famille.`,
-        neutral: `Comment se passe l'équilibre entre votre vie pro et votre vie de parent ?`,
-      },
-      legal: {
-        negative: `Vos droits au bien-être au travail sont importants. Souhaitez-vous des informations sur vos droits ?`,
-        positive: `Gardez cette énergie positive, et n'hésitez pas si vous avez besoin d'informations.`,
-        neutral: `Je suis là pour vous informer sur vos droits et vous accompagner.`,
-      },
+    const tone = {
+      negative: "Je sens un peu de tension dans vos mots.",
+      positive: "Quel bel élan positif aujourd’hui !",
+      lonely: "Je perçois un peu de solitude.",
+      neutral: "Merci pour ce partage.",
+    }[emotion];
+
+    const box = getRecommendations(emotion, role)[0];
+    const boxPart = box ? `Je vous recommande la ${box.name} ${box.emoji} : ${box.description}` : '';
+
+    const roleIntro: Record<RoleType, string> = {
+      coach: "En tant que coach bien-être,",
+      manager: "En tant que manager QVT,",
+      parent: "Avec mon regard de parent,",
+      legal: "Sur le plan juridique et humain,",
     };
 
-    return responses[role][emotion] || responses[role]['neutral'];
+    return `${tone} ${roleIntro[role]} ${boxPart}`;
   };
 
+  // --- Handle messages ---
   const handleSendMessage = (text: string) => {
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       text,
@@ -135,18 +157,14 @@ const Index = () => {
     setMessages((prev) => [...prev, userMessage]);
     setIsProcessing(true);
 
-    // Analyze emotion
     const emotion = analyzeEmotion(text);
     setCurrentEmotion(emotion);
 
-    // Get recommendations
     const boxes = getRecommendations(emotion, currentRole);
     setRecommendedBoxes(boxes);
 
-    // Simulate processing delay
     setTimeout(() => {
       const response = generateResponse(text, emotion, currentRole);
-      
       const zenaMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: response,
@@ -154,34 +172,28 @@ const Index = () => {
         timestamp: new Date(),
         emotion,
       };
-      
       setMessages((prev) => [...prev, zenaMessage]);
+      speak(response);
       setIsProcessing(false);
-      setIsSpeaking(true);
-      
-      // Stop speaking after a delay
-      setTimeout(() => setIsSpeaking(false), 3000);
     }, 1500);
   };
 
   const handleRoleChange = (role: RoleType) => {
     setCurrentRole(role);
-    
-    const roleMessages: Record<RoleType, string> = {
-      coach: 'Je suis maintenant en mode Coach Bien-être. Parlons de votre équilibre émotionnel.',
-      manager: 'Je suis maintenant en mode Manager QVT. Optimisons le bien-être de votre équipe.',
-      parent: 'Je suis maintenant en mode Parent Mentor. Trouvons ensemble votre équilibre familial.',
-      legal: 'Je suis maintenant en mode Conseiller. Je peux vous informer sur vos droits.',
+    const messages: Record<RoleType, string> = {
+      coach: 'Je suis en mode Coach Bien-être 🌿',
+      manager: 'Je passe en mode Manager QVT 💼',
+      parent: 'Je passe en mode Parent Mentor 🏡',
+      legal: 'Je passe en mode Conseiller ⚖️',
     };
-    
     const message: Message = {
       id: Date.now().toString(),
-      text: roleMessages[role],
+      text: messages[role],
       sender: 'zena',
       timestamp: new Date(),
     };
-    
     setMessages((prev) => [...prev, message]);
+    speak(messages[role]);
   };
 
   return (
@@ -190,34 +202,29 @@ const Index = () => {
         {/* Header */}
         <header className="text-center mb-12 animate-slide-up">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-primary bg-clip-text text-transparent">
-            ZENA
+            {avatarName}
           </h1>
           <p className="text-lg text-muted-foreground">
-            La voix qui veille sur vos émotions
+            La voix qui veille sur vos émotions ✨
           </p>
         </header>
 
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-8 mb-8">
-          {/* Avatar Section */}
           <div className="lg:col-span-1 flex flex-col items-center gap-6">
-            <AvatarGenderSelector gender={gender} onGenderChange={handleGenderChange} />
+            <AvatarGenderSelector gender={gender} onGenderChange={setGender} />
             <AvatarDisplay isSpeaking={isSpeaking} currentEmotion={currentEmotion} gender={gender} />
-            <VoiceControl
-              onSpeechRecognized={handleSendMessage}
-              isSpeaking={isSpeaking}
-              currentMessage={messages[messages.length - 1]?.sender === 'zena' ? messages[messages.length - 1].text : undefined}
-              gender={gender}
-            />
+            <button
+              onClick={startListening}
+              className="px-4 py-2 rounded-xl bg-primary text-white hover:opacity-90 transition"
+            >
+              🎙️ Parler à {avatarName}
+            </button>
           </div>
 
           {/* Chat Section */}
           <div className="lg:col-span-2">
-            <ChatInterface
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              isProcessing={isProcessing}
-            />
+            <ChatInterface messages={messages} onSendMessage={handleSendMessage} isProcessing={isProcessing} />
           </div>
         </div>
 
@@ -235,6 +242,7 @@ const Index = () => {
                 title: box.name,
                 description: box.description,
               });
+              speak(`Je vous en dis plus sur ${box.name}`);
             }}
           />
         )}
