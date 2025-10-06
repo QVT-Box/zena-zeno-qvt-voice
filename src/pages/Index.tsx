@@ -13,7 +13,6 @@ const qvtBoxes: QVTBox[] = [
     name: 'Box Relax & Sérénité',
     description: 'Techniques de relaxation et gestion du stress pour retrouver votre calme intérieur.',
     category: 'Bien-être',
-    emoji: '🌿',
     color: 'secondary',
   },
   {
@@ -21,7 +20,6 @@ const qvtBoxes: QVTBox[] = [
     name: 'Box Cohésion',
     description: 'Activités pour renforcer les liens et célébrer les réussites en équipe.',
     category: 'Collectif',
-    emoji: '💫',
     color: 'primary',
   },
   {
@@ -29,7 +27,6 @@ const qvtBoxes: QVTBox[] = [
     name: 'Box Parent Zen',
     description: 'Conseils et outils pour équilibrer vie pro et vie de parent sereinement.',
     category: 'Famille',
-    emoji: '🏡',
     color: 'secondary',
   },
   {
@@ -37,7 +34,6 @@ const qvtBoxes: QVTBox[] = [
     name: 'Box Énergie & Focus',
     description: 'Routines et produits pour booster votre concentration et énergie au travail.',
     category: 'Performance',
-    emoji: '⚡',
     color: 'accent',
   },
 ];
@@ -181,10 +177,10 @@ const Index = () => {
   const handleRoleChange = (role: RoleType) => {
     setCurrentRole(role);
     const messages: Record<RoleType, string> = {
-      coach: 'Je suis en mode Coach Bien-être 🌿',
-      manager: 'Je passe en mode Manager QVT 💼',
-      parent: 'Je passe en mode Parent Mentor 🏡',
-      legal: 'Je passe en mode Conseiller ⚖️',
+      coach: 'Je suis en mode Coach Bien-être ',
+      manager: 'Je passe en mode Manager QVT ',
+      parent: 'Je passe en mode Parent Mentor ',
+      legal: 'Je passe en mode Conseiller ',
     };
     const message: Message = {
       id: Date.now().toString(),
@@ -205,7 +201,7 @@ const Index = () => {
             {avatarName}
           </h1>
           <p className="text-lg text-muted-foreground">
-            La voix qui veille sur vos émotions ✨
+            La voix qui veille sur vos émotions 
           </p>
         </header>
 
@@ -218,7 +214,7 @@ const Index = () => {
               onClick={startListening}
               className="px-4 py-2 rounded-xl bg-primary text-white hover:opacity-90 transition"
             >
-              🎙️ Parler à {avatarName}
+               Parler à {avatarName}
             </button>
           </div>
 
