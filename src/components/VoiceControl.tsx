@@ -1,91 +1,87 @@
-import { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff } from 'lucide-react';
+import { useState, useEffect, useMemo } from "react";
+import { Mic, MicOff } from "lucide-react";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
 
 interface VoiceControlProps {
-  onSpeechRecognized: (text: string) => void;
+  onSpeechRecognized: (text: string, lang?: string) => void;
   isSpeaking: boolean;
   currentMessage?: string;
-  gender: 'female' | 'male';
+  gender: "female" | "male";
 }
 
-const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage, gender }: VoiceControlProps) => {
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const [transcript, setTranscript] = useState('');
+export const VoiceControl = ({
+  onSpeechRecognized,
+  isSpeaking,
+  currentMessage,
+  gender,
+}: VoiceControlProps) => {
+  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
 
-  //  Palette selon avatar actif
-  const palette = {
-    primary: gender === 'female' ? '#5B4B8A' : '#4B5E8A',
-    secondary: gender === 'female' ? '#4FD1C5' : '#64B5F6',
-    label: gender === 'female' ? 'ZENA' : 'ZENO',
-  };
+  // 🎤 Hook vocal multilingue (FR/EN)
+  const { transcript, detectedLang, isListening, startListening, stopListening } = useVoiceInput({
+    lang: "auto",
+    onResult: (text, lang) => onSpeechRecognized(text, lang),
+    onError: (err) => console.warn("Erreur vocale :", err),
+  });
 
-  // Initialisation reconnaissance vocale
+  // 🎨 Palette selon le personnage
+  const palette = useMemo(
+    () => ({
+      primary: gender === "female" ? "#5B4B8A" : "#4B5E8A",
+      secondary: gender === "female" ? "#4FD1C5" : "#64B5F6",
+      label: gender === "female" ? "ZENA" : "ZENO",
+    }),
+    [gender]
+  );
+
+  // 🧠 Sélection automatique d’une voix adaptée au genre + langue
   useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn('La reconnaissance vocale n’est pas supportée sur ce navigateur.');
-      return;
-    }
+    const voices = speechSynthesis.getVoices();
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'fr-FR';
-    recognition.continuous = false;
-    recognition.interimResults = true;
+    // on filtre selon genre et langue
+    const preferredVoice =
+      voices.find((v) =>
+        gender === "female"
+          ? v.lang.startsWith(detectedLang === "en" ? "en" : "fr") &&
+            /female|woman|femme|Google français/i.test(v.name)
+          : v.lang.startsWith(detectedLang === "en" ? "en" : "fr") &&
+            /male|man|homme|Google français/i.test(v.name)
+      ) ||
+      voices.find((v) => v.lang.startsWith(detectedLang === "en" ? "en" : "fr"));
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const lastResult = event.results[event.resultIndex];
-      const text = lastResult[0].transcript;
-      setTranscript(text);
-      if (lastResult.isFinal) {
-        onSpeechRecognized(text);
-        setTranscript('');
-      }
-    };
+    setSelectedVoice(preferredVoice || null);
+  }, [gender, detectedLang]);
 
-    recognition.onend = () => setIsListening(false);
-    recognitionRef.current = recognition;
-  }, [onSpeechRecognized]);
-
-  //  Lecture de la réponse vocale
+  // 🗣️ Lecture du message de Zena/Zeno
   useEffect(() => {
     if (isSpeaking && currentMessage) {
-      const voice = new SpeechSynthesisUtterance(currentMessage);
-      voice.lang = 'fr-FR';
-      voice.pitch = gender === 'female' ? 1.1 : 0.9;
-      voice.rate = 0.95;
-      voice.volume = 1;
-      speechSynthesis.speak(voice);
+      const utterance = new SpeechSynthesisUtterance(currentMessage);
+      utterance.lang = detectedLang === "en" ? "en-US" : "fr-FR";
+      utterance.voice = selectedVoice || null;
+      utterance.pitch = gender === "female" ? 1.1 : 0.9;
+      utterance.rate = gender === "female" ? 1.05 : 0.95;
+      utterance.volume = 1;
+      speechSynthesis.speak(utterance);
     }
-  }, [isSpeaking, currentMessage, gender]);
+  }, [isSpeaking, currentMessage, gender, selectedVoice, detectedLang]);
 
-  //  Toggle écoute
+  // 🎛️ Gestion du micro
   const handleToggle = () => {
-    if (!recognitionRef.current) return;
-    const recognition = recognitionRef.current;
-    if (isListening) {
-      recognition.stop();
-      setIsListening(false);
-    } else {
-      recognition.start();
-      setIsListening(true);
-    }
+    isListening ? stopListening() : startListening();
   };
 
-  //  Styles dynamiques du halo vocal
   const glowColor = isListening
     ? `0 0 40px ${palette.secondary}, 0 0 80px ${palette.primary}80`
     : `0 0 15px ${palette.secondary}50`;
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 mt-4">
-      {/* Halo principal */}
+      {/* Bouton principal avec halo */}
       <div
-        className={`relative flex items-center justify-center w-24 h-24 rounded-full transition-smooth cursor-pointer select-none ${
-          isListening ? 'scale-110 animate-breathe' : 'scale-100'
-        }`}
         onClick={handleToggle}
+        className={`relative flex items-center justify-center w-24 h-24 rounded-full cursor-pointer select-none transition-transform duration-300 ${
+          isListening ? "scale-110 animate-breathe" : "scale-100"
+        }`}
         style={{
           background: `radial-gradient(circle, ${palette.secondary}40, transparent 70%)`,
           boxShadow: glowColor,
@@ -101,8 +97,8 @@ const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage, gender }
         <div
           className={`absolute inset-0 rounded-full blur-2xl ${
             isListening
-              ? 'animate-pulse-glow opacity-90'
-              : 'opacity-40 transition-opacity duration-700'
+              ? "animate-pulse-glow opacity-90"
+              : "opacity-40 transition-opacity duration-700"
           }`}
           style={{
             background: `linear-gradient(135deg, ${palette.primary}60, ${palette.secondary}60)`,
@@ -110,14 +106,20 @@ const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage, gender }
         />
       </div>
 
-      {/* Texte indicatif */}
+      {/* Indicateur vocal */}
       <div className="text-center space-y-1">
         <p
           className={`text-sm font-medium tracking-wide ${
-            isListening ? 'text-secondary' : 'text-muted-foreground'
+            isListening ? "text-secondary" : "text-muted-foreground"
           }`}
         >
-          {isListening ? 'Je vous écoute...' : `Parlez à ${palette.label}`}
+          {isListening
+            ? detectedLang === "en"
+              ? "I'm listening..."
+              : "Je vous écoute..."
+            : detectedLang === "en"
+            ? `Talk to ${palette.label}`
+            : `Parlez à ${palette.label}`}
         </p>
         {transcript && (
           <p className="text-xs text-foreground/70 italic">{`“${transcript}”`}</p>
@@ -126,5 +128,3 @@ const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage, gender }
     </div>
   );
 };
-
-export default VoiceControl;
