@@ -4,64 +4,99 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>ZENA - L’IA Émotionnelle de QVT Box | Coach Bien-être Interactif</title>
+    <title>ZENA – L’IA émotionnelle de QVT Box | La voix qui veille sur vos émotions</title>
 
     <meta
       name="description"
-      content="ZENA (ou ZENO), l’avatar IA humanoïde de QVT Box, vous écoute, vous parle et vous aide à mieux vivre vos émotions. Coach bien-être, manager QVT ou parent mentor — la voix qui veille sur vous."
+      content="ZENA, l’avatar IA réaliste et bienveillant de QVT Box. Elle vous écoute, vous parle et veille sur votre bien-être émotionnel. L’expérience QVT humaine et phygitale."
     />
     <meta name="author" content="QVT Box" />
     <meta name="robots" content="index, follow" />
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:title" content="ZENA - L’IA Émotionnelle de QVT Box" />
+    <!-- Open Graph -->
+    <meta property="og:title" content="ZENA – L’IA émotionnelle de QVT Box" />
     <meta
       property="og:description"
-      content="L’avatar IA qui veille sur vos émotions au travail et à la maison. ZENA ou ZENO, la voix humaine et bienveillante signée QVT Box."
+      content="La voix qui veille sur vos émotions. L’avatar IA humain et bienveillant signé QVT Box."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://qvtbox.com/zena" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:image" content="/images/zena-avatar.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="ZENA - Coach IA QVT Box" />
+    <meta name="twitter:title" content="ZENA – L’IA émotionnelle de QVT Box" />
     <meta
       name="twitter:description"
       content="L’avatar IA qui veille sur vos émotions au travail et à la maison."
     />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:image" content="/images/zena-avatar.png" />
     <meta name="twitter:creator" content="@QVTBox" />
 
-    <!-- Favicons -->
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Manifest & Theme -->
+    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#5B4B8A" />
 
-    <!-- Fonts & Styles -->
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="/public/favicon.png" />
+    <link rel="apple-touch-icon" href="/public/apple-touch-icon.png" />
+
+    <!-- Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Styles -->
     <style>
       body {
         margin: 0;
         font-family: 'Montserrat', sans-serif;
-        background-color: #f2f7f6;
+        background: linear-gradient(180deg, #f2f7f6 0%, #e9f9f5 100%);
         color: #212121;
       }
-      .gradient-ambient {
-        background: linear-gradient(
-          180deg,
-          rgba(91, 75, 138, 0.08) 0%,
-          rgba(79, 209, 197, 0.08) 100%
-        );
+      .hero {
+        text-align: center;
+        padding: 4rem 1rem;
+      }
+      .hero img {
+        max-width: 320px;
+        border-radius: 50%;
+        box-shadow: 0 0 60px rgba(91, 75, 138, 0.3);
+      }
+      h1 {
+        font-size: 2.5rem;
+        color: #5b4b8a;
+      }
+      p {
+        font-size: 1.1rem;
+        color: #555;
+      }
+      footer {
+        margin-top: 2rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: #888;
       }
     </style>
   </head>
 
-  <body class="gradient-ambient">
+  <body>
     <div id="root"></div>
+
+    <!-- Hero static fallback (SEO + image render before React) -->
+    <section class="hero">
+      <img src="/images/zena-avatar.png" alt="ZENA - Avatar IA QVT Box" />
+      <h1>ZENA</h1>
+      <p>La voix qui veille sur vos émotions</p>
+    </section>
+
+    <footer>
+      © 2025 QVT Box – Made with 💜 en Bretagne
+    </footer>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
