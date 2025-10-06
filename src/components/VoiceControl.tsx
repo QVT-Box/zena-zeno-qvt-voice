@@ -13,14 +13,14 @@ const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage, gender }
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [transcript, setTranscript] = useState('');
 
-  // 🎨 Palette selon avatar actif
+  //  Palette selon avatar actif
   const palette = {
     primary: gender === 'female' ? '#5B4B8A' : '#4B5E8A',
     secondary: gender === 'female' ? '#4FD1C5' : '#64B5F6',
     label: gender === 'female' ? 'ZENA' : 'ZENO',
   };
 
-  // 🎙️ Initialisation reconnaissance vocale
+  // Initialisation reconnaissance vocale
   useEffect(() => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -48,7 +48,7 @@ const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage, gender }
     recognitionRef.current = recognition;
   }, [onSpeechRecognized]);
 
-  // 🗣️ Lecture de la réponse vocale
+  //  Lecture de la réponse vocale
   useEffect(() => {
     if (isSpeaking && currentMessage) {
       const voice = new SpeechSynthesisUtterance(currentMessage);
@@ -60,7 +60,7 @@ const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage, gender }
     }
   }, [isSpeaking, currentMessage, gender]);
 
-  // 🎤 Toggle écoute
+  //  Toggle écoute
   const handleToggle = () => {
     if (!recognitionRef.current) return;
     const recognition = recognitionRef.current;
@@ -73,7 +73,7 @@ const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage, gender }
     }
   };
 
-  // 🌈 Styles dynamiques du halo vocal
+  //  Styles dynamiques du halo vocal
   const glowColor = isListening
     ? `0 0 40px ${palette.secondary}, 0 0 80px ${palette.primary}80`
     : `0 0 15px ${palette.secondary}50`;
