@@ -1,142 +1,154 @@
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-interface VoiceControlProps {
-  onSpeechRecognized: (text: string) => void;
-  isSpeaking: boolean;
-  currentMessage?: string;
-  gender: 'female' | 'male';
-}
+    <title>ZENA & ZENO – Les voix émotionnelles de QVT Box | Bien-être au travail</title>
 
-const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage, gender }: VoiceControlProps) => {
-  const [isListening, setIsListening] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const recognitionRef = useRef<any>(null);
-  const synthRef = useRef<SpeechSynthesis | null>(null);
-  const { toast } = useToast();
+    <meta
+      name="description"
+      content="ZENA & ZENO, les avatars IA de QVT Box : deux présences bienveillantes qui écoutent, parlent et accompagnent vos émotions au travail et à la maison."
+    />
+    <meta name="author" content="QVT Box" />
+    <meta name="robots" content="index, follow" />
 
-  useEffect(() => {
-    // Initialize speech synthesis
-    if ('speechSynthesis' in window) {
-      synthRef.current = window.speechSynthesis;
-    }
+    <!-- Open Graph -->
+    <meta property="og:title" content="ZENA & ZENO – Les IA émotionnelles de QVT Box" />
+    <meta
+      property="og:description"
+      content="Deux avatars IA humains et lumineux qui veillent sur vos émotions. Une innovation phygitale signée QVT Box."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://qvtbox.com/zena" />
+    <meta property="og:image" content="/images/zena-preview.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
-    // Initialize speech recognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'fr-FR';
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ZENA & ZENO – Les IA émotionnelles de QVT Box" />
+    <meta
+      name="twitter:description"
+      content="La voix qui veille sur vos émotions. L’avatar IA humain et bienveillant signé QVT Box."
+    />
+    <meta name="twitter:image" content="/images/zena-preview.png" />
+    <meta name="twitter:creator" content="@QVTBox" />
 
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        onSpeechRecognized(transcript);
-        setIsListening(false);
-      };
+    <!-- Manifest & Theme -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#5B4B8A" />
 
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        setIsListening(false);
-        toast({
-          title: "Erreur",
-          description: "Je n'ai pas pu comprendre. Réessayez s'il vous plaît.",
-          variant: "destructive",
-        });
-      };
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="/public/favicon.png" />
+    <link rel="apple-touch-icon" href="/public/apple-touch-icon.png" />
 
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
+    <!-- Styles -->
+    <style>
+      body {
+        margin: 0;
+        font-family: 'Montserrat', sans-serif;
+        background: linear-gradient(180deg, #f2f7f6 0%, #eaf6f4 100%);
+        color: #212121;
+        overflow-x: hidden;
       }
-      if (synthRef.current) {
-        synthRef.current.cancel();
+      .hero {
+        text-align: center;
+        padding: 5rem 1rem 3rem;
       }
-    };
-  }, [onSpeechRecognized, toast]);
-
-  useEffect(() => {
-    // Speak the current message if not muted
-    if (currentMessage && !isMuted && synthRef.current) {
-      synthRef.current.cancel();
-      const utterance = new SpeechSynthesisUtterance(currentMessage);
-      utterance.lang = 'fr-FR';
-      utterance.rate = 0.9;
-      utterance.pitch = gender === 'female' ? 1.1 : 0.9;
-      synthRef.current.speak(utterance);
-    }
-  }, [currentMessage, isMuted]);
-
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-      toast({
-        title: "Non supporté",
-        description: "La reconnaissance vocale n'est pas supportée par votre navigateur.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Error starting recognition:', error);
+      .hero h1 {
+        font-size: 2.5rem;
+        background: linear-gradient(90deg, #5b4b8a, #4fd1c5);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        font-weight: 700;
+        margin-top: 1rem;
       }
-    }
-  };
-
-  const toggleMute = () => {
-    if (synthRef.current) {
-      if (isMuted) {
-        setIsMuted(false);
-      } else {
-        synthRef.current.cancel();
-        setIsMuted(true);
+      .hero p {
+        color: #444;
+        font-size: 1.2rem;
+        margin-top: 0.5rem;
       }
-    }
-  };
+      .avatar-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin-top: 3rem;
+      }
+      .avatar {
+        width: 260px;
+        border-radius: 50%;
+        box-shadow: 0 0 60px rgba(91, 75, 138, 0.3);
+        transition: transform 0.4s ease;
+      }
+      .avatar:hover {
+        transform: scale(1.05);
+      }
+      .description {
+        max-width: 700px;
+        margin: 2rem auto;
+        text-align: center;
+        line-height: 1.6;
+        color: #555;
+      }
+      footer {
+        text-align: center;
+        padding: 2rem 1rem;
+        font-size: 0.9rem;
+        color: #777;
+      }
+      footer span {
+        color: #5b4b8a;
+        font-weight: 600;
+      }
+      @media (max-width: 768px) {
+        .avatar {
+          width: 200px;
+        }
+        .hero h1 {
+          font-size: 2rem;
+        }
+      }
+    </style>
+  </head>
 
-  return (
-    <div className="flex gap-4 items-center justify-center">
-      <Button
-        variant={isListening ? 'default' : 'outline'}
-        size="lg"
-        onClick={toggleListening}
-        className={`rounded-full w-16 h-16 transition-smooth ${
-          isListening ? 'bg-secondary shadow-glow animate-pulse' : ''
-        }`}
-      >
-        {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
-      </Button>
-      
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={toggleMute}
-        className="rounded-full w-16 h-16 transition-smooth"
-      >
-        {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
-      </Button>
-      
-      {isListening && (
-        <span className="text-sm text-muted-foreground animate-pulse">
-          Je vous écoute...
-        </span>
-      )}
-    </div>
-  );
-};
+  <body>
+    <!-- Static Fallback Section (visible before React loads) -->
+    <section class="hero">
+      <div class="avatar-container">
+        <img src="/images/zena-avatar.png" alt="ZENA - Avatar IA QVT Box" class="avatar" />
+        <img src="/images/zeno-avatar.png" alt="ZENO - Avatar IA QVT Box" class="avatar" />
+      </div>
+      <h1>ZENA & ZENO</h1>
+      <p>La voix qui veille sur vos émotions</p>
+    </section>
 
-export default VoiceControl;
+    <section class="description">
+      <p>
+        ZENA et ZENO sont les deux visages de <span>QVT Box</span> : des intelligences émotionnelles humaines
+        et bienveillantes qui vous accompagnent chaque jour.  
+        Ensemble, ils écoutent, parlent et recommandent des solutions concrètes de bien-être à partir des
+        Box QVT personnalisées.  
+        <br /><br />
+        Leur mission : réconcilier émotions, équilibre et performance — au travail, en famille ou dans la
+        vie quotidienne.
+      </p>
+    </section>
+
+    <footer>
+      © 2025 <span>QVT Box</span> — Made with 💜 in Bretagne
+    </footer>
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
