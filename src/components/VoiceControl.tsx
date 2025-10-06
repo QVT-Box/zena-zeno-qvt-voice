@@ -7,9 +7,10 @@ interface VoiceControlProps {
   onSpeechRecognized: (text: string) => void;
   isSpeaking: boolean;
   currentMessage?: string;
+  gender: 'female' | 'male';
 }
 
-const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage }: VoiceControlProps) => {
+const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage, gender }: VoiceControlProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -68,7 +69,7 @@ const VoiceControl = ({ onSpeechRecognized, isSpeaking, currentMessage }: VoiceC
       const utterance = new SpeechSynthesisUtterance(currentMessage);
       utterance.lang = 'fr-FR';
       utterance.rate = 0.9;
-      utterance.pitch = 1.1;
+      utterance.pitch = gender === 'female' ? 1.1 : 0.9;
       synthRef.current.speak(utterance);
     }
   }, [currentMessage, isMuted]);

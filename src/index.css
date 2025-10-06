@@ -145,6 +145,11 @@ All colors MUST be HSL.
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
+  
+  @keyframes mouth-speak {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.2); }
+  }
 }
 
 @layer utilities {

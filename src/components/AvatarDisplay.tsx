@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react';
-import avatarImage from '@/assets/zena-avatar.jpg';
+import zenaAvatar from '@/assets/zena-avatar.jpg';
+import zenoAvatar from '@/assets/zeno-avatar.jpg';
+import LipSyncOverlay from './LipSyncOverlay';
+import { useAudioAnalyzer } from '@/hooks/useAudioAnalyzer';
 
 interface AvatarDisplayProps {
   isSpeaking: boolean;
   currentEmotion?: string;
+  gender: 'female' | 'male';
 }
 
-const AvatarDisplay = ({ isSpeaking, currentEmotion }: AvatarDisplayProps) => {
+const AvatarDisplay = ({ isSpeaking, currentEmotion, gender }: AvatarDisplayProps) => {
   const [fireflies, setFireflies] = useState<Array<{ id: number; delay: number; duration: number }>>([]);
+  const audioLevel = useAudioAnalyzer(isSpeaking);
+  
+  const avatarImage = gender === 'female' ? zenaAvatar : zenoAvatar;
+  const avatarName = gender === 'female' ? 'ZENA' : 'ZENO';
+  const primaryColor = gender === 'female' ? 'primary' : 'secondary';
 
   useEffect(() => {
     // Generate firefly particles
@@ -28,7 +37,7 @@ const AvatarDisplay = ({ isSpeaking, currentEmotion }: AvatarDisplayProps) => {
       {fireflies.map((firefly) => (
         <div
           key={firefly.id}
-          className="absolute w-2 h-2 bg-secondary rounded-full opacity-0 animate-firefly"
+          className={`absolute w-2 h-2 bg-${primaryColor} rounded-full opacity-0 animate-firefly`}
           style={{
             left: `${20 + Math.random() * 60}%`,
             top: `${20 + Math.random() * 60}%`,
@@ -44,17 +53,22 @@ const AvatarDisplay = ({ isSpeaking, currentEmotion }: AvatarDisplayProps) => {
         <div className={`absolute inset-0 rounded-full border-4 ${
           currentEmotion === 'positive' ? 'border-secondary' : 
           currentEmotion === 'negative' ? 'border-destructive' : 
-          'border-primary'
+          `border-${primaryColor}`
         } opacity-50 animate-breathe`} />
         
         {/* Avatar image */}
         <div className="relative w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20" />
+          <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${
+            gender === 'female' ? 'from-primary/20 to-secondary/20' : 'from-secondary/20 to-primary/20'
+          }`} />
           <img
             src={avatarImage}
-            alt="ZENA - Coach QVT"
+            alt={`${avatarName} - Coach QVT`}
             className="relative z-10 w-full h-full object-cover rounded-full animate-breathe"
           />
+          
+          {/* Lip sync overlay */}
+          <LipSyncOverlay isSpeaking={isSpeaking} audioLevel={audioLevel} />
           
           {/* Speaking indicator */}
           {isSpeaking && (
@@ -76,7 +90,9 @@ const AvatarDisplay = ({ isSpeaking, currentEmotion }: AvatarDisplayProps) => {
         </div>
         
         {/* Inner glow ring */}
-        <div className="absolute inset-2 rounded-full bg-gradient-to-br from-primary-glow/30 to-secondary/30 blur-xl" />
+        <div className={`absolute inset-2 rounded-full bg-gradient-to-br blur-xl ${
+          gender === 'female' ? 'from-primary-glow/30 to-secondary/30' : 'from-secondary/30 to-primary-glow/30'
+        }`} />
       </div>
     </div>
   );

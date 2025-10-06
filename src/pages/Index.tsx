@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AvatarDisplay from '@/components/AvatarDisplay';
+import AvatarGenderSelector from '@/components/AvatarGenderSelector';
 import RoleSelector, { RoleType } from '@/components/RoleSelector';
 import VoiceControl from '@/components/VoiceControl';
 import ChatInterface, { Message } from '@/components/ChatInterface';
@@ -35,11 +36,16 @@ const qvtBoxes: QVTBox[] = [
 ];
 
 const Index = () => {
+  const [gender, setGender] = useState<'female' | 'male'>(() => {
+    const saved = localStorage.getItem('avatar-gender');
+    return (saved === 'male' ? 'male' : 'female') as 'female' | 'male';
+  });
   const [currentRole, setCurrentRole] = useState<RoleType>('coach');
+  const avatarName = gender === 'female' ? 'ZENA' : 'ZENO';
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Bonjour ! Je suis ZENA, votre coach bien-être. Comment puis-je vous accompagner aujourd\'hui ?',
+      text: `Bonjour ! Je suis ${avatarName}, votre coach bien-être. Comment puis-je vous accompagner aujourd'hui ?`,
       sender: 'zena',
       timestamp: new Date(),
     },
@@ -49,6 +55,22 @@ const Index = () => {
   const [currentEmotion, setCurrentEmotion] = useState<string>();
   const [recommendedBoxes, setRecommendedBoxes] = useState<QVTBox[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    localStorage.setItem('avatar-gender', gender);
+  }, [gender]);
+
+  const handleGenderChange = (newGender: 'female' | 'male') => {
+    setGender(newGender);
+    const newName = newGender === 'female' ? 'ZENA' : 'ZENO';
+    const message: Message = {
+      id: Date.now().toString(),
+      text: `Bonjour ! Je suis ${newName}. Je suis là pour vous accompagner.`,
+      sender: 'zena',
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, message]);
+  };
 
   const analyzeEmotion = (text: string): string => {
     const lowerText = text.toLowerCase();
@@ -179,11 +201,13 @@ const Index = () => {
         <div className="grid lg:grid-cols-3 gap-8 mb-8">
           {/* Avatar Section */}
           <div className="lg:col-span-1 flex flex-col items-center gap-6">
-            <AvatarDisplay isSpeaking={isSpeaking} currentEmotion={currentEmotion} />
+            <AvatarGenderSelector gender={gender} onGenderChange={handleGenderChange} />
+            <AvatarDisplay isSpeaking={isSpeaking} currentEmotion={currentEmotion} gender={gender} />
             <VoiceControl
               onSpeechRecognized={handleSendMessage}
               isSpeaking={isSpeaking}
               currentMessage={messages[messages.length - 1]?.sender === 'zena' ? messages[messages.length - 1].text : undefined}
+              gender={gender}
             />
           </div>
 
