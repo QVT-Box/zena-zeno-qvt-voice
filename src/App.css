@@ -1,23 +1,24 @@
-/* 🌿 Thème global ZENA / QVT Box */
+/* 🌿 Thème visuel ZENA / QVT Box (version stable et non destructive) */
 
+/* === Variables de thème === */
 :root {
-  --color-primary: #005b5f;
-  --color-secondary: #4fd1c5;
-  --color-bg-light: #f2f7f6;
+  --color-primary: #005b5f;       /* Vert canard */
+  --color-secondary: #4fd1c5;     /* Vert eau */
+  --color-bg-light: #f2f7f6;      /* Blanc cassé */
   --color-bg-gradient-start: #f2f7f6;
   --color-bg-gradient-end: #eaf4f3;
-  --color-text-dark: #212121;
-  --color-text-muted: #6b7280;
+  --color-text-dark: #212121;     /* Noir doux */
+  --color-text-muted: #6b7280;    /* Gris neutre */
 }
 
-html,
-body {
+/* === Fond global et typographie === */
+html, body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
   font-family: "Montserrat", system-ui, sans-serif;
   background: linear-gradient(
-    to bottom,
+    135deg,
     var(--color-bg-gradient-start),
     var(--color-bg-gradient-end)
   );
@@ -25,24 +26,7 @@ body {
   overflow-x: hidden;
 }
 
-/* --- Liens et titres --- */
-a {
-  color: var(--color-secondary);
-  text-decoration: none;
-  font-weight: 500;
-}
-a:hover {
-  text-decoration: underline;
-}
-
-h1,
-h2,
-h3 {
-  color: var(--color-primary);
-  margin: 0.5em 0;
-}
-
-/* --- Cartes / boîtes --- */
+/* === Cartes et sections === */
 .card {
   background: #fff;
   border-radius: 1rem;
@@ -55,7 +39,40 @@ h3 {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
 }
 
-/* --- Animations ZENA --- */
+/* === Titres === */
+h1, h2, h3 {
+  color: var(--color-primary);
+  margin: 0.5em 0;
+}
+
+/* === Liens === */
+a {
+  color: var(--color-secondary);
+  text-decoration: none;
+  font-weight: 500;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* === Classes utilitaires === */
+.text-muted-foreground {
+  color: var(--color-text-muted);
+}
+
+.gradient-primary {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+}
+
+.gradient-ambient {
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-gradient-start),
+    var(--color-bg-gradient-end)
+  );
+}
+
+/* === Animations respiratoires === */
 @keyframes breathe-slow {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
@@ -83,19 +100,62 @@ h3 {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
-/* --- Classes utilitaires --- */
-.text-muted-foreground {
-  color: var(--color-text-muted);
+/* === Fond à bulles discrètes === */
+body::before,
+body::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(79, 209, 197, 0.06);
+  z-index: -1;
+  animation: floatBubbles 40s infinite linear;
 }
 
-.gradient-primary {
-  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+body::before {
+  width: 240px;
+  height: 240px;
+  top: 10%;
+  left: -10%;
 }
 
-.gradient-ambient {
-  background: linear-gradient(
-    135deg,
-    var(--color-bg-gradient-start),
-    var(--color-bg-gradient-end)
-  );
+body::after {
+  width: 320px;
+  height: 320px;
+  bottom: 10%;
+  right: -15%;
+}
+
+@keyframes floatBubbles {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-40px) rotate(45deg); }
+  100% { transform: translateY(0) rotate(360deg); }
+}
+
+/* === Mode nuit doux === */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #4fd1c5;
+    --color-secondary: #5b4b8a;
+    --color-bg-gradient-start: #1f1f1f;
+    --color-bg-gradient-end: #2b2b2b;
+    --color-text-dark: #f2f7f6;
+    --color-text-muted: #a3a3a3;
+  }
+
+  body {
+    background: linear-gradient(
+      135deg,
+      var(--color-bg-gradient-start),
+      var(--color-bg-gradient-end)
+    );
+  }
+
+  .card {
+    background: #2b2b2b;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  a {
+    color: var(--color-secondary);
+  }
 }
