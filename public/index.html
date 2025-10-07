@@ -1,20 +1,21 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>ZENA – L’IA émotionnelle de QVT Box | La voix qui veille sur vos émotions</title>
+    <title>ZÉNA – L’IA émotionnelle de QVT Box | La voix qui veille sur vos émotions</title>
 
+    <!-- SEO -->
     <meta
       name="description"
-      content="ZENA, l’avatar IA réaliste et bienveillant de QVT Box. Elle vous écoute, vous parle et veille sur votre bien-être émotionnel. L’expérience QVT humaine et phygitale."
+      content="ZÉNA, l’avatar IA réaliste et bienveillant de QVT Box. Elle vous écoute, vous parle et veille sur votre bien-être émotionnel. L’expérience QVT humaine et phygitale."
     />
     <meta name="author" content="QVT Box" />
     <meta name="robots" content="index, follow" />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="ZENA – L’IA émotionnelle de QVT Box" />
+    <meta property="og:title" content="ZÉNA – L’IA émotionnelle de QVT Box" />
     <meta
       property="og:description"
       content="La voix qui veille sur vos émotions. L’avatar IA humain et bienveillant signé QVT Box."
@@ -27,7 +28,7 @@
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="ZENA – L’IA émotionnelle de QVT Box" />
+    <meta name="twitter:title" content="ZÉNA – L’IA émotionnelle de QVT Box" />
     <meta
       name="twitter:description"
       content="L’avatar IA qui veille sur vos émotions au travail et à la maison."
@@ -35,50 +36,67 @@
     <meta name="twitter:image" content="/images/zena-avatar.png" />
     <meta name="twitter:creator" content="@QVTBox" />
 
-    <!-- Manifest & Theme -->
+    <!-- Manifest & thème -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#5B4B8A" />
 
     <!-- Favicons -->
-    <link rel="icon" type="image/png" href="/public/favicon.png" />
-    <link rel="apple-touch-icon" href="/public/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <!-- Fonts -->
+    <!-- Polices -->
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
 
-    <!-- Styles -->
+    <!-- Styles minimalistes pour fallback SEO -->
     <style>
       body {
         margin: 0;
-        font-family: 'Montserrat', sans-serif;
-        background: linear-gradient(180deg, #f2f7f6 0%, #e9f9f5 100%);
+        font-family: "Montserrat", sans-serif;
+        background: linear-gradient(180deg, #f2f7f6 0%, #eaf4f3 100%);
         color: #212121;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
       }
       .hero {
         text-align: center;
-        padding: 4rem 1rem;
+        padding: 3rem 1rem;
+        animation: fadeIn 1.5s ease-in;
       }
       .hero img {
-        max-width: 320px;
+        max-width: 280px;
         border-radius: 50%;
         box-shadow: 0 0 60px rgba(91, 75, 138, 0.3);
       }
       h1 {
         font-size: 2.5rem;
         color: #5b4b8a;
+        margin-bottom: 0.5rem;
       }
       p {
         font-size: 1.1rem;
-        color: #555;
+        color: #4b5e8a;
       }
       footer {
         margin-top: 2rem;
         text-align: center;
         font-size: 0.9rem;
-        color: #888;
+        color: #6b7280;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(15px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
     </style>
   </head>
@@ -86,17 +104,16 @@
   <body>
     <div id="root"></div>
 
-    <!-- Hero static fallback (SEO + image render before React) -->
-    <section class="hero">
-      <img src="/images/zena-avatar.png" alt="ZENA - Avatar IA QVT Box" />
-      <h1>ZENA</h1>
+    <!-- Fallback statique visible avant que React charge -->
+    <section class="hero" id="static-hero">
+      <img src="/images/zena-avatar.png" alt="ZÉNA – Avatar IA QVT Box" />
+      <h1>ZÉNA</h1>
       <p>La voix qui veille sur vos émotions</p>
     </section>
 
-    <footer>
-      © 2025 QVT Box – Made with 💜 en Bretagne
-    </footer>
+    <footer>© 2025 QVT Box — Made with 💜 en Bretagne</footer>
 
+    <!-- Script principal React/Vite -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
