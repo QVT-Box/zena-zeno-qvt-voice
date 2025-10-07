@@ -1,85 +1,41 @@
-import { useEffect, useState } from "react";
+// src/components/ZenaAvatar.tsx
 import { motion } from "framer-motion";
-import zenaImg from "@/assets/zena-avatar.png";
-import zenoImg from "@/assets/zeno-avatar.png";
+import zenaAvatar from "@/assets/zena-avatar.png";
+import { useAudioAnalyzer } from "@/hooks/useAudioAnalyzer";
 
 interface ZenaAvatarProps {
-  gender?: "female" | "male";
-  audioLevel?: number; // Reçu depuis useZenaZenoBrain
+  isSpeaking?: boolean;
+  emotion?: "positive" | "neutral" | "negative";
 }
 
-/**
- * 💫 ZenaAvatar
- * ------------------------------------------------------
- * Avatar émotionnel réactif :
- * - Halo lumineux qui pulse au rythme de la voix
- * - Lucioles flottantes (symbole de la bienveillance QVT Box)
- * - Animation de respiration (cohérence cardiaque visuelle)
- */
-export default function ZenaAvatar({ gender = "female", audioLevel = 0 }: ZenaAvatarProps) {
-  const avatarImage = gender === "female" ? zenaImg : zenoImg;
-  const mainColor = gender === "female" ? "#5B4B8A" : "#4FD1C5";
-  const accentColor = gender === "female" ? "#4FD1C5" : "#5B4B8A";
+export default function ZenaAvatar({ isSpeaking = false, emotion = "neutral" }: ZenaAvatarProps) {
+  const audioLevel = useAudioAnalyzer(isSpeaking);
 
-  const [fireflies, setFireflies] = useState<Array<{ id: number; x: number; y: number; delay: number }>>([]);
-
-  useEffect(() => {
-    const ff = Array.from({ length: 10 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 5,
-    }));
-    setFireflies(ff);
-  }, []);
+  // Aura émotionnelle selon le ton
+  const auraColor =
+    emotion === "positive"
+      ? "from-emerald-300/50 to-teal-400/30"
+      : emotion === "negative"
+      ? "from-rose-400/50 to-red-400/30"
+      : "from-[#5B4B8A]/40 to-[#4FD1C5]/30";
 
   return (
-    <div className="relative flex justify-center items-center py-8">
-      {/* 🌌 Halo animé */}
+    <div className="relative flex flex-col items-center justify-center text-center select-none">
+      {/* Halo d’ambiance */}
       <motion.div
-        className="absolute rounded-full blur-3xl"
+        className={`absolute w-72 h-72 md:w-96 md:h-96 rounded-full blur-3xl bg-gradient-to-br ${auraColor}`}
         animate={{
-          scale: 1 + audioLevel * 0.2,
-          opacity: 0.5 + audioLevel * 0.4,
+          scale: isSpeaking ? 1.1 : 1,
+          opacity: isSpeaking ? 0.8 : 0.6,
         }}
-        transition={{ type: "spring", stiffness: 60, damping: 15 }}
-        style={{
-          width: 300,
-          height: 300,
-          background: `radial-gradient(circle, ${accentColor}60, ${mainColor}40, transparent 70%)`,
-        }}
+        transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
       />
 
-      {/* ✨ Lucioles */}
-      {fireflies.map((f) => (
-        <motion.div
-          key={f.id}
-          className="absolute w-2 h-2 rounded-full"
-          initial={{ opacity: 0 }}
-          animate={{
-            x: `${f.x}%`,
-            y: `${f.y}%`,
-            opacity: [0, 1, 0.6, 1, 0],
-            scale: [0.5, 1.2, 0.8],
-          }}
-          transition={{
-            duration: 6 + Math.random() * 4,
-            delay: f.delay,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          style={{
-            backgroundColor: accentColor,
-            boxShadow: `0 0 12px ${accentColor}`,
-          }}
-        />
-      ))}
-
-      {/* 🧘 Avatar principal */}
+      {/* Avatar principal */}
       <motion.img
-        src={avatarImage}
-        alt={gender === "female" ? "Zéna" : "Zéno"}
-        className="relative z-10 rounded-full object-cover w-52 h-52 md:w-64 md:h-64 shadow-[0_0_40px_rgba(91,75,138,0.3)] border-4 border-white/10"
+        src={zenaAvatar}
+        alt="ZÉNA - IA émotionnelle QVT Box"
+        className="relative z-10 w-48 h-48 md:w-64 md:h-64 rounded-full shadow-lg border-4 border-white/20"
         animate={{
           scale: 1 + audioLevel * 0.05,
           rotate: audioLevel * 3,
@@ -87,12 +43,12 @@ export default function ZenaAvatar({ gender = "female", audioLevel = 0 }: ZenaAv
         transition={{ type: "spring", stiffness: 80, damping: 10 }}
       />
 
-      {/* 🩵 Nom */}
-      <div className="absolute bottom-[-3.5rem] text-center">
-        <p className="text-xl font-semibold tracking-widest bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] text-transparent bg-clip-text">
-          {gender === "female" ? "ZÉNA" : "ZÉNO"}
-        </p>
-        <p className="text-sm text-gray-500">La voix qui veille sur vos émotions</p>
+      {/* Nom et tagline */}
+      <div className="mt-4">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] bg-clip-text text-transparent tracking-widest">
+          ZÉNA
+        </h2>
+        <p className="text-sm text-muted-foreground">La voix qui veille sur vos émotions</p>
       </div>
     </div>
   );
