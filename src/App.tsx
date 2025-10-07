@@ -4,29 +4,43 @@ import ZenaChat from "@/pages/ZenaChat";
 import { Toaster } from "@/components/ui/sonner";
 
 /**
- * App principale QVT Box – ZÉNA Voice
- * ---------------------------------------------------------
- * - Gère les routes de l'application
- * - Applique le fond dégradé et la palette globale
- * - Affiche les notifications (Toaster)
+ * 🌸 App principale – ZÉNA Voice / QVT Box
+ * ----------------------------------------------------------
+ * - Gère la navigation entre les univers (accueil, chat)
+ * - Applique le thème émotionnel global (gradient, douceur)
+ * - Active les notifications contextuelles
  */
 function App() {
   return (
     <Router>
-      {/*  Fond global en dégradé QVT Box */}
-      <div className="min-h-screen bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-[#212121]">
+      {/* === Fond global et mise en page === */}
+      <div className="relative min-h-screen text-[#212121] font-sans overflow-hidden">
+        {/* Dégradé d’ambiance QVT Box */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#F2F7F6] via-[#EAF4F3] to-[#E9F9F5] -z-10" />
+
+        {/* Halo d’ambiance douce */}
+        <div
+          className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-[#4FD1C5]/30 rounded-full blur-[120px] -z-10 animate-breathe"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute bottom-[-15%] right-[-10%] w-[400px] h-[400px] bg-[#5B4B8A]/25 rounded-full blur-[140px] -z-10 animate-breathe-slow"
+          aria-hidden="true"
+        />
+
+        {/* === Contenu principal === */}
         <Routes>
-          {/*  Page d’accueil principale – ZÉNA Voice */}
+          {/* 🏠 Page d’accueil principale – ZÉNA Voice */}
           <Route path="/" element={<Index />} />
 
-          {/*  Page secondaire – Chat dédié à ZÉNA */}
+          {/* 💬 Page secondaire – Chat dédié à ZÉNA */}
           <Route path="/zena-chat" element={<ZenaChat />} />
 
-          {/*  Fallback : redirection vers l’accueil si route inconnue */}
+          {/* 🚦 Redirection par défaut */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
-        {/*  Notifications globales (ex. réponses IA, erreurs, etc.) */}
+        {/* 🔔 Notifications globales (Toaster) */}
         <Toaster position="bottom-center" />
       </div>
     </Router>
