@@ -1,239 +1,144 @@
-/* 🌿 Thème global ZENA / QVT Box (version propre et stable) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* === Variables globales === */
-:root {
-  --background: 174 40% 96%;
-  --foreground: 222.2 47.4% 11.2%;
-  
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 47.4% 11.2%;
-  
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 47.4% 11.2%;
-  
-  --primary: 181 100% 19%;
-  --primary-foreground: 210 40% 98%;
-  --primary-glow: 174 60% 56%;
-  
-  --secondary: 174 60% 56%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --secondary-soft: 174 40% 80%;
-  
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
-  
-  --radius: 0.5rem;
-  
-  /* Custom colors for legacy support */
-  --color-primary: #005b5f;
-  --color-secondary: #4fd1c5;
-  --color-bg-light: #f2f7f6;
-  --color-bg-gradient-start: #f2f7f6;
-  --color-bg-gradient-end: #eaf4f3;
-  --color-text-dark: #212121;
-  --color-text-muted: #6b7280;
-}
+/* -----------------------------------------------------
+   🌿 Système de Design – QVT Box (ZENA & ZENO)
+   Toutes les couleurs sont en HSL
+------------------------------------------------------*/
 
-/* === Base générale === */
-html,
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  font-family: "Montserrat", system-ui, sans-serif;
-  background: linear-gradient(
-    135deg,
-    var(--color-bg-gradient-start),
-    var(--color-bg-gradient-end)
-  );
-  color: var(--color-text-dark);
-  overflow-x: hidden;
-}
-
-/* === Racine React === */
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-/* === Liens === */
-a {
-  color: var(--color-secondary);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-/* === Titres === */
-h1,
-h2,
-h3 {
-  color: var(--color-primary);
-  margin: 0.5em 0;
-}
-
-/* === Cartes / boîtes === */
-.card {
-  background: #fff;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
-}
-
-/* === Texte secondaire === */
-.text-muted-foreground {
-  color: var(--color-text-muted);
-}
-
-/* === Dégradés === */
-.gradient-primary {
-  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
-}
-
-.gradient-ambient {
-  background: linear-gradient(
-    135deg,
-    var(--color-bg-gradient-start),
-    var(--color-bg-gradient-end)
-  );
-}
-
-/* === Animations respiratoires et halo === */
-@keyframes breathe-slow {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes pulse-fast {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.12); opacity: 0.9; }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.8; filter: brightness(1); }
-  50% { opacity: 1; filter: brightness(1.3); }
-}
-
-.animate-breathe-slow {
-  animation: breathe-slow 4s ease-in-out infinite;
-}
-
-.animate-pulse-fast {
-  animation: pulse-fast 1.5s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-/* === Fond à bulles légères === */
-body::before,
-body::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(79, 209, 197, 0.08);
-  z-index: -1;
-  animation: floatBubbles 35s infinite linear;
-}
-
-body::before {
-  width: 220px;
-  height: 220px;
-  top: 10%;
-  left: -8%;
-}
-
-body::after {
-  width: 300px;
-  height: 300px;
-  bottom: 15%;
-  right: -12%;
-}
-
-@keyframes floatBubbles {
-  0% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-40px) rotate(60deg); }
-  100% { transform: translateY(0) rotate(360deg); }
-}
-
-/* === Mode nuit doux === */
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    
-    --primary: 174 60% 56%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --primary-glow: 174 80% 70%;
-    
-    --secondary: 262 30% 45%;
-    --secondary-foreground: 210 40% 98%;
-    --secondary-soft: 262 20% 30%;
-    
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    
-    /* Custom colors for legacy support */
-    --color-primary: #4fd1c5;
-    --color-secondary: #5b4b8a;
-    --color-bg-gradient-start: #1f1f1f;
-    --color-bg-gradient-end: #2b2b2b;
-    --color-text-dark: #f2f7f6;
-    --color-text-muted: #a3a3a3;
+    /* Couleurs principales */
+    --background: 158 30% 96%;
+    --foreground: 255 30% 20%;
+
+    --primary: 255 30% 41%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 255 40% 65%;
+
+    --secondary: 178 62% 58%;
+    --secondary-foreground: 255 30% 20%;
+    --secondary-soft: 178 40% 85%;
+
+    /* Complémentaires */
+    --accent: 178 62% 58%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --muted: 158 20% 90%;
+    --muted-foreground: 255 15% 45%;
+
+    /* Fonds & éléments */
+    --card: 0 0% 100%;
+    --card-foreground: 255 30% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 255 30% 20%;
+    --border: 158 20% 85%;
+    --input: 158 20% 90%;
+    --ring: 255 30% 41%;
+    --radius: 1rem;
+
+    /* Dégradés */
+    --gradient-primary: linear-gradient(135deg, hsl(255, 30%, 41%), hsl(255, 40%, 55%));
+    --gradient-secondary: linear-gradient(135deg, hsl(178, 62%, 58%), hsl(178, 50%, 70%));
+    --gradient-ambient: linear-gradient(180deg, hsl(255, 30%, 41%, 0.08), hsl(178, 62%, 58%, 0.08));
+
+    /* Ombres & lumières */
+    --shadow-glow: 0 0 40px hsl(255, 40%, 65%, 0.3);
+    --shadow-soft: 0 10px 40px hsl(255, 30%, 41%, 0.1);
+    --luciole-glow: 0 0 20px hsl(178, 62%, 68%, 0.7);
+
+    /* Transitions */
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .dark {
+    --background: 255 30% 12%;
+    --foreground: 158 30% 96%;
+    --primary: 255 40% 65%;
+    --primary-glow: 255 50% 75%;
+    --secondary: 178 62% 58%;
+    --secondary-soft: 178 30% 35%;
+    --muted: 255 20% 25%;
+    --muted-foreground: 158 15% 65%;
+    --accent: 178 62% 58%;
+    --border: 255 20% 25%;
+    --input: 255 20% 25%;
+    --ring: 178 62% 58%;
+  }
+
+  * {
+    @apply border-border;
   }
 
   body {
-    background: linear-gradient(
-      135deg,
-      var(--color-bg-gradient-start),
-      var(--color-bg-gradient-end)
-    );
+    @apply bg-background text-foreground font-sans antialiased;
   }
 
-  .card {
-    background: hsl(var(--card));
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  /* --- Animations émotionnelles --- */
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
   }
 
-  a {
-    color: hsl(var(--secondary));
+  @keyframes breathe-slow {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+
+  @keyframes halo-pulse {
+    0%, 100% { box-shadow: 0 0 60px hsl(255, 40%, 65%, 0.3); }
+    50% { box-shadow: 0 0 90px hsl(178, 62%, 68%, 0.5); }
+  }
+
+  @keyframes luciole-glow {
+    0%, 100% { opacity: 0.3; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+  }
+
+  @keyframes firefly {
+    0%, 100% { opacity: 0.3; transform: translate(0, 0); }
+    50% { opacity: 1; transform: translate(20px, -20px); }
+  }
+
+  @keyframes slide-up {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+}
+
+@layer utilities {
+  .animate-breathe { animation: breathe 4s ease-in-out infinite; }
+  .animate-breathe-slow { animation: breathe-slow 6s ease-in-out infinite; }
+  .animate-float { animation: float 8s ease-in-out infinite; }
+  .animate-firefly { animation: firefly 4s ease-in-out infinite; }
+  .animate-halo { animation: halo-pulse 5s ease-in-out infinite; }
+  .animate-luciole { animation: luciole-glow 3s ease-in-out infinite; }
+  .animate-slide-up { animation: slide-up 0.6s ease-out; }
+
+  .gradient-primary { background: var(--gradient-primary); }
+  .gradient-secondary { background: var(--gradient-secondary); }
+  .gradient-ambient { background: var(--gradient-ambient); }
+
+  .gradient-emotion {
+    background: linear-gradient(135deg, hsl(255, 30%, 41%, 0.3), hsl(178, 62%, 58%, 0.3));
+  }
+
+  .shadow-glow { box-shadow: var(--shadow-glow); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-luciole { box-shadow: var(--luciole-glow); }
+
+  .transition-smooth { transition: var(--transition-smooth); }
+  .transition-bounce { transition: var(--transition-bounce); }
+
+  .bubble-glow {
+    background: radial-gradient(circle at 50% 50%, hsl(178, 62%, 68%, 0.3), transparent 70%);
   }
 }
