@@ -11,8 +11,7 @@
 }
 
 html,
-body,
-#root {
+body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -24,16 +23,6 @@ body,
   );
   color: var(--color-text-dark);
   overflow-x: hidden;
-}
-
-/* --- Layout --- */
-#root {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  text-align: center;
-  padding: 2rem 1rem;
 }
 
 /* --- Liens et titres --- */
@@ -68,34 +57,18 @@ h3 {
 
 /* --- Animations ZENA --- */
 @keyframes breathe-slow {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 @keyframes pulse-fast {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.12);
-    opacity: 0.9;
-  }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.9; }
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.8;
-    filter: brightness(1);
-  }
-  50% {
-    opacity: 1;
-    filter: brightness(1.3);
-  }
+  0%, 100% { opacity: 0.8; filter: brightness(1); }
+  50% { opacity: 1; filter: brightness(1.3); }
 }
 
 .animate-breathe-slow {
@@ -110,7 +83,7 @@ h3 {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
-/* --- Classes utilitaires supplémentaires --- */
+/* --- Classes utilitaires --- */
 .text-muted-foreground {
   color: var(--color-text-muted);
 }
