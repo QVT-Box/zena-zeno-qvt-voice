@@ -104,6 +104,7 @@ export default function ZenaChatEngine({ gender, role }: ZenaChatEngineProps) {
           </p>
           <p className="text-sm text-gray-600">{recommendedBox.description}</p>
         </div>
+      )}
     </div>
   );
 }
