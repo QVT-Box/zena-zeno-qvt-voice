@@ -9,6 +9,10 @@ interface VoiceControlProps {
   gender: "female" | "male";
 }
 
+/**
+ * 🎙️ Composant de contrôle vocal multilingue (FR/EN)
+ * Zena = voix féminine | Zeno = voix masculine
+ */
 export const VoiceControl = ({
   onSpeechRecognized,
   isSpeaking,
@@ -17,14 +21,14 @@ export const VoiceControl = ({
 }: VoiceControlProps) => {
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
 
-  // 🎤 Hook vocal multilingue (FR/EN)
+  // 🎤 Hook vocal pour écouter l’utilisateur
   const { transcript, detectedLang, isListening, startListening, stopListening } = useVoiceInput({
     lang: "auto",
     onResult: (text, lang) => onSpeechRecognized(text, lang),
     onError: (err) => console.warn("Erreur vocale :", err),
   });
 
-  // 🎨 Palette selon le personnage
+  // 🎨 Palette de couleur dynamique selon le personnage
   const palette = useMemo(
     () => ({
       primary: gender === "female" ? "#5B4B8A" : "#4B5E8A",
@@ -34,11 +38,10 @@ export const VoiceControl = ({
     [gender]
   );
 
-  // 🧠 Sélection automatique d’une voix adaptée au genre + langue
+  // 🧠 Sélection automatique de la voix adaptée (langue + genre)
   useEffect(() => {
     const voices = speechSynthesis.getVoices();
 
-    // on filtre selon genre et langue
     const preferredVoice =
       voices.find((v) =>
         gender === "female"
@@ -52,7 +55,7 @@ export const VoiceControl = ({
     setSelectedVoice(preferredVoice || null);
   }, [gender, detectedLang]);
 
-  // 🗣️ Lecture du message de Zena/Zeno
+  // 🗣️ Lecture du message de Zena ou Zeno
   useEffect(() => {
     if (isSpeaking && currentMessage) {
       const utterance = new SpeechSynthesisUtterance(currentMessage);
@@ -76,7 +79,7 @@ export const VoiceControl = ({
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 mt-4">
-      {/* Bouton principal avec halo */}
+      {/* Bouton principal avec halo animé */}
       <div
         onClick={handleToggle}
         className={`relative flex items-center justify-center w-24 h-24 rounded-full cursor-pointer select-none transition-transform duration-300 ${
@@ -106,7 +109,7 @@ export const VoiceControl = ({
         />
       </div>
 
-      {/* Indicateur vocal */}
+      {/* Texte d'état */}
       <div className="text-center space-y-1">
         <p
           className={`text-sm font-medium tracking-wide ${
@@ -128,3 +131,5 @@ export const VoiceControl = ({
     </div>
   );
 };
+
+export default VoiceControl; // ✅ export par défaut requis par Vercel
