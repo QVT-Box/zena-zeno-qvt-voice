@@ -1,125 +1,128 @@
-/* 🌿 Styles spécifiques à l’application ZENA Voice / QVT Box */
+/* 🌿 Thème global ZENA / QVT Box */
 
-/* === Variables locales (hérite de index.css) === */
 :root {
-  --halo-color: rgba(79, 209, 197, 0.3);
-  --halo-color-strong: rgba(79, 209, 197, 0.6);
+  --color-primary: #005b5f;
+  --color-secondary: #4fd1c5;
+  --color-bg-light: #f2f7f6;
+  --color-bg-gradient-start: #f2f7f6;
+  --color-bg-gradient-end: #eaf4f3;
+  --color-text-dark: #212121;
+  --color-text-muted: #6b7280;
 }
 
-/* === Section principale === */
-.App {
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: "Montserrat", system-ui, sans-serif;
+  background: linear-gradient(
+    to bottom,
+    var(--color-bg-gradient-start),
+    var(--color-bg-gradient-end)
+  );
+  color: var(--color-text-dark);
+  overflow-x: hidden;
+}
+
+/* --- Layout --- */
+#root {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
-  min-height: 100vh;
-  width: 100%;
-  position: relative;
+  padding: 2rem 1rem;
 }
 
-/* === Animation de halo autour des éléments actifs === */
-@keyframes haloPulse {
+/* --- Liens et titres --- */
+a {
+  color: var(--color-secondary);
+  text-decoration: none;
+  font-weight: 500;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--color-primary);
+  margin: 0.5em 0;
+}
+
+/* --- Cartes / boîtes --- */
+.card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Animations ZENA --- */
+@keyframes breathe-slow {
   0%, 100% {
-    box-shadow: 0 0 15px var(--halo-color);
+    transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 35px var(--halo-color-strong);
+    transform: scale(1.05);
   }
 }
 
-.halo-active {
-  animation: haloPulse 3s ease-in-out infinite;
-  border-radius: 50%;
-}
-
-/* === Animation subtile de fondu lors du changement de message === */
-@keyframes fadeMessage {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
+@keyframes pulse-fast {
+  0%, 100% {
+    transform: scale(1);
     opacity: 1;
-    transform: translateY(0);
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.9;
   }
 }
 
-.fade-message {
-  animation: fadeMessage 0.8s ease;
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.8;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.3);
+  }
 }
 
-/* === Style du header principal === */
-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.5rem;
+.animate-breathe-slow {
+  animation: breathe-slow 4s ease-in-out infinite;
 }
 
-header p {
-  font-size: 1.1rem;
+.animate-pulse-fast {
+  animation: pulse-fast 1.5s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* --- Classes utilitaires supplémentaires --- */
+.text-muted-foreground {
   color: var(--color-text-muted);
-  margin-top: 0;
 }
 
-/* === VoiceControl (micro) === */
-.voice-halo {
-  background: radial-gradient(circle, var(--halo-color-strong), transparent 70%);
-  border-radius: 50%;
-  transition: transform 0.3s ease;
-}
-
-.voice-halo:hover {
-  transform: scale(1.05);
-}
-
-/* === Boutons et contrôles === */
-button {
-  font-family: inherit;
-  border: none;
-  border-radius: 9999px;
-  padding: 0.6rem 1.2rem;
-  cursor: pointer;
-  font-weight: 600;
-  color: white;
+.gradient-primary {
   background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
-  transition: opacity 0.3s ease, transform 0.2s ease;
 }
 
-button:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
-}
-
-/* === Footer === */
-footer {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  margin-top: 3rem;
-  opacity: 0.8;
-}
-
-/* === Responsif === */
-@media (max-width: 768px) {
-  header h1 {
-    font-size: 1.9rem;
-  }
-  header p {
-    font-size: 1rem;
-  }
-}
-
-/* === Mode nuit === */
-@media (prefers-color-scheme: dark) {
-  button {
-    color: #f2f7f6;
-    background: linear-gradient(90deg, var(--color-secondary), var(--color-primary));
-  }
-
-  footer {
-    color: #a3a3a3;
-  }
+.gradient-ambient {
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-gradient-start),
+    var(--color-bg-gradient-end)
+  );
 }
