@@ -1,144 +1,27 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* -----------------------------------------------------
-   🌿 Système de Design – QVT Box (ZENA & ZENO)
-   Toutes les couleurs sont en HSL
-------------------------------------------------------*/
-
-@layer base {
+/* 🌙 Mode nuit doux automatique (basé sur préférence système) */
+@media (prefers-color-scheme: dark) {
   :root {
-    /* Couleurs principales */
-    --background: 158 30% 96%;
-    --foreground: 255 30% 20%;
-
-    --primary: 255 30% 41%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 255 40% 65%;
-
-    --secondary: 178 62% 58%;
-    --secondary-foreground: 255 30% 20%;
-    --secondary-soft: 178 40% 85%;
-
-    /* Complémentaires */
-    --accent: 178 62% 58%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --muted: 158 20% 90%;
-    --muted-foreground: 255 15% 45%;
-
-    /* Fonds & éléments */
-    --card: 0 0% 100%;
-    --card-foreground: 255 30% 20%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 255 30% 20%;
-    --border: 158 20% 85%;
-    --input: 158 20% 90%;
-    --ring: 255 30% 41%;
-    --radius: 1rem;
-
-    /* Dégradés */
-    --gradient-primary: linear-gradient(135deg, hsl(255, 30%, 41%), hsl(255, 40%, 55%));
-    --gradient-secondary: linear-gradient(135deg, hsl(178, 62%, 58%), hsl(178, 50%, 70%));
-    --gradient-ambient: linear-gradient(180deg, hsl(255, 30%, 41%, 0.08), hsl(178, 62%, 58%, 0.08));
-
-    /* Ombres & lumières */
-    --shadow-glow: 0 0 40px hsl(255, 40%, 65%, 0.3);
-    --shadow-soft: 0 10px 40px hsl(255, 30%, 41%, 0.1);
-    --luciole-glow: 0 0 20px hsl(178, 62%, 68%, 0.7);
-
-    /* Transitions */
-    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --color-primary: #4fd1c5;
+    --color-secondary: #5b4b8a;
+    --color-bg-light: #1f1f1f;
+    --color-bg-gradient-start: #1f1f1f;
+    --color-bg-gradient-end: #2b2b2b;
+    --color-text-dark: #f2f7f6;
+    --color-text-muted: #a3a3a3;
   }
 
-  .dark {
-    --background: 255 30% 12%;
-    --foreground: 158 30% 96%;
-    --primary: 255 40% 65%;
-    --primary-glow: 255 50% 75%;
-    --secondary: 178 62% 58%;
-    --secondary-soft: 178 30% 35%;
-    --muted: 255 20% 25%;
-    --muted-foreground: 158 15% 65%;
-    --accent: 178 62% 58%;
-    --border: 255 20% 25%;
-    --input: 255 20% 25%;
-    --ring: 178 62% 58%;
+  body,
+  #root {
+    background: linear-gradient(
+      to bottom,
+      var(--color-bg-gradient-start),
+      var(--color-bg-gradient-end)
+    );
+    color: var(--color-text-dark);
   }
 
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-  }
-
-  /* --- Animations émotionnelles --- */
-  @keyframes breathe {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.9; }
-  }
-
-  @keyframes breathe-slow {
-    0%, 100% { transform: scale(1); opacity: 0.7; }
-    50% { transform: scale(1.08); opacity: 1; }
-  }
-
-  @keyframes halo-pulse {
-    0%, 100% { box-shadow: 0 0 60px hsl(255, 40%, 65%, 0.3); }
-    50% { box-shadow: 0 0 90px hsl(178, 62%, 68%, 0.5); }
-  }
-
-  @keyframes luciole-glow {
-    0%, 100% { opacity: 0.3; transform: scale(0.9); }
-    50% { opacity: 1; transform: scale(1.2); }
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-15px); }
-  }
-
-  @keyframes firefly {
-    0%, 100% { opacity: 0.3; transform: translate(0, 0); }
-    50% { opacity: 1; transform: translate(20px, -20px); }
-  }
-
-  @keyframes slide-up {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-}
-
-@layer utilities {
-  .animate-breathe { animation: breathe 4s ease-in-out infinite; }
-  .animate-breathe-slow { animation: breathe-slow 6s ease-in-out infinite; }
-  .animate-float { animation: float 8s ease-in-out infinite; }
-  .animate-firefly { animation: firefly 4s ease-in-out infinite; }
-  .animate-halo { animation: halo-pulse 5s ease-in-out infinite; }
-  .animate-luciole { animation: luciole-glow 3s ease-in-out infinite; }
-  .animate-slide-up { animation: slide-up 0.6s ease-out; }
-
-  .gradient-primary { background: var(--gradient-primary); }
-  .gradient-secondary { background: var(--gradient-secondary); }
-  .gradient-ambient { background: var(--gradient-ambient); }
-
-  .gradient-emotion {
-    background: linear-gradient(135deg, hsl(255, 30%, 41%, 0.3), hsl(178, 62%, 58%, 0.3));
-  }
-
-  .shadow-glow { box-shadow: var(--shadow-glow); }
-  .shadow-soft { box-shadow: var(--shadow-soft); }
-  .shadow-luciole { box-shadow: var(--luciole-glow); }
-
-  .transition-smooth { transition: var(--transition-smooth); }
-  .transition-bounce { transition: var(--transition-bounce); }
-
-  .bubble-glow {
-    background: radial-gradient(circle at 50% 50%, hsl(178, 62%, 68%, 0.3), transparent 70%);
+  .card {
+    background: #2b2b2b;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
 }
