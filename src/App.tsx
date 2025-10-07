@@ -1,45 +1,28 @@
-import { useState } from "react";
-import ZenaChatEngine from "@/components/ZenaChatEngine";
-import AvatarGenderSelector from "@/components/AvatarGenderSelector";
-import RoleSelector, { RoleType } from "@/components/RoleSelector";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Index from "@/pages/Index";
+import ZenaChat from "@/pages/ZenaChat";
+import { Toaster } from "@/components/ui/sonner";
 
-const Index = () => {
-  const [gender, setGender] = useState<"female" | "male">("female");
-  const [role, setRole] = useState<RoleType>("coach");
-
+function App() {
   return (
-    <div className="min-h-screen gradient-ambient text-foreground">
-      <div className="container mx-auto px-4 py-10 space-y-10">
-        {/* Header principal */}
-        <header className="text-center animate-slide-up">
-          <h1 className="text-4xl md:text-5xl font-bold mb-3 gradient-primary bg-clip-text text-transparent">
-            ZENA Voice
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            L’IA émotionnelle de QVT Box qui vous écoute, vous parle et vous guide.
-          </p>
-        </header>
+    <Router>
+      <div className="min-h-screen bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-[#212121]">
+        <Routes>
+          {/* Page d'accueil principale ZENA Voice */}
+          <Route path="/" element={<Index />} />
 
-        {/* Sélecteurs */}
-        <div className="flex flex-col md:flex-row justify-center items-center gap-4 animate-slide-up">
-          <AvatarGenderSelector gender={gender} onGenderChange={setGender} />
-          <RoleSelector currentRole={role} onRoleChange={setRole} />
-        </div>
+          {/* Page de chat Zena */}
+          <Route path="/zena-chat" element={<ZenaChat />} />
 
-        {/* Moteur principal */}
-        <div className="max-w-5xl mx-auto">
-          <ZenaChatEngine gender={gender} role={role} />
-        </div>
+          {/* Redirection fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
 
-        {/* Footer */}
-        <footer className="text-center text-sm text-muted-foreground mt-12 opacity-80">
-          <p>
-            © {new Date().getFullYear()} QVT Box — “Le coup de pouce bien-être”.
-          </p>
-        </footer>
+        {/* Notifications globales */}
+        <Toaster position="bottom-center" />
       </div>
-    </div>
+    </Router>
   );
-};
+}
 
-export default Index;
+export default App;
