@@ -5,7 +5,7 @@ import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 interface ZenaZenoBrainOptions {
   persona: "zena" | "zeno";
   userId?: string;
-  language?: "fr" | "en" | "auto";
+  language?: "fr-FR" | "en-US" | "auto";
 }
 
 interface EmotionalState {
@@ -37,17 +37,20 @@ export function useZenaZenoBrain({
   const [recommendedBox, setRecommendedBox] = useState<RecommendedBox | null>(null);
 
   const { transcript, detectedLang, startListening, stopListening, isListening } =
-    useVoiceInput({ lang: language === "auto" ? "auto" : language });
+    useVoiceInput({ lang: language });
   const { speak, speaking } = useSpeechSynthesis();
 
-  // Analyse IA ou fallback local
+  // Analyse IA via edge function
   const analyzeMessage = useCallback(
     async (text: string, lang: string = "fr") => {
       setThinking(true);
       try {
-        const response = await fetch("/api/qvt-ai", {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qvt-ai`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+          },
           body: JSON.stringify({ text, persona, lang }),
         });
 
@@ -65,10 +68,11 @@ export function useZenaZenoBrain({
               : "Je comprends. Réfléchissons ensemble.";
           }
         }
-      } catch {
+      } catch (error) {
+        console.error("Error calling qvt-ai:", error);
         return lang === "en"
-          ? "Sorry, I didn’t catch that well."
-          : "Désolée, je n’ai pas bien compris.";
+          ? "Sorry, I didn't catch that well."
+          : "Désolée, je n'ai pas bien compris.";
       } finally {
         setThinking(false);
       }
@@ -76,7 +80,7 @@ export function useZenaZenoBrain({
     [persona]
   );
 
-  // Analyse émotionnelle simple (à enrichir plus tard avec ton IA)
+  // Analyse émotionnelle simple
   const updateEmotion = useCallback((text: string) => {
     const lower = text.toLowerCase();
     const positive = ["merci", "bien", "heureux", "motivé", "cool"];
@@ -113,7 +117,7 @@ export function useZenaZenoBrain({
           name: "Box Sérénité",
           theme: "Anti-stress & relaxation",
           description:
-            "Des produits apaisants pour t’aider à relâcher la pression cette semaine.",
+            "Des produits apaisants pour t'aider à relâcher la pression cette semaine.",
         };
       else if (emotionalState.score <= 11)
         box = {
@@ -127,7 +131,7 @@ export function useZenaZenoBrain({
           name: "Box Inspiration",
           theme: "Créativité & optimisme",
           description:
-            "Une sélection pleine d’énergie positive pour entretenir ton bien-être.",
+            "Une sélection pleine d'énergie positive pour entretenir ton bien-être.",
         };
 
       setRecommendedBox(box);

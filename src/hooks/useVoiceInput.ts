@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 interface UseVoiceInputOptions {
-  lang?: "fr-FR" | "en-US" | "auto"; // nouvelle option "auto"
+  lang?: "fr-FR" | "en-US" | "auto";
   continuous?: boolean;
   interimResults?: boolean;
   onResult?: (text: string, detectedLang?: string) => void;
@@ -25,20 +25,20 @@ export function useVoiceInput({
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-    const SpeechRecognition =
+    const SpeechRecognitionAPI =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
-      onError?.("La reconnaissance vocale n’est pas supportée sur ce navigateur.");
+    if (!SpeechRecognitionAPI) {
+      onError?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
       return;
     }
 
-    const recognition = new SpeechRecognition();
+    const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
     recognition.lang = lang === "auto" ? "fr-FR" : lang;
     recognition.continuous = continuous;
     recognition.interimResults = interimResults;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       const lastResult = event.results[event.resultIndex];
       const text = lastResult[0].transcript.trim();
 
@@ -58,7 +58,7 @@ export function useVoiceInput({
       }
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: any) => {
       onError?.(event.error);
       setIsListening(false);
     };
