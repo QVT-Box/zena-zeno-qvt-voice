@@ -104,17 +104,6 @@ export default function ZenaChatEngine({ gender, role }: ZenaChatEngineProps) {
           </p>
           <p className="text-sm text-gray-600">{recommendedBox.description}</p>
         </div>
-      )}
-
-      {/* 🎛️ Bouton Parler / Stop */}
-      <div className="flex justify-center gap-4 mt-6">
-        <button
-          onClick={isListening ? stopListening : startListening}
-          className="px-4 py-2 bg-[#005B5F] text-white rounded-lg shadow hover:bg-[#00474A] transition"
-        >
-          {isListening ? "⏹️ Arrêter" : "🎙️ Parler"}
-        </button>
-      </div>
     </div>
   );
 }
