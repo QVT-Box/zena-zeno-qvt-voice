@@ -2,7 +2,7 @@ import { useState } from "react";
 import ZenaChatEngine from "@/components/ZenaChatEngine";
 import AvatarGenderSelector from "@/components/AvatarGenderSelector";
 import RoleSelector, { RoleType } from "@/components/RoleSelector";
-import ZenaAvatar from "@/components/ZenaAvatar"; // 💫 avatar animé ZÉNA
+import ZenaAvatar from "@/components/ZenaAvatar"; // 💫 Avatar animé ZÉNA
 
 /**
  * 🌿 Page principale : ZÉNA Voice – IA émotionnelle de QVT Box
@@ -39,8 +39,9 @@ const Index = () => {
 
           {/* === Sous-texte === */}
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-            L’IA émotionnelle de <span className="font-semibold text-secondary">QVT Box</span> —
-            une voix humaine, une bulle de bien-être, un lien entre émotions et action.
+            L’IA émotionnelle de{" "}
+            <span className="font-semibold text-secondary">QVT Box</span> — une voix humaine, une
+            bulle de bien-être, un lien entre émotions et action.
           </p>
         </header>
 
@@ -57,10 +58,45 @@ const Index = () => {
       </main>
 
       {/* === FOOTER === */}
-      <footer className="text-center text-sm text-muted-foreground py-6 border-t border-border bg-card/30 backdrop-blur-md">
-        <p className="opacity-80">
-          © {new Date().getFullYear()} <span className="font-semibold">QVT Box</span> —{" "}
-          <span className="text-secondary font-medium">Le coup de pouce bien-être</span> 💡
+      <footer className="mt-12 text-center text-sm py-8 border-t border-border/40 bg-card/20 backdrop-blur-md relative overflow-hidden">
+        {/* Halo d’ambiance discret */}
+        <div
+          className="absolute inset-0 -z-10 opacity-50 blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle at center, rgba(79,209,197,0.25), rgba(91,75,138,0.15), transparent 70%)",
+          }}
+        />
+
+        {/* Liens rapides */}
+        <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-4">
+          <button
+            onClick={() => (window.location.href = "/zena-chat")}
+            className="px-5 py-2 rounded-full font-medium text-white bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] hover:opacity-90 transition-all duration-300"
+          >
+            💬 Parler avec ZÉNA
+          </button>
+
+          <a
+            href="https://qvtbox.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-secondary font-medium hover:underline"
+          >
+            🌐 qvtbox.com
+          </a>
+
+          <a
+            href="mailto:contact@qvtbox.com"
+            className="text-muted-foreground hover:text-secondary transition-colors"
+          >
+            ✉️ contact@qvtbox.com
+          </a>
+        </div>
+
+        {/* Signature QVT Box */}
+        <p className="opacity-80 text-muted-foreground text-xs tracking-wide">
+          © {new Date().getFullYear()} QVT Box — Le coup de pouce bien-être 💡
         </p>
       </footer>
     </div>
