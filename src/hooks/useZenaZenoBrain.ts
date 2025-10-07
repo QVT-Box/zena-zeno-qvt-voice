@@ -1,17 +1,14 @@
-import { useState, useCallback, useEffect } from "react";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
+import { useState, useEffect, useRef } from "react";
+import { useZenaVoice } from "@/hooks/useZenaVoice";
 
-interface ZenaZenoBrainOptions {
-  persona: "zena" | "zeno";
-  userId?: string;
-  language?: "fr-FR" | "en-US" | "auto";
+interface Message {
+  from: "user" | "zena";
+  text: string;
 }
 
 interface EmotionalState {
-  mood: "positive" | "neutral" | "negative";
-  score: number; // 1–15
-  lastUpdated: string;
+  mood: "positive" | "negative" | "neutral";
+  score: number;
 }
 
 interface RecommendedBox {
@@ -20,158 +17,124 @@ interface RecommendedBox {
   description: string;
 }
 
+interface UseZenaZenoBrainOptions {
+  persona: "zena" | "zeno";
+  language?: "auto" | "fr-FR" | "en-US";
+}
+
+/**
+ * 🧠 useZenaZenoBrain
+ * ------------------------------------------------------
+ * Cerveau IA unifié :
+ * - Écoute le texte utilisateur (via VoiceControl)
+ * - Génère une réponse émotionnelle (locale)
+ * - Parle avec la voix correspondante (useZenaVoice)
+ * - Gère les émotions + recommandations de box
+ */
 export function useZenaZenoBrain({
   persona = "zena",
-  userId,
   language = "auto",
-}: ZenaZenoBrainOptions) {
+}: UseZenaZenoBrainOptions) {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [thinking, setThinking] = useState(false);
-  const [messages, setMessages] = useState<
-    { from: "user" | "ia"; text: string; lang: string }[]
-  >([]);
   const [emotionalState, setEmotionalState] = useState<EmotionalState>({
     mood: "neutral",
-    score: 10,
-    lastUpdated: new Date().toISOString(),
+    score: 8,
   });
   const [recommendedBox, setRecommendedBox] = useState<RecommendedBox | null>(null);
+  const [transcript, setTranscript] = useState("");
+  const { say, isSpeaking, audioLevel } = useZenaVoice({
+    lang: language === "auto" ? "fr-FR" : language,
+    gender: persona === "zena" ? "female" : "male",
+  });
+  const [isListening, setIsListening] = useState(false);
 
-  const { transcript, detectedLang, startListening, stopListening, isListening } =
-    useVoiceInput({ lang: language });
-  const { speak, speaking } = useSpeechSynthesis();
+  const stopRef = useRef(false);
 
-  // Analyse IA via edge function
-  const analyzeMessage = useCallback(
-    async (text: string, lang: string = "fr") => {
-      setThinking(true);
-      try {
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qvt-ai`, {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-          },
-          body: JSON.stringify({ text, persona, lang }),
-        });
+  /**
+   * ✍️ Simulation d'une réponse émotionnelle IA
+   */
+  const generateAIResponse = async (userText: string): Promise<string> => {
+    const lower = userText.toLowerCase();
+    let response = "";
+    let mood: EmotionalState["mood"] = "neutral";
+    let score = 8;
+    let box: RecommendedBox | null = null;
 
-        if (response.ok) {
-          const data = await response.json();
-          return data.reply || "Je vous écoute avec attention.";
-        } else {
-          if (lang === "en") {
-            return persona === "zena"
-              ? "I'm here for you. Tell me more."
-              : "I understand. Let's think about it together.";
-          } else {
-            return persona === "zena"
-              ? "Je suis là pour vous. Parlez-moi un peu plus."
-              : "Je comprends. Réfléchissons ensemble.";
-          }
-        }
-      } catch (error) {
-        console.error("Error calling qvt-ai:", error);
-        return lang === "en"
-          ? "Sorry, I didn't catch that well."
-          : "Désolée, je n'ai pas bien compris.";
-      } finally {
-        setThinking(false);
-      }
-    },
-    [persona]
-  );
-
-  // Analyse émotionnelle simple
-  const updateEmotion = useCallback((text: string) => {
-    const lower = text.toLowerCase();
-    const positive = ["merci", "bien", "heureux", "motivé", "cool"];
-    const negative = ["fatigué", "stressé", "triste", "mal", "angoissé"];
-
-    let newMood: "positive" | "neutral" | "negative" = "neutral";
-    let delta = 0;
-
-    if (positive.some((w) => lower.includes(w))) {
-      newMood = "positive";
-      delta = +1;
-    } else if (negative.some((w) => lower.includes(w))) {
-      newMood = "negative";
-      delta = -1;
+    if (lower.includes("stress") || lower.includes("fatigue")) {
+      response =
+        persona === "zena"
+          ? "Je ressens un peu de tension dans ta voix. Prends un instant pour respirer profondément 💨"
+          : "Je comprends, la fatigue peut peser lourd. Un peu de recul t’aiderait.";
+      mood = "negative";
+      score = 5;
+      box = {
+        name: "Box Relax & Respire",
+        theme: "Détente & Sérénité",
+        description: "Une box pensée pour apaiser le mental et retrouver ton calme.",
+      };
+    } else if (lower.includes("bien") || lower.includes("motivé")) {
+      response =
+        persona === "zena"
+          ? "Ça me fait plaisir de te sentir dans une bonne énergie 🌞"
+          : "Excellente vibe aujourd’hui, continue sur cette lancée !";
+      mood = "positive";
+      score = 12;
+      box = {
+        name: "Box Vitalité & Motivation",
+        theme: "Énergie & Confiance",
+        description: "Des produits pour entretenir ta belle énergie !",
+      };
+    } else {
+      response =
+        persona === "zena"
+          ? "Merci pour ton partage. Dis-m’en un peu plus sur ce que tu ressens ? 💬"
+          : "Je t’écoute, veux-tu approfondir un peu ce que tu ressens ?";
+      mood = "neutral";
+      score = 8;
+      box = null;
     }
 
-    setEmotionalState((prev) => {
-      const newScore = Math.min(15, Math.max(1, prev.score + delta));
-      return { mood: newMood, score: newScore, lastUpdated: new Date().toISOString() };
-    });
-  }, []);
+    await new Promise((r) => setTimeout(r, 1500)); // simulation de réflexion
 
-  // Proposition hebdomadaire de box
-  useEffect(() => {
-    const now = new Date();
-    const last = new Date(emotionalState.lastUpdated);
-    const daysSince = (now.getTime() - last.getTime()) / (1000 * 3600 * 24);
+    setEmotionalState({ mood, score });
+    setRecommendedBox(box);
+    return response;
+  };
 
-    if (daysSince >= 7) {
-      let box: RecommendedBox;
+  /**
+   * 🎧 Quand l’utilisateur parle
+   */
+  const onUserSpeak = async (text: string) => {
+    if (!text || stopRef.current) return;
+    setTranscript(text);
+    setMessages((prev) => [...prev, { from: "user", text }]);
+    setThinking(true);
 
-      if (emotionalState.score <= 6)
-        box = {
-          name: "Box Sérénité",
-          theme: "Anti-stress & relaxation",
-          description:
-            "Des produits apaisants pour t'aider à relâcher la pression cette semaine.",
-        };
-      else if (emotionalState.score <= 11)
-        box = {
-          name: "Box Équilibre",
-          theme: "Régénération & motivation",
-          description:
-            "Des essentiels pour garder le cap et prendre soin de toi au quotidien.",
-        };
-      else
-        box = {
-          name: "Box Inspiration",
-          theme: "Créativité & optimisme",
-          description:
-            "Une sélection pleine d'énergie positive pour entretenir ton bien-être.",
-        };
+    const aiResponse = await generateAIResponse(text);
+    setThinking(false);
+    setMessages((prev) => [...prev, { from: persona, text: aiResponse }]);
 
-      setRecommendedBox(box);
-      setEmotionalState((prev) => ({
-        ...prev,
-        lastUpdated: new Date().toISOString(),
-      }));
-    }
-  }, [emotionalState]);
+    say(aiResponse);
+  };
 
-  // Réception message utilisateur
-  const onUserSpeak = useCallback(
-    async (text: string, lang?: string) => {
-      const languageCode = lang === "en" ? "en" : "fr";
-      setMessages((prev) => [...prev, { from: "user", text, lang: languageCode }]);
-      updateEmotion(text);
-      const reply = await analyzeMessage(text, languageCode);
-      setMessages((prev) => [...prev, { from: "ia", text: reply, lang: languageCode }]);
-
-      speak({
-        text: reply,
-        lang: languageCode === "en" ? "en-US" : "fr-FR",
-        gender: persona === "zena" ? "female" : "male",
-        pitch: persona === "zena" ? 1.1 : 0.9,
-        rate: persona === "zena" ? 1.05 : 0.95,
-      });
-    },
-    [analyzeMessage, updateEmotion, persona, speak]
-  );
+  /**
+   * 🎤 État d’écoute (lié à VoiceControl)
+   */
+  const startListening = () => setIsListening(true);
+  const stopListening = () => setIsListening(false);
 
   return {
-    isListening,
-    startListening,
-    stopListening,
-    speaking,
-    thinking,
     messages,
     emotionalState,
     recommendedBox,
+    isListening,
+    startListening,
+    stopListening,
     onUserSpeak,
+    speaking: isSpeaking,
+    thinking,
     transcript,
+    audioLevel,
   };
 }
