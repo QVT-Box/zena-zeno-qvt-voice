@@ -1,21 +1,28 @@
-// src/pages/index.tsx
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import ZenaAvatar from "@/components/ZenaAvatar";
-import { useNavigate } from "react-router-dom";
 
 export default function Index() {
-  const navigate = useNavigate();
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-[#212121]">
-      {/* ======== HERO ZÉNA ======== */}
+    <div className="min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-[#212121] font-sans overflow-hidden relative">
+      {/* ==== Halo d'ambiance général ==== */}
+      <div
+        className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-[#4FD1C5]/30 rounded-full blur-[120px] -z-10 animate-breathe"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute bottom-[-15%] right-[-10%] w-[400px] h-[400px] bg-[#5B4B8A]/25 rounded-full blur-[140px] -z-10 animate-breathe-slow"
+        aria-hidden="true"
+      />
+
+      {/* ==== HERO ZÉNA ==== */}
       <header className="flex flex-col items-center justify-center text-center px-6 pt-16 md:pt-20">
         {/* Avatar animé */}
         <ZenaAvatar isSpeaking={false} emotion="neutral" />
 
         {/* Titre principal */}
         <motion.h1
-          className="text-4xl md:text-5xl font-bold mt-6 bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] bg-clip-text text-transparent"
+          className="text-4xl md:text-5xl font-bold mt-6 bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] bg-clip-text text-transparent tracking-wide"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -31,32 +38,34 @@ export default function Index() {
           transition={{ delay: 0.8 }}
         >
           Une voix bienveillante, un regard attentif, et une bulle d’écoute
-          pour mieux comprendre le bien-être au travail.
+          pour mieux comprendre le bien-être au travail et en famille.
         </motion.p>
       </header>
 
-      {/* ======== APPEL À L’ACTION ======== */}
+      {/* ==== CTA (Call To Action) ==== */}
       <motion.div
         className="flex flex-col items-center justify-center mt-10 mb-16 gap-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}
       >
-        <button
-          onClick={() => navigate("/ZenaChat")}
+        {/* Bouton principal redirigeant vers le chat */}
+        <Link
+          to="/zena-chat"
           className="px-8 py-4 rounded-full text-white font-medium text-lg shadow-lg
                      bg-gradient-to-r from-[#005B5F] to-[#4FD1C5] hover:opacity-90 transition-all"
         >
           🎙️ Essayer ZÉNA en direct
-        </button>
+        </Link>
 
+        {/* Texte secondaire */}
         <p className="text-sm text-[#212121]/60 max-w-sm text-center">
           Découvrez comment ZÉNA écoute, analyse et vous recommande
           des solutions QVT concrètes grâce à son IA émotionnelle.
         </p>
       </motion.div>
 
-      {/* ======== FOOTER ======== */}
+      {/* ==== FOOTER ==== */}
       <footer className="w-full py-6 text-center border-t border-[#78A085]/30 bg-white/40 backdrop-blur-sm">
         <p className="text-sm">
           © {new Date().getFullYear()} QVT Box —{" "}
