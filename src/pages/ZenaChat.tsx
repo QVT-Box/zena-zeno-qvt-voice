@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useZenaZenoBrain } from "@/hooks/useZenaZenoBrain";
-import { VoiceControl } from "@/components/VoiceControl";
+import VoiceControl from "@/components/VoiceControl";
 import ZenaAvatar from "@/components/ZenaAvatar";
 
 export default function ZenaChat() {
