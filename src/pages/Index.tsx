@@ -31,7 +31,7 @@ export default function Index() {
           transition={{ delay: 0.8 }}
         >
           Une voix bienveillante, un regard attentif, et une bulle d’écoute
-          pour mieux comprendre le bien-être au travail et en famille.
+          pour mieux comprendre le bien-être au travail.
         </motion.p>
       </header>
 
