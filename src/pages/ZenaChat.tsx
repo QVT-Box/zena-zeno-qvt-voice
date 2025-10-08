@@ -1,14 +1,12 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { useZenaZenoBrain } from "@/hooks/useZenaZenoBrain";
 import { VoiceControl } from "@/components/VoiceControl";
 import ZenaAvatar from "@/components/ZenaAvatar";
-import { Link } from "react-router-dom";
 
 export default function ZenaChat() {
   const {
     isListening,
-    startListening,
-    stopListening,
     speaking,
     thinking,
     messages,
@@ -40,21 +38,21 @@ export default function ZenaChat() {
         aria-hidden="true"
       />
 
-      {/* ==== Header avec avatar ==== */}
-      <header className="flex flex-col items-center text-center mt-10 mb-6">
+      {/* ==== HEADER ZÉNA ==== */}
+      <header className="flex flex-col items-center text-center mt-10 mb-8">
         <ZenaAvatar isSpeaking={speaking} emotion={emotionalState.mood} />
         <motion.h1
           className="text-3xl md:text-4xl font-bold mt-6 bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] bg-clip-text text-transparent"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          ZÉNA – Ma Bulle Attentionnée 💬
+          ZÉNA – Ca va aujourd'hui?
         </motion.h1>
         <p className="text-sm text-[#212121]/70 mt-2">
-          La voix qui veille sur vos émotions, et agit pour votre bien-être 🌸
+          La voix qui veille sur vos émotions et agit pour votre bien-être �
         </p>
 
-        {/* Bouton retour accueil */}
+        {/* Lien retour */}
         <Link
           to="/"
           className="mt-4 text-xs text-[#005B5F] hover:underline opacity-80 hover:opacity-100 transition"
@@ -63,7 +61,7 @@ export default function ZenaChat() {
         </Link>
       </header>
 
-      {/* ==== Zone de conversation ==== */}
+      {/* ==== ZONE DE CHAT ==== */}
       <motion.div
         className="w-full max-w-md bg-white/70 rounded-3xl shadow-xl p-5 mb-6 overflow-y-auto max-h-[55vh] border border-[#78A085]/30 backdrop-blur-sm"
         initial={{ opacity: 0, y: 30 }}
@@ -107,7 +105,7 @@ export default function ZenaChat() {
         )}
       </motion.div>
 
-      {/* ==== Contrôle vocal ==== */}
+      {/* ==== CONTRÔLE VOCAL ==== */}
       <motion.div
         className="w-full max-w-md flex flex-col items-center justify-center gap-3"
         initial={{ opacity: 0, y: 20 }}
@@ -120,21 +118,14 @@ export default function ZenaChat() {
           currentMessage={transcript}
           gender="female"
         />
-
-        <button
-          onClick={isListening ? stopListening : startListening}
-          className={`px-6 py-3 rounded-full text-white font-medium shadow-md transition
-            ${
-              isListening
-                ? "bg-[#4FD1C5] hover:bg-[#3bb5ac]"
-                : "bg-[#005B5F] hover:bg-[#00474A]"
-            }`}
-        >
-          {isListening ? "🛑 Arrêter" : "🎙️ Parler"}
-        </button>
+        <p className="text-xs text-gray-500 italic">
+          {isListening
+            ? "🎧 ZÉNA vous écoute..."
+            : "Appuyez sur le micro pour parler à ZÉNA"}
+        </p>
       </motion.div>
 
-      {/* ==== Statut émotionnel ==== */}
+      {/* ==== ÉTAT ÉMOTIONNEL ==== */}
       <motion.div
         className="mt-8 text-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 shadow-inner w-full max-w-xs border border-[#4FD1C5]/30"
         initial={{ opacity: 0, y: 20 }}
@@ -150,7 +141,6 @@ export default function ZenaChat() {
             : "Neutre"}
         </p>
 
-        {/* Barre d’énergie QVT */}
         <div className="w-full bg-[#EAF4F3] rounded-full h-3 overflow-hidden">
           <motion.div
             className="h-full bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5]"
@@ -164,7 +154,7 @@ export default function ZenaChat() {
         </p>
       </motion.div>
 
-      {/* ==== Box recommandée ==== */}
+      {/* ==== BOX RECOMMANDÉE ==== */}
       {recommendedBox && (
         <motion.div
           className="mt-8 bg-white rounded-3xl shadow-lg p-6 border border-[#4FD1C5]/40 text-center w-full max-w-md"
@@ -182,7 +172,7 @@ export default function ZenaChat() {
         </motion.div>
       )}
 
-      {/* ==== Footer stylé ==== */}
+      {/* ==== FOOTER ==== */}
       <footer className="w-full text-center py-6 mt-10 text-sm text-[#212121]/60">
         <p>
           © {new Date().getFullYear()} QVT Box —{" "}
