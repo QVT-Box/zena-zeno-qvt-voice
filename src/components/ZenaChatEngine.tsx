@@ -1,5 +1,5 @@
 import { useZenaZenoBrain } from "@/hooks/useZenaZenoBrain";
-import { VoiceControl } from "@/components/VoiceControl";
+import VoiceControl from "@/components/VoiceControl";
 
 interface ZenaChatEngineProps {
   gender: "female" | "male";

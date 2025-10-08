@@ -26,15 +26,37 @@ export default function ZenaAvatar({
                  w-full mx-auto select-none text-center overflow-visible"
       style={{ maxHeight: "min(56vh, 520px)" }}
     >
-      {/* Halo émotionnel respirant */}
+      {/* Halo émotionnel respirant - Version améliorée */}
       <motion.div
         className={`absolute w-72 h-72 md:w-96 md:h-96 rounded-full blur-3xl bg-gradient-to-br ${auraColor}`}
         animate={{
-          scale: isSpeaking ? [1, 1.15, 1] : [1, 1.05, 1],
-          opacity: isSpeaking ? [0.7, 1, 0.8] : [0.5, 0.7, 0.5],
+          scale: isSpeaking ? [1, 1.2, 1.1, 1] : [1, 1.05, 1],
+          opacity: isSpeaking ? [0.7, 1, 0.9, 0.8] : [0.5, 0.7, 0.5],
+          rotate: isSpeaking ? [0, 5, -5, 0] : 0,
         }}
-        transition={{ duration: 3, repeat: Infinity }}
+        transition={{ 
+          duration: isSpeaking ? 2 : 3, 
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
       />
+
+      {/* Cercle pulsant supplémentaire quand l'avatar parle */}
+      {isSpeaking && (
+        <motion.div
+          className={`absolute w-80 h-80 md:w-[28rem] md:h-[28rem] rounded-full blur-2xl bg-gradient-to-br ${auraColor}`}
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{
+            scale: [0.8, 1.3, 0.8],
+            opacity: [0, 0.5, 0],
+          }}
+          transition={{ 
+            duration: 2.5, 
+            repeat: Infinity,
+            ease: "easeOut"
+          }}
+        />
+      )}
 
       {/* Lucioles animées */}
       {Array.from({ length: 8 }).map((_, i) => (
@@ -60,8 +82,24 @@ export default function ZenaAvatar({
       ))}
 
       {/* 🎥 Avatar vidéo animé avec fallback image */}
-      <div
+      <motion.div
         className="relative z-10 w-48 h-48 md:w-64 md:h-64 rounded-full shadow-lg border-4 border-white/10 bg-[#F2F7F6] overflow-hidden"
+        animate={{
+          scale: isSpeaking ? [1, 1.05, 1.02, 1] : 1,
+          boxShadow: isSpeaking 
+            ? [
+                "0 10px 30px rgba(91, 75, 138, 0.3)",
+                "0 20px 60px rgba(79, 209, 197, 0.6)",
+                "0 15px 45px rgba(91, 75, 138, 0.4)",
+                "0 10px 30px rgba(91, 75, 138, 0.3)"
+              ]
+            : "0 10px 30px rgba(91, 75, 138, 0.3)"
+        }}
+        transition={{
+          duration: isSpeaking ? 1.5 : 0.3,
+          repeat: isSpeaking ? Infinity : 0,
+          ease: "easeInOut"
+        }}
       >
         <video
           className="w-full h-full object-cover rounded-full"
@@ -85,7 +123,7 @@ export default function ZenaAvatar({
           alt="ZÉNA – Avatar IA émotionnelle QVT Box"
           className="hidden w-full h-full object-cover rounded-full"
         />
-      </div>
+      </motion.div>
 
       {/* Nom et tagline */}
       <motion.div

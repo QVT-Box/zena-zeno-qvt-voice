@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useZenaVoice } from "@/hooks/useZenaVoice";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
-  from: "user" | "zena";
+  from: "user" | "zena" | "zeno";
   text: string;
 }
 
@@ -27,7 +28,7 @@ interface UseZenaZenoBrainOptions {
  * ------------------------------------------------------
  * Cerveau IA unifié :
  * - Écoute le texte utilisateur (via VoiceControl)
- * - Génère une réponse émotionnelle (locale)
+ * - Génère une réponse via l'IA (Lovable AI avec Gemini)
  * - Parle avec la voix correspondante (useZenaVoice)
  * - Gère les émotions + recommandations de box
  */
@@ -52,58 +53,63 @@ export function useZenaZenoBrain({
   const stopRef = useRef(false);
 
   /**
-   * ✍️ Simulation d'une réponse émotionnelle IA
+   * ✍️ Génération de réponse via IA (Lovable AI)
    */
   const generateAIResponse = async (userText: string): Promise<string> => {
-    const lower = userText.toLowerCase();
-    let response = "";
-    let mood: EmotionalState["mood"] = "neutral";
-    let score = 8;
-    let box: RecommendedBox | null = null;
+    try {
+      const { data, error } = await supabase.functions.invoke('qvt-ai', {
+        body: { 
+          text: userText,
+          persona: persona,
+          lang: language === "en-US" ? "en" : "fr"
+        }
+      });
 
-    if (lower.includes("stress") || lower.includes("fatigue")) {
-      response =
-        persona === "zena"
-          ? "Je ressens un peu de tension dans ta voix. Prends un instant pour respirer profondément 💨"
-          : "Je comprends, la fatigue peut peser lourd. Un peu de recul t’aiderait.";
-      mood = "negative";
-      score = 5;
-      box = {
-        name: "Box Relax & Respire",
-        theme: "Détente & Sérénité",
-        description: "Une box pensée pour apaiser le mental et retrouver ton calme.",
-      };
-    } else if (lower.includes("bien") || lower.includes("motivé")) {
-      response =
-        persona === "zena"
-          ? "Ça me fait plaisir de te sentir dans une bonne énergie 🌞"
-          : "Excellente vibe aujourd’hui, continue sur cette lancée !";
-      mood = "positive";
-      score = 12;
-      box = {
-        name: "Box Vitalité & Motivation",
-        theme: "Énergie & Confiance",
-        description: "Des produits pour entretenir ta belle énergie !",
-      };
-    } else {
-      response =
-        persona === "zena"
-          ? "Merci pour ton partage. Dis-m’en un peu plus sur ce que tu ressens ? 💬"
-          : "Je t’écoute, veux-tu approfondir un peu ce que tu ressens ?";
-      mood = "neutral";
-      score = 8;
-      box = null;
+      if (error) {
+        console.error("Erreur IA:", error);
+        return persona === "zena" 
+          ? "Je suis désolée, j'ai du mal à me concentrer. Peux-tu répéter ?"
+          : "Excuse-moi, peux-tu reformuler ta question ?";
+      }
+
+      // Analyse émotionnelle du texte utilisateur
+      const lower = userText.toLowerCase();
+      let mood: EmotionalState["mood"] = "neutral";
+      let score = 8;
+      let box: RecommendedBox | null = null;
+
+      if (lower.includes("stress") || lower.includes("fatigue") || lower.includes("difficile") || lower.includes("épuisé")) {
+        mood = "negative";
+        score = 5;
+        box = {
+          name: "Box Relax & Respire",
+          theme: "Détente & Sérénité",
+          description: "Une box pensée pour apaiser le mental et retrouver ton calme.",
+        };
+      } else if (lower.includes("bien") || lower.includes("motivé") || lower.includes("heureux") || lower.includes("content")) {
+        mood = "positive";
+        score = 12;
+        box = {
+          name: "Box Vitalité & Motivation",
+          theme: "Énergie & Confiance",
+          description: "Des produits pour entretenir ta belle énergie !",
+        };
+      }
+
+      setEmotionalState({ mood, score });
+      setRecommendedBox(box);
+
+      return data.reply || (persona === "zena" ? "Je suis là pour t'écouter." : "Continue, je t'écoute.");
+    } catch (err) {
+      console.error("Erreur lors de l'appel à l'IA:", err);
+      return persona === "zena"
+        ? "Pardonne-moi, j'ai besoin d'un instant pour me reconcentrer."
+        : "Un instant s'il te plaît, je réfléchis.";
     }
-
-    await new Promise((r) => setTimeout(r, 1500)); // simulation de réflexion
-
-    setEmotionalState({ mood, score });
-    setRecommendedBox(box);
-    return response;
   };
 
   /**
-   * 🎧 Quand l’utilisateur parle
+   * 🎧 Quand l'utilisateur parle
    */
   const onUserSpeak = async (text: string) => {
     if (!text || stopRef.current) return;
@@ -119,7 +125,7 @@ export function useZenaZenoBrain({
   };
 
   /**
-   * 🎤 État d’écoute (lié à VoiceControl)
+   * 🎤 État d'écoute (lié à VoiceControl)
    */
   const startListening = () => setIsListening(true);
   const stopListening = () => setIsListening(false);

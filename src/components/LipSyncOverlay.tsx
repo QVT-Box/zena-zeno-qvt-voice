@@ -6,40 +6,59 @@ interface LipSyncOverlayProps {
 const LipSyncOverlay = ({ isSpeaking, audioLevel }: LipSyncOverlayProps) => {
   if (!isSpeaking) return null;
 
-  // Dynamique d’ouverture : transformation douce du halo selon volume audio
-  const pulseScale = 1 + Math.min(audioLevel * 1.2, 0.4);
-  const opacity = 0.3 + Math.min(audioLevel * 1.5, 0.7);
+  // Dynamique d'ouverture améliorée : transformation plus expressive
+  const pulseScale = 1 + Math.min(audioLevel * 1.5, 0.6);
+  const opacity = 0.4 + Math.min(audioLevel * 2, 0.8);
+  const glowIntensity = 10 + audioLevel * 25;
 
   return (
     <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
-      {/* Halo émotionnel */}
+      {/* Halo émotionnel principal - Plus expressif */}
       <div
-        className="w-40 h-40 rounded-full blur-3xl bg-gradient-to-br from-[#5B4B8A]/40 to-[#4FD1C5]/40 animate-breathe-slow"
+        className="w-48 h-48 rounded-full blur-3xl bg-gradient-to-br from-[#5B4B8A]/50 to-[#4FD1C5]/50"
         style={{
           transform: `scale(${pulseScale})`,
           opacity,
-          transition: 'transform 0.15s ease, opacity 0.15s ease',
+          transition: 'transform 0.12s ease-out, opacity 0.12s ease-out',
+          filter: `drop-shadow(0 0 ${glowIntensity}px rgba(91,75,138,0.6))`,
         }}
       />
 
-      {/* Onde vocale subtile */}
+      {/* Onde vocale dynamique */}
       <div
-        className="absolute rounded-full w-24 h-24 bg-gradient-to-br from-[#4FD1C5]/30 to-[#5B4B8A]/30 blur-xl"
+        className="absolute rounded-full w-32 h-32 bg-gradient-to-br from-[#4FD1C5]/40 to-[#5B4B8A]/40 blur-2xl"
         style={{
-          transform: `scale(${pulseScale * 1.4})`,
-          opacity: opacity * 0.6,
-          filter: `drop-shadow(0 0 ${10 + audioLevel * 15}px rgba(91,75,138,0.5))`,
+          transform: `scale(${pulseScale * 1.5})`,
+          opacity: opacity * 0.7,
+          filter: `drop-shadow(0 0 ${glowIntensity * 1.5}px rgba(79,209,197,0.6))`,
+          transition: 'transform 0.1s ease-out',
         }}
       />
 
-      {/* “Mouth” central minimaliste */}
+      {/* Particules d'énergie vocale */}
+      {[...Array(6)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-2 h-2 rounded-full bg-[#4FD1C5]/80"
+          style={{
+            top: `${45 + Math.sin(i * Math.PI / 3) * 20}%`,
+            left: `${45 + Math.cos(i * Math.PI / 3) * 20}%`,
+            transform: `scale(${1 + audioLevel * 3})`,
+            opacity: opacity * 0.8,
+            transition: 'all 0.15s ease-out',
+          }}
+        />
+      ))}
+
+      {/* "Mouth" central plus expressif */}
       <div
-        className="absolute bottom-[28%] left-1/2 -translate-x-1/2 w-10 h-[2px] rounded-full"
+        className="absolute bottom-[28%] left-1/2 -translate-x-1/2 w-12 h-[3px] rounded-full"
         style={{
-          background: `linear-gradient(90deg, rgba(91,75,138,0.8), rgba(79,209,197,0.8))`,
-          transform: `scaleY(${1 + audioLevel * 2.5})`,
-          opacity,
-          transition: 'transform 0.1s ease-out, opacity 0.15s ease',
+          background: `linear-gradient(90deg, rgba(91,75,138,0.9), rgba(79,209,197,0.9))`,
+          transform: `translateX(-50%) scaleY(${1 + audioLevel * 3.5})`,
+          opacity: opacity * 1.2,
+          transition: 'transform 0.08s ease-out, opacity 0.1s ease',
+          boxShadow: `0 0 ${glowIntensity * 0.8}px rgba(79,209,197,0.8)`,
         }}
       />
     </div>
