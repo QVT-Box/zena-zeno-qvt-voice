@@ -7,6 +7,7 @@ interface VoiceControlProps {
   isSpeaking: boolean;
   currentMessage: string;
   gender?: "female" | "male";
+  language?: "fr-FR" | "en-US";
 }
 
 /**
@@ -22,6 +23,7 @@ export default function VoiceControl({
   isSpeaking,
   currentMessage,
   gender = "female",
+  language = "fr-FR",
 }: VoiceControlProps) {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -38,9 +40,11 @@ export default function VoiceControl({
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "fr-FR";
+    recognition.lang = language;
     recognition.continuous = false;
     recognition.interimResults = true;
+    
+    console.log("🎤 Reconnaissance vocale initialisée avec la langue:", language);
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let newTranscript = "";
@@ -48,7 +52,12 @@ export default function VoiceControl({
         newTranscript += event.results[i][0].transcript;
       }
       setTranscript(newTranscript);
-      onSpeechRecognized(newTranscript.trim());
+      
+      // N'envoyer que les résultats finaux (quand l'utilisateur a fini de parler)
+      if (event.results[event.results.length - 1].isFinal && newTranscript.trim()) {
+        console.log("✅ Texte final capté:", newTranscript.trim());
+        onSpeechRecognized(newTranscript.trim());
+      }
     };
 
     recognition.onerror = (event: any) => {
@@ -61,7 +70,7 @@ export default function VoiceControl({
     };
 
     recognitionRef.current = recognition;
-  }, [onSpeechRecognized]);
+  }, [onSpeechRecognized, language]);
 
   // 🚀 Actions : démarrer / arrêter
   const startListening = () => {

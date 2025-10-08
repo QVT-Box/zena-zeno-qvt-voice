@@ -1,0 +1,18 @@
+{
+  "name": "ZÉNA - QVT Voice Assistant",
+  "short_name": "ZÉNA",
+  "description": "Votre assistante IA bien-être au travail",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F2F7F6",
+  "theme_color": "#4FD1C5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/zena-preview.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,10 +1,15 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import { useZenaZenoBrain } from "@/hooks/useZenaZenoBrain";
 import VoiceControl from "@/components/VoiceControl";
 import ZenaAvatar from "@/components/ZenaAvatar";
+import { Button } from "@/components/ui/button";
+import { Globe } from "lucide-react";
 
 export default function ZenaChat() {
+  const [selectedLanguage, setSelectedLanguage] = useState<"fr-FR" | "en-US">("fr-FR");
+  
   const {
     isListening,
     speaking,
@@ -16,7 +21,7 @@ export default function ZenaChat() {
     transcript,
   } = useZenaZenoBrain({
     persona: "zena",
-    language: "auto",
+    language: selectedLanguage,
   });
 
   const moodEmoji =
@@ -38,18 +43,47 @@ export default function ZenaChat() {
         aria-hidden="true"
       />
 
+      {/* ==== Sélecteur de langue (en haut à droite) ==== */}
+      <motion.div 
+        className="absolute top-4 right-4 flex gap-2 z-20"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Button
+          variant={selectedLanguage === "fr-FR" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedLanguage("fr-FR")}
+          className="flex items-center gap-1 text-xs"
+        >
+          <Globe size={14} />
+          FR
+        </Button>
+        <Button
+          variant={selectedLanguage === "en-US" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedLanguage("en-US")}
+          className="flex items-center gap-1 text-xs"
+        >
+          <Globe size={14} />
+          EN
+        </Button>
+      </motion.div>
+
       {/* ==== HEADER ZÉNA ==== */}
-      <header className="flex flex-col items-center text-center mt-10 mb-8">
+      <header className="flex flex-col items-center text-center mt-10 mb-8 px-4">
         <ZenaAvatar isSpeaking={speaking} emotion={emotionalState.mood} />
         <motion.h1
           className="text-3xl md:text-4xl font-bold mt-6 bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] bg-clip-text text-transparent"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          ZÉNA – Ca va aujourd'hui?
+          {selectedLanguage === "fr-FR" ? "ZÉNA – Ça va aujourd'hui?" : "ZÉNA – How are you today?"}
         </motion.h1>
         <p className="text-sm text-[#212121]/70 mt-2">
-          La voix qui veille sur vos émotions et agit pour votre bien-être �
+          {selectedLanguage === "fr-FR" 
+            ? "La voix qui veille sur vos émotions et agit pour votre bien-être 💜"
+            : "The voice that watches over your emotions and acts for your well-being 💜"}
         </p>
 
         {/* Lien retour */}
@@ -57,7 +91,7 @@ export default function ZenaChat() {
           to="/"
           className="mt-4 text-xs text-[#005B5F] hover:underline opacity-80 hover:opacity-100 transition"
         >
-          ← Retour à l’accueil
+          {selectedLanguage === "fr-FR" ? "← Retour à l'accueil" : "← Back to home"}
         </Link>
       </header>
 
@@ -70,10 +104,9 @@ export default function ZenaChat() {
       >
         {messages.length === 0 && (
           <div className="text-center text-gray-500 italic text-sm">
-            Commencez à parler avec ZÉNA, ou dites simplement :{" "}
-            <span className="text-[#005B5F] font-semibold">
-              “Salut Zéna, ça va ?”
-            </span>
+            {selectedLanguage === "fr-FR" 
+              ? 'Commencez à parler avec ZÉNA, ou dites simplement : "Salut Zéna, ça va ?"'
+              : 'Start talking to ZÉNA, or just say: "Hi Zéna, how are you?"'}
           </div>
         )}
 
@@ -100,7 +133,7 @@ export default function ZenaChat() {
 
         {thinking && (
           <p className="text-xs text-center text-gray-400 italic animate-pulse">
-            ZÉNA réfléchit...
+            {selectedLanguage === "fr-FR" ? "ZÉNA réfléchit..." : "ZÉNA is thinking..."}
           </p>
         )}
       </motion.div>
@@ -117,11 +150,16 @@ export default function ZenaChat() {
           isSpeaking={speaking}
           currentMessage={transcript}
           gender="female"
+          language={selectedLanguage}
         />
         <p className="text-xs text-gray-500 italic">
           {isListening
-            ? "🎧 ZÉNA vous écoute..."
-            : "Appuyez sur le micro pour parler à ZÉNA"}
+            ? selectedLanguage === "fr-FR" 
+              ? "🎧 ZÉNA vous écoute..." 
+              : "🎧 ZÉNA is listening..."
+            : selectedLanguage === "fr-FR"
+              ? "Appuyez sur le micro pour parler à ZÉNA"
+              : "Press the mic to talk to ZÉNA"}
         </p>
       </motion.div>
 
@@ -133,12 +171,14 @@ export default function ZenaChat() {
         transition={{ delay: 0.6 }}
       >
         <p className="text-sm text-[#212121]/80 font-medium mb-2">
-          <span className="font-semibold">État émotionnel :</span> {moodEmoji}{" "}
+          <span className="font-semibold">
+            {selectedLanguage === "fr-FR" ? "État émotionnel :" : "Emotional state:"}
+          </span> {moodEmoji}{" "}
           {emotionalState.mood === "positive"
-            ? "Positif"
+            ? selectedLanguage === "fr-FR" ? "Positif" : "Positive"
             : emotionalState.mood === "negative"
-            ? "Fragile"
-            : "Neutre"}
+            ? selectedLanguage === "fr-FR" ? "Fragile" : "Fragile"
+            : selectedLanguage === "fr-FR" ? "Neutre" : "Neutral"}
         </p>
 
         <div className="w-full bg-[#EAF4F3] rounded-full h-3 overflow-hidden">
@@ -150,7 +190,8 @@ export default function ZenaChat() {
           />
         </div>
         <p className="text-xs text-gray-600 mt-1">
-          Score QVT : <span className="font-semibold">{emotionalState.score}</span> / 15
+          {selectedLanguage === "fr-FR" ? "Score QVT :" : "QVT Score:"}{" "}
+          <span className="font-semibold">{emotionalState.score}</span> / 15
         </p>
       </motion.div>
 
@@ -177,7 +218,7 @@ export default function ZenaChat() {
         <p>
           © {new Date().getFullYear()} QVT Box —{" "}
           <span className="text-[#005B5F] font-semibold">
-            La bulle qui veille sur vous
+            {selectedLanguage === "fr-FR" ? "La bulle qui veille sur vous" : "Your wellness companion"}
           </span>{" "}
           💡
         </p>
