@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Mic, MicOff } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface VoiceControlProps {
   onSpeechRecognized: (text: string) => void;
@@ -10,12 +10,12 @@ interface VoiceControlProps {
 }
 
 /**
- * 🎙️ VoiceControl
- * -------------------------------------------------------------
- * Composant d’enregistrement vocal stylisé et animé.
- * - Gère un micro central avec halo lumineux.
- * - Affiche le texte transcrit en temps réel.
- * - Montre une onde visuelle quand ZÉNA écoute.
+ * 🎙️ VoiceControl – ZÉNA QVT Box
+ * -----------------------------------------------------------
+ * - Reconnaissance vocale réelle (Web Speech API)
+ * - Halo animé QVT Box turquoise/violet
+ * - Texte capté en direct
+ * - Design doux, professionnel et fluide
  */
 export default function VoiceControl({
   onSpeechRecognized,
@@ -24,17 +24,63 @@ export default function VoiceControl({
   gender = "female",
 }: VoiceControlProps) {
   const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  // Simule un déclenchement local (en attendant Web Speech API intégrée)
-  const toggleListening = () => {
-    if (isListening) {
+  // 🎤 Initialisation du micro (Web Speech API)
+  useEffect(() => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      console.warn("⚠️ Web Speech API non supportée sur ce navigateur.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "fr-FR";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let newTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        newTranscript += event.results[i][0].transcript;
+      }
+      setTranscript(newTranscript);
+      onSpeechRecognized(newTranscript.trim());
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Erreur SpeechRecognition :", event.error);
       setIsListening(false);
-    } else {
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+  }, [onSpeechRecognized]);
+
+  // 🚀 Actions : démarrer / arrêter
+  const startListening = () => {
+    if (!recognitionRef.current) return;
+    try {
+      recognitionRef.current.start();
       setIsListening(true);
-      // On pourrait ici appeler startListening() d’un hook SpeechRecognition
+      setTranscript("");
+    } catch (err) {
+      console.error("Erreur démarrage micro :", err);
     }
   };
 
+  const stopListening = () => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  };
+
+  // 🌈 Couleur du halo selon le genre
   const auraColor =
     gender === "female"
       ? "from-[#5B4B8A]/60 to-[#4FD1C5]/40"
@@ -42,7 +88,7 @@ export default function VoiceControl({
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 w-full text-center">
-      {/* ==== HALO ANIMÉ AUTOUR DU MICRO ==== */}
+      {/* ==== HALO ANIMÉ ==== */}
       <div className="relative flex items-center justify-center">
         {/* Halo pulsant */}
         <motion.div
@@ -66,10 +112,10 @@ export default function VoiceControl({
           />
         )}
 
-        {/* Icône micro */}
+        {/* Micro bouton */}
         <motion.button
-          onClick={toggleListening}
-          className={`relative z-10 w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-full shadow-lg transition-all 
+          onClick={isListening ? stopListening : startListening}
+          className={`relative z-10 w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-full shadow-lg transition-all focus:outline-none 
             ${
               isListening
                 ? "bg-gradient-to-r from-[#005B5F] to-[#4FD1C5] text-white"
@@ -85,20 +131,22 @@ export default function VoiceControl({
         </motion.button>
       </div>
 
-      {/* ==== TEXTE TRANSCRIT ==== */}
+      {/* ==== TRANSCRIPTION EN DIRECT ==== */}
       <motion.div
         className="w-full max-w-md min-h-[50px] mt-4 px-4 py-2 bg-white/70 rounded-2xl shadow-inner text-sm text-[#212121]/80 border border-[#EAF4F3]/80"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        {currentMessage ? (
-          <p className="leading-relaxed">{currentMessage}</p>
+        {transcript || currentMessage ? (
+          <p className="leading-relaxed">
+            {transcript || currentMessage}
+          </p>
         ) : (
           <p className="italic text-gray-400">Votre voix s’affichera ici...</p>
         )}
       </motion.div>
 
-      {/* ==== ÉTAT DE PAROLE ==== */}
+      {/* ==== ÉTAT DU MICRO ==== */}
       <p className="text-xs text-gray-500 mt-1">
         {isSpeaking
           ? "🔊 ZÉNA parle..."
