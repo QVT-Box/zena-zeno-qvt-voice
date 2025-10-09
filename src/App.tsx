@@ -2,7 +2,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Index from "@/pages/Index";
 import ZenaChat from "@/pages/ZenaChat";
 import Auth from "@/pages/Auth";
+import WellnessHub from "@/pages/WellnessHub";
+import Dashboard from "@/pages/Dashboard";
 import { Toaster } from "@/components/ui/sonner";
+import { BottomNav } from "@/components/BottomNav";
 
 /**
  * 🌸 App principale – ZÉNA Voice / QVT Box
@@ -40,12 +43,21 @@ function App() {
           {/* 💬 Page secondaire – Chat dédié à ZÉNA */}
           <Route path="/zena-chat" element={<ZenaChat />} />
 
+          {/* 🌸 Hub de bien-être – Bibliothèque QVT */}
+          <Route path="/wellness-hub" element={<WellnessHub />} />
+
+          {/* 📊 Dashboard personnel */}
+          <Route path="/dashboard" element={<Dashboard />} />
+
           {/* 🚦 Redirection par défaut */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
         {/* 🔔 Notifications globales (Toaster) */}
         <Toaster position="bottom-center" />
+
+        {/* 🧭 Navigation mobile (Bottom Tab Bar) */}
+        <BottomNav />
       </div>
     </Router>
   );
