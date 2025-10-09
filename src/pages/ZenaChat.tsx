@@ -241,14 +241,33 @@ export default function ZenaChat() {
       )}
 
       {/* ==== FOOTER ==== */}
-      <footer className="w-full text-center py-6 mt-10 text-sm text-[#212121]/60">
-        <p>
+      <footer className="w-full max-w-4xl mx-auto py-6 mt-10 text-center border-t border-[#78A085]/30 bg-white/40 backdrop-blur-sm rounded-t-3xl px-4">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+          <div className="text-sm">
+            <p className="font-semibold text-[#005B5F]">
+              {selectedLanguage === "fr-FR" ? "📧 Nous contacter" : "📧 Contact us"}
+            </p>
+            <a href="mailto:contact@qvtbox.com" className="text-[#4FD1C5] hover:underline">
+              contact@qvtbox.com
+            </a>
+          </div>
+          <div className="text-sm">
+            <p className="font-semibold text-[#005B5F]">
+              {selectedLanguage === "fr-FR" ? "📱 Support" : "📱 Support"}
+            </p>
+            <a href="tel:+33612345678" className="text-[#4FD1C5] hover:underline">
+              +33 6 12 34 56 78
+            </a>
+          </div>
+        </div>
+        <p className="text-sm text-[#212121]/70">
           © {new Date().getFullYear()} QVT Box —{" "}
           <span className="text-[#005B5F] font-semibold">
             {selectedLanguage === "fr-FR" ? "La bulle qui veille sur vous" : "Your wellness companion"}
           </span>{" "}
           💡
         </p>
+        <p className="text-xs opacity-75 mt-1">Made with 💜 en Bretagne</p>
       </footer>
     </div>
   );

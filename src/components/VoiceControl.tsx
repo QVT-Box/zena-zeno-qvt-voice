@@ -43,8 +43,9 @@ export default function VoiceControl({
 
     const recognition = new SpeechRecognition();
     recognition.lang = language;
-    recognition.continuous = false;
+    recognition.continuous = true; // Changé en true pour mobile
     recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
     
     console.log("🎤 Reconnaissance vocale initialisée avec la langue:", language);
 
@@ -59,50 +60,98 @@ export default function VoiceControl({
       if (event.results[event.results.length - 1].isFinal && newTranscript.trim()) {
         console.log("✅ Texte final capté:", newTranscript.trim());
         onSpeechRecognized(newTranscript.trim());
+        // Arrêter après avoir reçu un résultat final
+        recognition.stop();
       }
     };
 
     recognition.onerror = (event: any) => {
-      console.error("Erreur SpeechRecognition :", event.error);
+      console.error("❌ Erreur SpeechRecognition :", event.error);
+      const errorMessages: { [key: string]: string } = {
+        "not-allowed": selectedLanguage === "fr-FR" ? "Permission du microphone refusée" : "Microphone permission denied",
+        "no-speech": selectedLanguage === "fr-FR" ? "Aucune parole détectée" : "No speech detected",
+        "audio-capture": selectedLanguage === "fr-FR" ? "Microphone non disponible" : "Microphone not available",
+        "network": selectedLanguage === "fr-FR" ? "Erreur réseau" : "Network error"
+      };
+      
+      if (errorMessages[event.error]) {
+        alert(errorMessages[event.error]);
+      }
       setIsListening(false);
     };
 
     recognition.onend = () => {
+      console.log("🔴 Reconnaissance vocale arrêtée");
       setIsListening(false);
     };
 
     recognitionRef.current = recognition;
-  }, [onSpeechRecognized, language]);
+  }, [onSpeechRecognized, language, selectedLanguage]);
 
   // 🚀 Actions : démarrer / arrêter
   const startListening = async () => {
     if (!recognitionRef.current) {
       console.error("❌ Reconnaissance vocale non disponible");
       alert(selectedLanguage === "fr-FR" 
-        ? "❌ La reconnaissance vocale n'est pas disponible sur ce navigateur"
-        : "❌ Speech recognition is not available on this browser");
+        ? "❌ La reconnaissance vocale n'est pas disponible sur ce navigateur. Essayez Chrome sur Android."
+        : "❌ Speech recognition is not available on this browser. Try Chrome on Android.");
       return;
     }
     
     try {
-      // Demander explicitement les permissions du microphone
+      // Vérifier si le micro est disponible
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("getUserMedia not supported");
+      }
+
+      // Demander explicitement les permissions du microphone avec contraintes mobiles
       console.log("🎤 Demande de permission du microphone...");
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
       console.log("✅ Permission du microphone accordée");
       
-      // Libérer le stream immédiatement (on l'utilise juste pour les permissions)
-      stream.getTracks().forEach(track => track.stop());
+      // Garder le stream actif pendant la reconnaissance
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(audioContext.destination);
       
-      // Maintenant démarrer la reconnaissance
+      // Démarrer la reconnaissance
       recognitionRef.current.start();
       setIsListening(true);
       setTranscript("");
       console.log("🎤 Reconnaissance vocale démarrée");
+      
+      // Libérer le stream après quelques secondes
+      setTimeout(() => {
+        stream.getTracks().forEach(track => track.stop());
+        audioContext.close();
+      }, 30000); // 30 secondes max
+      
     } catch (err: any) {
       console.error("❌ Erreur démarrage micro :", err);
-      const errorMessage = selectedLanguage === "fr-FR"
-        ? `❌ Impossible d'accéder au microphone.\n\nVeuillez autoriser l'accès au microphone dans les paramètres de votre navigateur.\n\nErreur: ${err.message || 'Permission refusée'}`
-        : `❌ Cannot access microphone.\n\nPlease allow microphone access in your browser settings.\n\nError: ${err.message || 'Permission denied'}`;
+      let errorMessage = selectedLanguage === "fr-FR"
+        ? "❌ Impossible d'accéder au microphone.\n\n"
+        : "❌ Cannot access microphone.\n\n";
+      
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        errorMessage += selectedLanguage === "fr-FR"
+          ? "Veuillez autoriser l'accès au microphone dans les paramètres de votre navigateur."
+          : "Please allow microphone access in your browser settings.";
+      } else if (err.name === "NotFoundError") {
+        errorMessage += selectedLanguage === "fr-FR"
+          ? "Aucun microphone trouvé sur votre appareil."
+          : "No microphone found on your device.";
+      } else {
+        errorMessage += selectedLanguage === "fr-FR"
+          ? `Erreur: ${err.message || 'Permission refusée'}\n\nEssayez Chrome sur Android pour une meilleure compatibilité.`
+          : `Error: ${err.message || 'Permission denied'}\n\nTry Chrome on Android for better compatibility.`;
+      }
+      
       alert(errorMessage);
     }
   };
