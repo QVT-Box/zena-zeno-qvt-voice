@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { BottomNav } from "@/components/BottomNav";
 
 /**
- * 🌸 App principale – ZÉNA Voice / QVT Box
+ *  App principale – ZÉNA Voice / QVT Box
  * ----------------------------------------------------------
  * - Gère la navigation entre les univers (accueil, chat)
  * - Applique le thème émotionnel global (gradient, douceur)
@@ -34,29 +34,29 @@ function App() {
 
         {/* === Contenu principal === */}
         <Routes>
-          {/* 🏠 Page d'accueil principale – ZÉNA Voice */}
+          {/*  Page d'accueil principale – ZÉNA Voice */}
           <Route path="/" element={<Index />} />
 
-          {/* 🔐 Page d'authentification */}
+          {/*  Page d'authentification */}
           <Route path="/auth" element={<Auth />} />
 
-          {/* 💬 Page secondaire – Chat dédié à ZÉNA */}
+          {/*  Page secondaire – Chat dédié à ZÉNA */}
           <Route path="/zena-chat" element={<ZenaChat />} />
 
-          {/* 🌸 Hub de bien-être – Bibliothèque QVT */}
+          {/*  Hub de bien-être – Bibliothèque QVT */}
           <Route path="/wellness-hub" element={<WellnessHub />} />
 
-          {/* 📊 Dashboard personnel */}
+          {/*  Dashboard personnel */}
           <Route path="/dashboard" element={<Dashboard />} />
 
-          {/* 🚦 Redirection par défaut */}
+          {/*  Redirection par défaut */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
-        {/* 🔔 Notifications globales (Toaster) */}
+        {/*  Notifications globales (Toaster) */}
         <Toaster position="bottom-center" />
 
-        {/* 🧭 Navigation mobile (Bottom Tab Bar) */}
+        {/*  Navigation mobile (Bottom Tab Bar) */}
         <BottomNav />
       </div>
     </Router>
