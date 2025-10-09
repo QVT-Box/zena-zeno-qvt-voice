@@ -182,8 +182,8 @@ export default function ZenaChat() {
         <p className="text-xs text-gray-500 italic">
           {isListening
             ? selectedLanguage === "fr-FR" 
-              ? "🎧 ZÉNA vous écoute..." 
-              : "🎧 ZÉNA is listening..."
+              ? " ZÉNA vous écoute..." 
+              : " ZÉNA is listening..."
             : selectedLanguage === "fr-FR"
               ? "Appuyez sur le micro pour parler à ZÉNA"
               : "Press the mic to talk to ZÉNA"}
@@ -245,7 +245,7 @@ export default function ZenaChat() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
           <div className="text-sm">
             <p className="font-semibold text-[#005B5F]">
-              {selectedLanguage === "fr-FR" ? "📧 Nous contacter" : "📧 Contact us"}
+              {selectedLanguage === "fr-FR" ? " Nous contacter" : " Contact us"}
             </p>
             <a href="mailto:contact@qvtbox.com" className="text-[#4FD1C5] hover:underline">
               contact@qvtbox.com
@@ -253,10 +253,10 @@ export default function ZenaChat() {
           </div>
           <div className="text-sm">
             <p className="font-semibold text-[#005B5F]">
-              {selectedLanguage === "fr-FR" ? "📱 Support" : "📱 Support"}
+              {selectedLanguage === "fr-FR" ? " Support" : " Support"}
             </p>
-            <a href="tel:+33612345678" className="text-[#4FD1C5] hover:underline">
-              +33 6 12 34 56 78
+            <a href="tel:+33676435551" className="text-[#4FD1C5] hover:underline">
+              +33 6 76 43 55 51
             </a>
           </div>
         </div>
