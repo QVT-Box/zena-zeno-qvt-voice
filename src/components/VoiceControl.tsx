@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Mic, MicOff } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 
 interface VoiceControlProps {
   onSpeechRecognized: (text: string) => void;
@@ -14,10 +14,10 @@ interface VoiceControlProps {
 /**
  * 🎙️ VoiceControl – ZÉNA QVT Box
  * -----------------------------------------------------------
- * - Reconnaissance vocale réelle (Web Speech API)
+ * - Reconnaissance vocale modulaire (browser/cloud)
+ * - Compatible mobile avec gestion permissions améliorée
  * - Halo animé QVT Box turquoise/violet
  * - Texte capté en direct
- * - Design doux, professionnel et fluide
  */
 export default function VoiceControl({
   onSpeechRecognized,
@@ -25,140 +25,24 @@ export default function VoiceControl({
   currentMessage,
   gender = "female",
   language = "fr-FR",
-  selectedLanguage = "fr-FR",
 }: VoiceControlProps) {
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const { isListening, transcript, start, stop } = useVoiceRecognition({
+    lang: language,
+    continuous: false,
+    interimResults: true,
+    onResult: (text, isFinal) => {
+      if (isFinal && text.trim()) {
+        onSpeechRecognized(text.trim());
+      }
+    },
+  });
 
-  // 🎤 Initialisation du micro (Web Speech API)
-  useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      console.warn("⚠️ Web Speech API non supportée sur ce navigateur.");
-      return;
+  const handleToggleListening = () => {
+    if (isListening) {
+      stop();
+    } else {
+      start();
     }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = language;
-    recognition.continuous = true; // Changé en true pour mobile
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-    
-    console.log("🎤 Reconnaissance vocale initialisée avec la langue:", language);
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let newTranscript = "";
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        newTranscript += event.results[i][0].transcript;
-      }
-      setTranscript(newTranscript);
-      
-      // N'envoyer que les résultats finaux (quand l'utilisateur a fini de parler)
-      if (event.results[event.results.length - 1].isFinal && newTranscript.trim()) {
-        console.log("✅ Texte final capté:", newTranscript.trim());
-        onSpeechRecognized(newTranscript.trim());
-        // Arrêter après avoir reçu un résultat final
-        recognition.stop();
-      }
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error("❌ Erreur SpeechRecognition :", event.error);
-      const errorMessages: { [key: string]: string } = {
-        "not-allowed": selectedLanguage === "fr-FR" ? "Permission du microphone refusée" : "Microphone permission denied",
-        "no-speech": selectedLanguage === "fr-FR" ? "Aucune parole détectée" : "No speech detected",
-        "audio-capture": selectedLanguage === "fr-FR" ? "Microphone non disponible" : "Microphone not available",
-        "network": selectedLanguage === "fr-FR" ? "Erreur réseau" : "Network error"
-      };
-      
-      if (errorMessages[event.error]) {
-        alert(errorMessages[event.error]);
-      }
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      console.log("🔴 Reconnaissance vocale arrêtée");
-      setIsListening(false);
-    };
-
-    recognitionRef.current = recognition;
-  }, [onSpeechRecognized, language, selectedLanguage]);
-
-  // 🚀 Actions : démarrer / arrêter
-  const startListening = async () => {
-    if (!recognitionRef.current) {
-      console.error("❌ Reconnaissance vocale non disponible");
-      alert(selectedLanguage === "fr-FR" 
-        ? "❌ La reconnaissance vocale n'est pas disponible sur ce navigateur. Essayez Chrome sur Android."
-        : "❌ Speech recognition is not available on this browser. Try Chrome on Android.");
-      return;
-    }
-    
-    try {
-      // Vérifier si le micro est disponible
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("getUserMedia not supported");
-      }
-
-      // Demander explicitement les permissions du microphone avec contraintes mobiles
-      console.log("🎤 Demande de permission du microphone...");
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        } 
-      });
-      console.log("✅ Permission du microphone accordée");
-      
-      // Garder le stream actif pendant la reconnaissance
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      source.connect(audioContext.destination);
-      
-      // Démarrer la reconnaissance
-      recognitionRef.current.start();
-      setIsListening(true);
-      setTranscript("");
-      console.log("🎤 Reconnaissance vocale démarrée");
-      
-      // Libérer le stream après quelques secondes
-      setTimeout(() => {
-        stream.getTracks().forEach(track => track.stop());
-        audioContext.close();
-      }, 30000); // 30 secondes max
-      
-    } catch (err: any) {
-      console.error("❌ Erreur démarrage micro :", err);
-      let errorMessage = selectedLanguage === "fr-FR"
-        ? "❌ Impossible d'accéder au microphone.\n\n"
-        : "❌ Cannot access microphone.\n\n";
-      
-      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        errorMessage += selectedLanguage === "fr-FR"
-          ? "Veuillez autoriser l'accès au microphone dans les paramètres de votre navigateur."
-          : "Please allow microphone access in your browser settings.";
-      } else if (err.name === "NotFoundError") {
-        errorMessage += selectedLanguage === "fr-FR"
-          ? "Aucun microphone trouvé sur votre appareil."
-          : "No microphone found on your device.";
-      } else {
-        errorMessage += selectedLanguage === "fr-FR"
-          ? `Erreur: ${err.message || 'Permission refusée'}\n\nEssayez Chrome sur Android pour une meilleure compatibilité.`
-          : `Error: ${err.message || 'Permission denied'}\n\nTry Chrome on Android for better compatibility.`;
-      }
-      
-      alert(errorMessage);
-    }
-  };
-
-  const stopListening = () => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
   };
 
   // 🌈 Couleur du halo selon le genre
@@ -195,7 +79,7 @@ export default function VoiceControl({
 
         {/* Micro bouton */}
         <motion.button
-          onClick={isListening ? stopListening : startListening}
+          onClick={handleToggleListening}
           className={`relative z-10 w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-full shadow-lg transition-all focus:outline-none 
             ${
               isListening
