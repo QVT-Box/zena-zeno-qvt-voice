@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      box_recommendations: {
+        Row: {
+          box_description: string
+          box_name: string
+          box_theme: string
+          created_at: string
+          id: string
+          reason: string | null
+          session_id: string
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          box_description: string
+          box_name: string
+          box_theme: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          session_id: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          box_description?: string
+          box_name?: string
+          box_theme?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          session_id?: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "box_recommendations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string | null
@@ -47,6 +91,85 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_messages: {
+        Row: {
+          created_at: string
+          from_role: string
+          id: string
+          session_id: string
+          text: string
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          from_role: string
+          id?: string
+          session_id: string
+          text: string
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          from_role?: string
+          id?: string
+          session_id?: string
+          text?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_sessions: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          ended_at: string | null
+          id: string
+          language: string
+          message_count: number
+          persona: string
+          started_at: string
+          user_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          language?: string
+          message_count?: number
+          persona: string
+          started_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          language?: string
+          message_count?: number
+          persona?: string
+          started_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_sessions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           company_id: string
@@ -75,6 +198,47 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emotional_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          keywords_detected: string[] | null
+          mood: string
+          score: number
+          session_id: string
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          keywords_detected?: string[] | null
+          mood: string
+          score: number
+          session_id: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          keywords_detected?: string[] | null
+          mood?: string
+          score?: number
+          session_id?: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emotional_snapshots_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -269,7 +433,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      qvt_analytics: {
+        Row: {
+          avg_qvt_score: number | null
+          company_id: string | null
+          date: string | null
+          dominant_mood: string | null
+          persona: string | null
+          session_count: number | null
+          snapshot_count: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_sessions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_user_company_id: {
