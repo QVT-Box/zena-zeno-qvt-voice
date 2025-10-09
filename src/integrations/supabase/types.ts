@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_articles: {
+        Row: {
+          author: string
+          category: string
+          content: string
+          created_at: string | null
+          id: string
+          published_at: string
+          read_time: number
+          related_articles: string[] | null
+          slug: string
+          summary: string
+          tags: string[] | null
+          thumbnail: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author?: string
+          category: string
+          content: string
+          created_at?: string | null
+          id?: string
+          published_at: string
+          read_time: number
+          related_articles?: string[] | null
+          slug: string
+          summary: string
+          tags?: string[] | null
+          thumbnail?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          category?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          published_at?: string
+          read_time?: number
+          related_articles?: string[] | null
+          slug?: string
+          summary?: string
+          tags?: string[] | null
+          thumbnail?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       box_recommendations: {
         Row: {
           box_description: string
@@ -57,6 +108,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      burnout_tests: {
+        Row: {
+          client_score: number
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          personal_score: number
+          recommendations: string[] | null
+          risk_level: string
+          total_score: number
+          user_id: string | null
+          work_score: number
+          zena_insight: string | null
+        }
+        Insert: {
+          client_score: number
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          personal_score: number
+          recommendations?: string[] | null
+          risk_level: string
+          total_score: number
+          user_id?: string | null
+          work_score: number
+          zena_insight?: string | null
+        }
+        Update: {
+          client_score?: number
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          personal_score?: number
+          recommendations?: string[] | null
+          risk_level?: string
+          total_score?: number
+          user_id?: string | null
+          work_score?: number
+          zena_insight?: string | null
+        }
+        Relationships: []
       }
       companies: {
         Row: {
@@ -169,6 +262,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      daily_stress_checkins: {
+        Row: {
+          checkin_date: string
+          created_at: string | null
+          energy_level: number
+          id: string
+          keyword: string | null
+          mood_emoji: string
+          sleep_quality: string | null
+          user_id: string | null
+        }
+        Insert: {
+          checkin_date: string
+          created_at?: string | null
+          energy_level: number
+          id?: string
+          keyword?: string | null
+          mood_emoji: string
+          sleep_quality?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          checkin_date?: string
+          created_at?: string | null
+          energy_level?: number
+          id?: string
+          keyword?: string | null
+          mood_emoji?: string
+          sleep_quality?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       departments: {
         Row: {
@@ -304,6 +430,81 @@ export type Database = {
           },
         ]
       }
+      health_tips: {
+        Row: {
+          actionable_tip: string
+          category: string
+          created_at: string | null
+          frequency: string | null
+          icon: string
+          id: string
+          short_description: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          actionable_tip: string
+          category: string
+          created_at?: string | null
+          frequency?: string | null
+          icon: string
+          id?: string
+          short_description: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          actionable_tip?: string
+          category?: string
+          created_at?: string | null
+          frequency?: string | null
+          icon?: string
+          id?: string
+          short_description?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      legal_contents: {
+        Row: {
+          category: string
+          created_at: string | null
+          effective_date: string
+          full_text: string
+          id: string
+          reference: string
+          related_topics: string[] | null
+          summary: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          effective_date: string
+          full_text: string
+          id?: string
+          reference: string
+          related_topics?: string[] | null
+          summary: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          effective_date?: string
+          full_text?: string
+          id?: string
+          reference?: string
+          related_topics?: string[] | null
+          summary?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           company_id: string
@@ -399,6 +600,38 @@ export type Database = {
           },
         ]
       }
+      user_article_reads: {
+        Row: {
+          article_id: string | null
+          id: string
+          read_at: string | null
+          read_duration: number | null
+          user_id: string | null
+        }
+        Insert: {
+          article_id?: string | null
+          id?: string
+          read_at?: string | null
+          read_duration?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          article_id?: string | null
+          id?: string
+          read_at?: string | null
+          read_duration?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_article_reads_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "blog_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           company_id: string
@@ -430,6 +663,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vacation_checklists: {
+        Row: {
+          completed_at: string | null
+          completion_percentage: number | null
+          created_at: string | null
+          id: string
+          items_checked: number
+          total_items: number
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          id?: string
+          items_checked?: number
+          total_items?: number
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          id?: string
+          items_checked?: number
+          total_items?: number
+          user_id?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
