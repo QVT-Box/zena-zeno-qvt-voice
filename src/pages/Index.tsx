@@ -64,7 +64,7 @@ export default function Index() {
           className="px-6 py-3 rounded-full font-medium text-base shadow-md
                      bg-white text-[#005B5F] border-2 border-[#4FD1C5] hover:bg-[#4FD1C5]/10 transition-all"
         >
-          🔐 Se connecter / S'inscrire
+           Se connecter / S'inscrire
         </Link>
 
         {/* Texte secondaire */}
@@ -81,9 +81,9 @@ export default function Index() {
           <span className="text-[#005B5F] font-semibold">
             Le coup de pouce bien-être
           </span>{" "}
-          💡
+          �
         </p>
-        <p className="text-xs opacity-75 mt-1">Made with 💜 en Bretagne</p>
+        <p className="text-xs opacity-75 mt-1"></p>
       </footer>
     </div>
   );
