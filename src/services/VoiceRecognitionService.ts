@@ -29,7 +29,6 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
   private recognition: SpeechRecognition | null = null;
   private listening = false;
   private options: VoiceRecognitionOptions;
-  private mediaStream: MediaStream | null = null;
 
   constructor(options: VoiceRecognitionOptions) {
     this.options = options;
@@ -86,7 +85,6 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
     this.recognition.onend = () => {
       console.log("🔴 Reconnaissance arrêtée");
       this.listening = false;
-      this.cleanupMediaStream();
       this.options.onEnd?.();
     };
 
@@ -113,36 +111,22 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
     }
 
     try {
-      // Sur mobile, il faut demander explicitement les permissions
-      if (navigator.mediaDevices?.getUserMedia) {
-        console.log("🎤 Demande de permission microphone...");
-        
-        this.mediaStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-        });
-
-        console.log("✅ Permission accordée");
-      }
-
-      // Démarrer la reconnaissance
+      // Sur mobile/desktop, laisser Web Speech API gérer le micro
+      // Ne PAS utiliser getUserMedia manuellement car ça crée des conflits/échos
+      console.log("🎤 Démarrage reconnaissance vocale...");
       this.recognition.start();
       
     } catch (err: any) {
       console.error("❌ Erreur démarrage:", err);
-      this.cleanupMediaStream();
       
-      let errorMessage = "Impossible d'accéder au microphone";
+      let errorMessage = "Impossible de démarrer la reconnaissance vocale";
       
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         errorMessage = "Permission du microphone refusée. Vérifiez les paramètres de votre navigateur.";
-      } else if (err.name === "NotFoundError") {
-        errorMessage = "Aucun microphone trouvé sur votre appareil.";
       } else if (err.name === "NotSupportedError") {
         errorMessage = "Reconnaissance vocale non supportée sur ce navigateur. Essayez Chrome.";
+      } else if (err.message?.includes("already started")) {
+        errorMessage = "Reconnaissance déjà en cours";
       }
       
       throw new Error(errorMessage);
@@ -151,20 +135,17 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
 
   stop(): void {
     if (this.recognition && this.listening) {
-      this.recognition.stop();
+      try {
+        this.recognition.stop();
+      } catch (err) {
+        console.warn("Erreur lors de l'arrêt:", err);
+      }
     }
-    this.cleanupMediaStream();
+    this.listening = false;
   }
 
   isListening(): boolean {
     return this.listening;
-  }
-
-  private cleanupMediaStream(): void {
-    if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop());
-      this.mediaStream = null;
-    }
   }
 }
 
