@@ -1,15 +1,25 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useZenaZenoBrain } from "@/hooks/useZenaZenoBrain";
+import { useAuth } from "@/hooks/useAuth";
 import VoiceControl from "@/components/VoiceControl";
 import ZenaAvatar from "@/components/ZenaAvatar";
 import { Button } from "@/components/ui/button";
-import { Globe } from "lucide-react";
+import { Globe, LogOut } from "lucide-react";
 
 export default function ZenaChat() {
+  const navigate = useNavigate();
+  const { user, loading, signOut } = useAuth();
   const [selectedLanguage, setSelectedLanguage] = useState<"fr-FR" | "en-US">("fr-FR");
   
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
   const {
     isListening,
     speaking,
@@ -23,6 +33,20 @@ export default function ZenaChat() {
     persona: "zena",
     language: selectedLanguage,
   });
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3]">
+        <p className="text-lg text-[#212121]/70">Chargement...</p>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!user) {
+    return null;
+  }
 
   const moodEmoji =
     emotionalState.mood === "positive"
@@ -43,7 +67,7 @@ export default function ZenaChat() {
         aria-hidden="true"
       />
 
-      {/* ==== Sélecteur de langue (en haut à droite) ==== */}
+      {/* ==== Sélecteur de langue et déconnexion (en haut à droite) ==== */}
       <motion.div 
         className="absolute top-4 right-4 flex gap-2 z-20"
         initial={{ opacity: 0 }}
@@ -67,6 +91,15 @@ export default function ZenaChat() {
         >
           <Globe size={14} />
           EN
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={signOut}
+          className="flex items-center gap-1 text-xs"
+        >
+          <LogOut size={14} />
+          {selectedLanguage === "fr-FR" ? "Déconnexion" : "Logout"}
         </Button>
       </motion.div>
 

@@ -14,16 +14,280 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          created_at: string | null
+          employee_count: number
+          id: string
+          industry: string | null
+          license_tier: Database["public"]["Enums"]["license_tier"]
+          name: string
+          subscription_status: Database["public"]["Enums"]["subscription_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          employee_count?: number
+          id?: string
+          industry?: string | null
+          license_tier?: Database["public"]["Enums"]["license_tier"]
+          name: string
+          subscription_status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          employee_count?: number
+          id?: string
+          industry?: string | null
+          license_tier?: Database["public"]["Enums"]["license_tier"]
+          name?: string
+          subscription_status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      departments: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          manager_id: string | null
+          name: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          manager_id?: string | null
+          name: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          manager_id?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          department_id: string | null
+          email: string
+          first_name: string | null
+          id: string
+          is_active: boolean | null
+          last_name: string | null
+          team_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          department_id?: string | null
+          email: string
+          first_name?: string | null
+          id: string
+          is_active?: boolean | null
+          last_name?: string | null
+          team_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          department_id?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_name?: string | null
+          team_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          employee_count: number
+          id: string
+          monthly_price: number
+          plan_name: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          stripe_subscription_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          employee_count: number
+          id?: string
+          monthly_price: number
+          plan_name: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          employee_count?: number
+          id?: string
+          monthly_price?: number
+          plan_name?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          department_id: string
+          id: string
+          is_field_team: boolean | null
+          name: string
+          team_lead_id: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          department_id: string
+          id?: string
+          is_field_team?: boolean | null
+          name: string
+          team_lead_id?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          department_id?: string
+          id?: string
+          is_field_team?: boolean | null
+          name?: string
+          team_lead_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_company_id: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "company_admin" | "manager" | "employee"
+      license_tier: "starter" | "business" | "enterprise" | "custom"
+      subscription_status: "active" | "inactive" | "trial" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +414,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "company_admin", "manager", "employee"],
+      license_tier: ["starter", "business", "enterprise", "custom"],
+      subscription_status: ["active", "inactive", "trial", "cancelled"],
+    },
   },
 } as const

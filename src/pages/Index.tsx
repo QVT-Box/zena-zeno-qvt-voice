@@ -58,6 +58,15 @@ export default function Index() {
           🎙️ Essayer ZÉNA en direct
         </Link>
 
+        {/* Bouton secondaire pour connexion */}
+        <Link
+          to="/auth"
+          className="px-6 py-3 rounded-full font-medium text-base shadow-md
+                     bg-white text-[#005B5F] border-2 border-[#4FD1C5] hover:bg-[#4FD1C5]/10 transition-all"
+        >
+          🔐 Se connecter / S'inscrire
+        </Link>
+
         {/* Texte secondaire */}
         <p className="text-sm text-[#212121]/60 max-w-sm text-center">
           Découvrez comment ZÉNA écoute, analyse et vous recommande
