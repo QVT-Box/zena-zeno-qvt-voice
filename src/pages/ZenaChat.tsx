@@ -177,6 +177,7 @@ export default function ZenaChat() {
           currentMessage={transcript}
           gender="female"
           language={selectedLanguage}
+          selectedLanguage={selectedLanguage}
         />
         <p className="text-xs text-gray-500 italic">
           {isListening

@@ -8,6 +8,7 @@ interface VoiceControlProps {
   currentMessage: string;
   gender?: "female" | "male";
   language?: "fr-FR" | "en-US";
+  selectedLanguage?: "fr-FR" | "en-US";
 }
 
 /**
@@ -24,6 +25,7 @@ export default function VoiceControl({
   currentMessage,
   gender = "female",
   language = "fr-FR",
+  selectedLanguage = "fr-FR",
 }: VoiceControlProps) {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -73,14 +75,35 @@ export default function VoiceControl({
   }, [onSpeechRecognized, language]);
 
   // 🚀 Actions : démarrer / arrêter
-  const startListening = () => {
-    if (!recognitionRef.current) return;
+  const startListening = async () => {
+    if (!recognitionRef.current) {
+      console.error("❌ Reconnaissance vocale non disponible");
+      alert(selectedLanguage === "fr-FR" 
+        ? "❌ La reconnaissance vocale n'est pas disponible sur ce navigateur"
+        : "❌ Speech recognition is not available on this browser");
+      return;
+    }
+    
     try {
+      // Demander explicitement les permissions du microphone
+      console.log("🎤 Demande de permission du microphone...");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("✅ Permission du microphone accordée");
+      
+      // Libérer le stream immédiatement (on l'utilise juste pour les permissions)
+      stream.getTracks().forEach(track => track.stop());
+      
+      // Maintenant démarrer la reconnaissance
       recognitionRef.current.start();
       setIsListening(true);
       setTranscript("");
-    } catch (err) {
-      console.error("Erreur démarrage micro :", err);
+      console.log("🎤 Reconnaissance vocale démarrée");
+    } catch (err: any) {
+      console.error("❌ Erreur démarrage micro :", err);
+      const errorMessage = selectedLanguage === "fr-FR"
+        ? `❌ Impossible d'accéder au microphone.\n\nVeuillez autoriser l'accès au microphone dans les paramètres de votre navigateur.\n\nErreur: ${err.message || 'Permission refusée'}`
+        : `❌ Cannot access microphone.\n\nPlease allow microphone access in your browser settings.\n\nError: ${err.message || 'Permission denied'}`;
+      alert(errorMessage);
     }
   };
 
