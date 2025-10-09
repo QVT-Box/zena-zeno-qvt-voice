@@ -16,7 +16,7 @@ export default function Index() {
       />
 
       {/* ==== HERO ZÉNA ==== */}
-      <header className="flex flex-col items-center justify-center text-center px-6 pt-16 md:pt-20">
+      <header className="flex flex-col items-center justify-center text-center px-6 pt-20 md:pt-24">
         {/* Avatar animé */}
         <ZenaAvatar isSpeaking={false} emotion="neutral" />
 
@@ -74,17 +74,6 @@ export default function Index() {
         </p>
       </motion.div>
 
-      {/* ==== FOOTER ==== */}
-      <footer className="w-full py-6 text-center border-t border-[#78A085]/30 bg-white/40 backdrop-blur-sm">
-        <p className="text-sm">
-          © {new Date().getFullYear()} QVT Box —{" "}
-          <span className="text-[#005B5F] font-semibold">
-            Le coup de pouce bien-être
-          </span>{" "}
-          �
-        </p>
-        <p className="text-xs opacity-75 mt-1"></p>
-      </footer>
     </div>
   );
 }
