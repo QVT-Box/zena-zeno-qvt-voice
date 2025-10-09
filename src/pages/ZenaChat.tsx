@@ -264,7 +264,8 @@ export default function ZenaChat() {
           © {new Date().getFullYear()} QVT Box —{" "}
           <span className="text-[#005B5F] font-semibold">
             {selectedLanguage === "fr-FR" ? "La bulle qui veille sur vous" : "Your wellness companion"}
-          </span>{" "}
+          </span>
+        </p>
       </footer>
     </div>
   );
