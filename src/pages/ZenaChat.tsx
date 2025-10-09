@@ -265,9 +265,6 @@ export default function ZenaChat() {
           <span className="text-[#005B5F] font-semibold">
             {selectedLanguage === "fr-FR" ? "La bulle qui veille sur vous" : "Your wellness companion"}
           </span>{" "}
-          💡
-        </p>
-        <p className="text-xs opacity-75 mt-1">Made with 💜 en Bretagne</p>
       </footer>
     </div>
   );
