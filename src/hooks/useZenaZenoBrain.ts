@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useZenaVoice } from "@/hooks/useZenaVoice";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   from: "user" | "zena" | "zeno";
@@ -49,8 +50,107 @@ export function useZenaZenoBrain({
     gender: persona === "zena" ? "female" : "male",
   });
   const [isListening, setIsListening] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const stopRef = useRef(false);
+
+  /**
+   * 🗄️ Créer une session de conversation
+   */
+  useEffect(() => {
+    const createSession = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        const { data, error } = await supabase
+          .from('conversation_sessions')
+          .insert({
+            user_id: user?.id || null,
+            persona,
+            language: language === "auto" ? "fr-FR" : language,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Erreur création session:", error);
+          return;
+        }
+
+        setSessionId(data.id);
+      } catch (err) {
+        console.error("Erreur lors de la création de session:", err);
+      }
+    };
+
+    createSession();
+  }, [persona, language]);
+
+  /**
+   * 💾 Sauvegarder un message
+   */
+  const saveMessage = async (from: "user" | "zena" | "zeno", text: string) => {
+    if (!sessionId) return;
+
+    try {
+      await supabase.from('conversation_messages').insert({
+        session_id: sessionId,
+        from_role: from,
+        text,
+      });
+
+      // Incrémenter le compteur de messages
+      await supabase
+        .from('conversation_sessions')
+        .update({ message_count: messages.length + 1 })
+        .eq('id', sessionId);
+    } catch (err) {
+      console.error("Erreur sauvegarde message:", err);
+    }
+  };
+
+  /**
+   * 📊 Sauvegarder l'état émotionnel
+   */
+  const saveEmotionalState = async (state: EmotionalState, keywords: string[]) => {
+    if (!sessionId) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      await supabase.from('emotional_snapshots').insert({
+        session_id: sessionId,
+        user_id: user?.id || null,
+        mood: state.mood,
+        score: state.score,
+        keywords_detected: keywords,
+      });
+    } catch (err) {
+      console.error("Erreur sauvegarde état émotionnel:", err);
+    }
+  };
+
+  /**
+   * 🎁 Sauvegarder la recommandation de box
+   */
+  const saveBoxRecommendation = async (box: RecommendedBox) => {
+    if (!sessionId) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      await supabase.from('box_recommendations').insert({
+        session_id: sessionId,
+        user_id: user?.id || null,
+        box_name: box.name,
+        box_theme: box.theme,
+        box_description: box.description,
+      });
+    } catch (err) {
+      console.error("Erreur sauvegarde recommandation:", err);
+    }
+  };
 
   /**
    * ✍️ Génération de réponse via IA (Lovable AI)
@@ -77,10 +177,12 @@ export function useZenaZenoBrain({
       let mood: EmotionalState["mood"] = "neutral";
       let score = 8;
       let box: RecommendedBox | null = null;
+      let keywords: string[] = [];
 
       if (lower.includes("stress") || lower.includes("fatigue") || lower.includes("difficile") || lower.includes("épuisé")) {
         mood = "negative";
         score = 5;
+        keywords = ["stress", "fatigue", "difficile"];
         box = {
           name: "Box Relax & Respire",
           theme: "Détente & Sérénité",
@@ -89,6 +191,7 @@ export function useZenaZenoBrain({
       } else if (lower.includes("bien") || lower.includes("motivé") || lower.includes("heureux") || lower.includes("content")) {
         mood = "positive";
         score = 12;
+        keywords = ["bien", "motivé", "heureux"];
         box = {
           name: "Box Vitalité & Motivation",
           theme: "Énergie & Confiance",
@@ -98,6 +201,12 @@ export function useZenaZenoBrain({
 
       setEmotionalState({ mood, score });
       setRecommendedBox(box);
+
+      // Sauvegarder l'état émotionnel et la box
+      await saveEmotionalState({ mood, score }, keywords);
+      if (box) {
+        await saveBoxRecommendation(box);
+      }
 
       return data.reply || (persona === "zena" ? "Je suis là pour t'écouter." : "Continue, je t'écoute.");
     } catch (err) {
@@ -115,11 +224,13 @@ export function useZenaZenoBrain({
     if (!text || stopRef.current) return;
     setTranscript(text);
     setMessages((prev) => [...prev, { from: "user", text }]);
+    await saveMessage("user", text);
     setThinking(true);
 
     const aiResponse = await generateAIResponse(text);
     setThinking(false);
     setMessages((prev) => [...prev, { from: persona, text: aiResponse }]);
+    await saveMessage(persona, aiResponse);
 
     say(aiResponse);
   };
