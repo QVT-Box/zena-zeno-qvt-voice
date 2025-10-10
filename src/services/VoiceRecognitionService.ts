@@ -178,8 +178,14 @@ export class CloudVoiceRecognition implements IVoiceRecognitionService {
   }
 
   isSupported(): boolean {
-    // MediaRecorder est supporté sur presque tous les navigateurs modernes, y compris iOS
-    return typeof MediaRecorder !== 'undefined' && typeof navigator.mediaDevices?.getUserMedia !== 'undefined';
+    // Vérification complète pour iOS et autres navigateurs
+    const hasMediaRecorder = typeof MediaRecorder !== 'undefined';
+    const hasGetUserMedia = typeof navigator !== 'undefined' && 
+                           typeof navigator.mediaDevices !== 'undefined' && 
+                           typeof navigator.mediaDevices.getUserMedia === 'function';
+    
+    console.log("🔍 [Cloud] Support check:", { hasMediaRecorder, hasGetUserMedia });
+    return hasMediaRecorder && hasGetUserMedia;
   }
 
   async start(): Promise<void> {
@@ -376,20 +382,33 @@ export class VoiceRecognitionFactory {
   }
 
   static getBestAvailableMode(): VoiceRecognitionMode {
-    // Détecter si on est sur iOS (Safari ou Chrome iOS)
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    // Détection iOS améliorée
+    const isIOS = (() => {
+      const ua = navigator.userAgent;
+      const isAppleDevice = /iPad|iPhone|iPod/.test(ua);
+      const isSafariMobile = /Safari/.test(ua) && /Mobile/.test(ua);
+      const isIOSChrome = /CriOS/.test(ua);
+      const isTouchDevice = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+      
+      return isAppleDevice || isSafariMobile || isIOSChrome || isTouchDevice;
+    })();
     
     console.log("🔍 Détection plateforme:", { 
       isIOS, 
       userAgent: navigator.userAgent,
-      platform: navigator.platform 
+      platform: navigator.platform,
+      maxTouchPoints: navigator.maxTouchPoints 
     });
 
-    // Sur iOS, toujours utiliser le cloud car Web Speech API n'est pas supporté
+    // Sur iOS, vérifier si cloud est supporté
     if (isIOS) {
-      console.log("📱 iOS détecté → mode cloud");
-      return 'cloud';
+      const cloudService = new CloudVoiceRecognition({});
+      if (cloudService.isSupported()) {
+        console.log("📱 iOS détecté → mode cloud (supporté)");
+        return 'cloud';
+      } else {
+        console.warn("⚠️ iOS détecté mais cloud non supporté, tentative browser");
+      }
     }
 
     // Sur autres plateformes, préférer le navigateur si disponible

@@ -21,9 +21,9 @@ serve(async (req) => {
       throw new Error('No audio data provided');
     }
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
     console.log("🔄 Converting audio for Whisper API...");
@@ -35,28 +35,27 @@ serve(async (req) => {
       bytes[i] = binaryString.charCodeAt(i);
     }
 
-    // Create form data for OpenAI Whisper API
+    // Create form data for Whisper API via Lovable AI
     const formData = new FormData();
     const audioBlob = new Blob([bytes], { type: mimeType || 'audio/webm' });
     formData.append('file', audioBlob, 'audio.webm');
     formData.append('model', 'whisper-1');
-    formData.append('language', 'fr'); // French by default
 
-    console.log("📤 Sending to OpenAI Whisper API...");
+    console.log("📤 Sending to Lovable AI (Whisper)...");
 
-    // Call OpenAI Whisper API
+    // Call Whisper API via Lovable AI Gateway
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
       },
       body: formData,
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ OpenAI API error:", response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      console.error("❌ API error:", response.status, errorText);
+      throw new Error(`Speech-to-text API error: ${response.status}`);
     }
 
     const result = await response.json();
