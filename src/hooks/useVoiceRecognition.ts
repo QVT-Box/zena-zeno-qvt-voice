@@ -71,16 +71,29 @@ export function useVoiceRecognition({
   }, [lang, effectiveMode, continuous, interimResults, onResult, toast]);
 
   const start = useCallback(async () => {
+    console.log("🎤 [useVoiceRecognition] Tentative de démarrage...");
+    console.log("🎤 Mode effectif:", effectiveMode);
+    
     if (!serviceRef.current) {
+      console.error("❌ Service de reconnaissance non disponible");
       setError("Service de reconnaissance non disponible");
+      toast({
+        title: "Erreur",
+        description: "Service de reconnaissance non disponible",
+        variant: "destructive",
+      });
       return;
     }
+
+    console.log("🎤 Service créé:", serviceRef.current);
+    console.log("🎤 Service supporté?", serviceRef.current.isSupported());
 
     if (!serviceRef.current.isSupported()) {
       const errorMsg = effectiveMode === 'browser'
         ? "Reconnaissance vocale non supportée sur ce navigateur. Essayez Chrome ou activez le mode cloud."
         : "Mode cloud non encore disponible";
       
+      console.error("❌ Service non supporté:", errorMsg);
       setError(errorMsg);
       toast({
         title: "Non supporté",
@@ -91,11 +104,14 @@ export function useVoiceRecognition({
     }
 
     try {
+      console.log("🎤 Appel de service.start()...");
       await serviceRef.current.start();
+      console.log("✅ Service démarré avec succès");
     } catch (err: any) {
+      console.error("❌ Erreur lors du démarrage:", err);
       setError(err.message);
       toast({
-        title: "Erreur",
+        title: "Erreur de démarrage",
         description: err.message,
         variant: "destructive",
       });

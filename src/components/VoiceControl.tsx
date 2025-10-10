@@ -37,11 +37,16 @@ export default function VoiceControl({
     },
   });
 
-  const handleToggleListening = () => {
+  const handleToggleListening = async () => {
+    console.log("🎤 [VoiceControl] Toggle listening, isListening:", isListening);
+    console.log("🎤 [VoiceControl] isSpeaking:", isSpeaking);
+    
     if (isListening) {
+      console.log("🛑 Arrêt de l'écoute");
       stop();
     } else {
-      start();
+      console.log("▶️ Démarrage de l'écoute");
+      await start();
     }
   };
 
