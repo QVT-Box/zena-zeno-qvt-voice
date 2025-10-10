@@ -163,29 +163,196 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
 }
 
 /**
- * Service de reconnaissance basé sur le cloud (OpenAI Realtime API)
- * À implémenter plus tard
+ * Service de reconnaissance basé sur le cloud (OpenAI Whisper via Edge Function)
+ * Compatible avec tous les navigateurs, y compris iOS
  */
 export class CloudVoiceRecognition implements IVoiceRecognitionService {
   private options: VoiceRecognitionOptions;
   private listening = false;
+  private mediaRecorder: MediaRecorder | null = null;
+  private audioChunks: Blob[] = [];
+  private stream: MediaStream | null = null;
 
   constructor(options: VoiceRecognitionOptions) {
     this.options = options;
   }
 
   isSupported(): boolean {
-    // TODO: vérifier si l'API cloud est disponible
-    return false;
+    // MediaRecorder est supporté sur presque tous les navigateurs modernes, y compris iOS
+    return typeof MediaRecorder !== 'undefined' && typeof navigator.mediaDevices?.getUserMedia !== 'undefined';
   }
 
   async start(): Promise<void> {
-    // TODO: implémenter avec OpenAI Realtime API
-    throw new Error("Cloud voice recognition pas encore implémenté");
+    if (this.listening) {
+      console.warn("⚠️ Déjà en écoute");
+      return;
+    }
+
+    try {
+      console.log("🎤 [Cloud] Demande de permission microphone...");
+      
+      // Demander la permission du microphone
+      this.stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          channelCount: 1,
+          sampleRate: 16000,
+          echoCancellation: true,
+          noiseSuppression: true,
+        } 
+      });
+      
+      console.log("✅ [Cloud] Permission accordée");
+
+      // Détecter le format audio supporté (iOS utilise mp4, Chrome utilise webm)
+      let mimeType = 'audio/webm';
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus';
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mimeType = 'audio/mp4';
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm';
+      }
+
+      console.log("🎵 [Cloud] Format audio détecté:", mimeType);
+
+      // Initialiser MediaRecorder
+      this.mediaRecorder = new MediaRecorder(this.stream, {
+        mimeType: mimeType,
+      });
+
+      this.audioChunks = [];
+
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          console.log("📦 [Cloud] Chunk audio reçu:", event.data.size, "bytes");
+          this.audioChunks.push(event.data);
+        }
+      };
+
+      this.mediaRecorder.onstop = async () => {
+        console.log("🔴 [Cloud] Enregistrement arrêté, traitement...");
+        
+        if (this.audioChunks.length === 0) {
+          console.warn("⚠️ [Cloud] Aucun audio capturé");
+          this.options.onError?.("Aucun audio capturé");
+          return;
+        }
+
+        try {
+          // Créer un blob avec tous les chunks
+          const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+          console.log("📤 [Cloud] Taille totale audio:", audioBlob.size, "bytes");
+
+          // Convertir en base64
+          const reader = new FileReader();
+          reader.onloadend = async () => {
+            const base64Audio = (reader.result as string).split(',')[1];
+            console.log("🔄 [Cloud] Audio encodé en base64");
+
+            try {
+              // Envoyer à l'edge function
+              const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+              const response = await fetch(`${supabaseUrl}/functions/v1/speech-to-text`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                },
+                body: JSON.stringify({ 
+                  audio: base64Audio,
+                  mimeType: mimeType 
+                }),
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Erreur lors de la transcription');
+              }
+
+              const data = await response.json();
+              console.log("✅ [Cloud] Transcription reçue:", data.text);
+
+              if (data.text && data.text.trim()) {
+                this.options.onResult?.(data.text.trim(), true);
+              } else {
+                console.warn("⚠️ [Cloud] Transcription vide");
+                this.options.onError?.("Aucune parole détectée");
+              }
+
+            } catch (error) {
+              console.error("❌ [Cloud] Erreur transcription:", error);
+              this.options.onError?.(error instanceof Error ? error.message : "Erreur de transcription");
+            }
+          };
+
+          reader.onerror = () => {
+            console.error("❌ [Cloud] Erreur lecture audio");
+            this.options.onError?.("Erreur lors de la lecture de l'audio");
+          };
+
+          reader.readAsDataURL(audioBlob);
+
+        } catch (error) {
+          console.error("❌ [Cloud] Erreur traitement audio:", error);
+          this.options.onError?.(error instanceof Error ? error.message : "Erreur de traitement audio");
+        } finally {
+          this.audioChunks = [];
+          this.options.onEnd?.();
+        }
+      };
+
+      this.mediaRecorder.onerror = (event: Event) => {
+        console.error("❌ [Cloud] Erreur MediaRecorder:", event);
+        this.options.onError?.("Erreur lors de l'enregistrement");
+        this.listening = false;
+      };
+
+      // Démarrer l'enregistrement
+      this.mediaRecorder.start();
+      this.listening = true;
+      console.log("🟢 [Cloud] Enregistrement démarré");
+      this.options.onStart?.();
+
+    } catch (error) {
+      console.error("❌ [Cloud] Erreur démarrage:", error);
+      
+      let errorMessage = "Impossible de démarrer l'enregistrement";
+      if (error instanceof Error) {
+        if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+          errorMessage = "Permission du microphone refusée";
+        } else if (error.name === "NotFoundError") {
+          errorMessage = "Microphone non trouvé";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      this.options.onError?.(errorMessage);
+      throw new Error(errorMessage);
+    }
   }
 
   stop(): void {
-    // TODO: implémenter
+    console.log("🛑 [Cloud] Arrêt demandé");
+    
+    if (this.mediaRecorder && this.listening) {
+      try {
+        if (this.mediaRecorder.state !== 'inactive') {
+          this.mediaRecorder.stop();
+        }
+      } catch (err) {
+        console.warn("⚠️ [Cloud] Erreur lors de l'arrêt:", err);
+      }
+    }
+
+    if (this.stream) {
+      this.stream.getTracks().forEach(track => {
+        track.stop();
+        console.log("🔇 [Cloud] Track audio arrêté");
+      });
+      this.stream = null;
+    }
+
     this.listening = false;
   }
 
@@ -209,10 +376,31 @@ export class VoiceRecognitionFactory {
   }
 
   static getBestAvailableMode(): VoiceRecognitionMode {
+    // Détecter si on est sur iOS (Safari ou Chrome iOS)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    console.log("🔍 Détection plateforme:", { 
+      isIOS, 
+      userAgent: navigator.userAgent,
+      platform: navigator.platform 
+    });
+
+    // Sur iOS, toujours utiliser le cloud car Web Speech API n'est pas supporté
+    if (isIOS) {
+      console.log("📱 iOS détecté → mode cloud");
+      return 'cloud';
+    }
+
+    // Sur autres plateformes, préférer le navigateur si disponible
     const browserRecognition = new BrowserVoiceRecognition({});
     if (browserRecognition.isSupported()) {
+      console.log("🌐 Web Speech API disponible → mode browser");
       return 'browser';
     }
-    return 'cloud'; // Fallback vers le cloud si le navigateur ne supporte pas
+
+    // Fallback vers le cloud
+    console.log("☁️ Fallback → mode cloud");
+    return 'cloud';
   }
 }
