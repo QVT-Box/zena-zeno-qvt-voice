@@ -52,6 +52,7 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
     this.recognition.maxAlternatives = 1;
 
     this.recognition.onresult = (event: SpeechRecognitionEvent) => {
+      console.log("🎯 Résultat de reconnaissance reçu:", event);
       let transcript = "";
       let isFinal = false;
 
@@ -62,7 +63,10 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
         }
       }
 
+      console.log("📝 Transcript:", transcript, "isFinal:", isFinal);
+
       if (transcript.trim()) {
+        console.log("✅ Appel onResult avec:", transcript.trim());
         this.options.onResult?.(transcript.trim(), isFinal);
       }
     };
@@ -102,6 +106,7 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
 
   async start(): Promise<void> {
     if (!this.recognition) {
+      console.error("❌ Reconnaissance vocale non disponible - recognition is null");
       throw new Error("Reconnaissance vocale non disponible");
     }
 
@@ -111,13 +116,20 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
     }
 
     try {
-      // Sur mobile/desktop, laisser Web Speech API gérer le micro
-      // Ne PAS utiliser getUserMedia manuellement car ça crée des conflits/échos
+      // Demander d'abord la permission du microphone explicitement
+      console.log("🎤 Demande de permission microphone...");
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("✅ Permission microphone accordée");
+      
+      // Démarrer la reconnaissance vocale
       console.log("🎤 Démarrage reconnaissance vocale...");
       this.recognition.start();
+      console.log("✅ Reconnaissance vocale démarrée");
       
     } catch (err: any) {
-      console.error("❌ Erreur démarrage:", err);
+      console.error("❌ Erreur démarrage reconnaissance:", err);
+      console.error("❌ Type d'erreur:", err.name);
+      console.error("❌ Message:", err.message);
       
       let errorMessage = "Impossible de démarrer la reconnaissance vocale";
       
@@ -127,6 +139,7 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
         errorMessage = "Reconnaissance vocale non supportée sur ce navigateur. Essayez Chrome.";
       } else if (err.message?.includes("already started")) {
         errorMessage = "Reconnaissance déjà en cours";
+        return; // Ne pas lancer d'erreur si déjà démarrée
       }
       
       throw new Error(errorMessage);
