@@ -2,60 +2,106 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
     <title>ZÉNA – L’IA émotionnelle de QVT Box</title>
 
     <!-- SEO -->
     <meta
       name="description"
-      content="ZÉNA, l’IA émotionnelle de QVT Box : une voix bienveillante qui écoute, parle et veille sur votre bien-être."
+      content="ZÉNA, l’IA émotionnelle de QVT Box — une voix bienveillante qui écoute, parle et veille sur votre bien-être mental au travail et à la maison."
     />
     <meta name="author" content="QVT Box" />
     <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://zena.qvtbox.com/" />
 
     <!-- Open Graph -->
     <meta property="og:title" content="ZÉNA – L’IA émotionnelle de QVT Box" />
     <meta
       property="og:description"
-      content="La voix qui veille sur vos émotions — une expérience QVT humaine et phygitale signée QVT Box."
+      content="La voix qui veille sur vos émotions — une expérience QVT humaine, bienveillante et phygitale signée QVT Box."
     />
     <meta property="og:image" content="/images/zena-avatar.png" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://qvtbox.com/zena" />
+    <meta property="og:url" content="https://zena.qvtbox.com" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ZÉNA – L’IA émotionnelle de QVT Box" />
     <meta
       name="twitter:description"
-      content="L’avatar IA qui veille sur vos émotions au travail et à la maison."
+      content="L’avatar IA qui veille sur vos émotions, au travail comme à la maison."
     />
     <meta name="twitter:image" content="/images/zena-avatar.png" />
 
-    <!-- Favicon & PWA -->
+    <!-- Favicons & PWA -->
     <link rel="icon" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#5B4B8A" />
 
     <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
 
-    <!-- Style minimal (SEO fallback avant React) -->
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-752B8V04TV"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", import.meta?.env?.VITE_GA_ID || "G-752B8V04TV", {
+        send_page_view: true,
+      });
+    </script>
+
+    <!-- Styles minimalistes (fallback avant React) -->
     <style>
+      html,
       body {
         margin: 0;
+        padding: 0;
+        height: 100%;
         font-family: "Montserrat", sans-serif;
         background: linear-gradient(180deg, #f2f7f6 0%, #eaf4f3 100%);
         color: #212121;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
-        height: 100vh;
+        justify-content: center;
         text-align: center;
+        overflow: hidden;
+      }
+
+      .halo {
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(circle at center, #5b4b8a40, transparent 70%);
+        border-radius: 50%;
+        animation: pulse 4s ease-in-out infinite;
+        z-index: -1;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scale(1.3);
+          opacity: 1;
+        }
       }
 
       .loader {
@@ -75,13 +121,15 @@
 
       h1 {
         color: #5b4b8a;
+        font-size: 2.2rem;
+        font-weight: 700;
         margin-bottom: 0.5rem;
-        font-size: 2rem;
       }
 
       p {
         color: #4b5e8a;
         font-size: 1rem;
+        margin: 0 1rem;
       }
 
       footer {
@@ -92,13 +140,35 @@
         font-size: 0.85rem;
         color: #6b7280;
       }
+
+      @media (max-width: 600px) {
+        h1 {
+          font-size: 1.8rem;
+        }
+        p {
+          font-size: 0.95rem;
+        }
+        .halo {
+          width: 220px;
+          height: 220px;
+        }
+      }
     </style>
   </head>
 
   <body>
+    <div class="halo"></div>
+
     <div id="root">
-      <!-- Fallback affiché avant chargement React -->
+      <!-- Fallback avant React -->
       <div class="loader">
+        <img
+          src="/images/zena-avatar.png"
+          alt="ZÉNA – avatar IA de QVT Box"
+          width="160"
+          height="160"
+          style="border-radius: 50%; box-shadow: 0 0 40px rgba(91, 75, 138, 0.4); margin-bottom: 1rem;"
+        />
         <h1>ZÉNA</h1>
         <p>La voix qui veille sur vos émotions...</p>
       </div>
