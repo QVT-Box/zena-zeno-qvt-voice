@@ -6,19 +6,18 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
+
     <title>ZÉNA – L’IA émotionnelle de QVT Box</title>
 
-    <!-- 🧠 SEO -->
+    <!-- SEO -->
     <meta
       name="description"
       content="ZÉNA, l’IA émotionnelle de QVT Box : une voix bienveillante qui écoute, parle et veille sur votre bien-être."
     />
     <meta name="author" content="QVT Box" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#5B4B8A" />
-    <meta name="color-scheme" content="light dark" />
 
-    <!-- 🌐 Open Graph -->
+    <!-- Open Graph -->
     <meta property="og:title" content="ZÉNA – L’IA émotionnelle de QVT Box" />
     <meta
       property="og:description"
@@ -26,9 +25,9 @@
     />
     <meta property="og:image" content="/images/zena-avatar.png" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://zena.qvtbox.com" />
+    <meta property="og:url" content="https://zena.qvtbox.com/" />
 
-    <!-- 🐦 Twitter -->
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ZÉNA – L’IA émotionnelle de QVT Box" />
     <meta
@@ -37,21 +36,23 @@
     />
     <meta name="twitter:image" content="/images/zena-avatar.png" />
 
-    <!-- 📱 PWA -->
+    <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#5B4B8A" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <!-- Icons -->
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="ZÉNA" />
 
-    <!-- 🧩 Fonts -->
+    <!-- Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
 
-    <!-- 🎨 Style minimal (avant React) -->
+    <!-- Fallback Style -->
     <style>
       body {
         margin: 0;
@@ -59,30 +60,36 @@
         background: linear-gradient(180deg, #f2f7f6 0%, #eaf4f3 100%);
         color: #212121;
         display: flex;
-        flex-direction: column;
         justify-content: center;
         align-items: center;
         height: 100vh;
         text-align: center;
       }
 
-      img.logo {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        box-shadow: 0 0 50px rgba(91, 75, 138, 0.3);
-        animation: float 4s ease-in-out infinite;
+      .loader {
+        animation: fadeIn 1.8s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       h1 {
-        font-size: 2.3rem;
         color: #5b4b8a;
-        margin: 1rem 0 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 2rem;
       }
 
       p {
-        font-size: 1.1rem;
         color: #4b5e8a;
+        font-size: 1rem;
       }
 
       footer {
@@ -93,27 +100,12 @@
         font-size: 0.85rem;
         color: #6b7280;
       }
-
-      @keyframes float {
-        0%, 100% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-6px);
-        }
-      }
     </style>
   </head>
 
   <body>
     <div id="root">
-      <!-- 🌸 Fallback avant React -->
-      <div>
-        <img
-          src="/images/zena-avatar.png"
-          alt="ZÉNA - Avatar IA QVT Box"
-          class="logo"
-        />
+      <div class="loader">
         <h1>ZÉNA</h1>
         <p>La voix qui veille sur vos émotions...</p>
       </div>
@@ -121,19 +113,7 @@
 
     <footer>© 2025 QVT Box — Made with 💜 en Bretagne</footer>
 
-    <!-- 🚀 Script React/Vite -->
-    <script type="module" src="/src/main.tsx"></script>
-
-    <!-- ⚙️ PWA : enregistrement du Service Worker -->
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/service-worker.js")
-            .then(() => console.log("✅ Service Worker enregistré"))
-            .catch((err) => console.error("❌ Service Worker error:", err));
-        });
-      }
-    </script>
+    <!-- ✅ Script bundle (corrige l’erreur MIME) -->
+    <script type="module" src="/assets/index.js"></script>
   </body>
 </html>
