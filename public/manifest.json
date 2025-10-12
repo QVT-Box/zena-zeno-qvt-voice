@@ -1,18 +1,24 @@
 {
-  "name": "ZÉNA - QVT Voice Assistant",
+  "name": "ZÉNA – IA émotionnelle QVT Box",
   "short_name": "ZÉNA",
-  "description": "Votre assistante IA bien-être au travail",
+  "description": "L’assistante émotionnelle de QVT Box — écoute, parle et accompagne le bien-être des salariés.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F2F7F6",
-  "theme_color": "#4FD1C5",
-  "orientation": "portrait",
+  "theme_color": "#5B4B8A",
+  "orientation": "portrait-primary",
+  "lang": "fr",
   "icons": [
     {
-      "src": "/zena-preview.png",
+      "src": "/images/zena-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/zena-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }
