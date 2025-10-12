@@ -4,14 +4,14 @@ import ZenaAvatar from "@/components/ZenaAvatar";
 
 export default function Index() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-[#212121] font-sans overflow-hidden relative">
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-[#212121] font-sans overflow-y-auto relative pb-16">
       {/* ==== HALOS D’AMBIANCE ==== */}
       <div
-        className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-[#4FD1C5]/40 rounded-full blur-[120px] -z-10 animate-breathe"
+        className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-[#4FD1C5]/30 rounded-full blur-[120px] -z-10 animate-pulse"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-[-15%] right-[-10%] w-[400px] h-[400px] bg-[#5B4B8A]/35 rounded-full blur-[160px] -z-10 animate-breathe-slow"
+        className="absolute bottom-[-15%] right-[-10%] w-[400px] h-[400px] bg-[#5B4B8A]/25 rounded-full blur-[150px] -z-10 animate-pulse"
         aria-hidden="true"
       />
 
@@ -25,7 +25,7 @@ export default function Index() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          ZÉNA – L’IA émotionnelle de QVT Box
+          ZÉNA — L’IA émotionnelle de QVT Box
         </motion.h1>
 
         <motion.p
@@ -39,9 +39,9 @@ export default function Index() {
         </motion.p>
       </header>
 
-      {/* ==== CTA ==== */}
+      {/* ==== BOUTONS ==== */}
       <motion.div
-        className="flex flex-col items-center justify-center mt-10 mb-16 gap-5"
+        className="flex flex-col items-center justify-center mt-10 gap-5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
@@ -68,48 +68,47 @@ export default function Index() {
         </p>
       </motion.div>
 
-      {/* ==== SECTION KENGO - SOUTENIR QVT BOX ==== */}
-      <section className="relative w-full py-14 px-6 text-center bg-gradient-to-b from-[#5B4B8A]/10 via-[#4FD1C5]/10 to-transparent overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#4FD1C5]/5 via-[#5B4B8A]/5 to-transparent blur-2xl opacity-40" />
+      {/* ==== SECTION KENGO ==== */}
+      <motion.section
+        className="relative w-full px-6 py-10 text-center flex flex-col items-center justify-center mt-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.4 }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-[#4FD1C5]/5 via-[#5B4B8A]/5 to-transparent blur-2xl opacity-40 -z-10" />
 
-        <div className="relative z-10 container mx-auto max-w-md flex flex-col items-center space-y-4">
-          {/* Petit halo animé */}
-          <div className="animate-pulse w-3 h-3 bg-[#4FD1C5] rounded-full shadow-[0_0_15px_#4FD1C580]" />
+        <h2 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#4FD1C5] to-[#5B4B8A] mb-2">
+          💚 Soutenez QVT Box
+        </h2>
 
-          <h2 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#4FD1C5] to-[#5B4B8A]">
-            💚 Soutenez QVT Box
-          </h2>
+        <p className="text-[#212121]/70 text-sm sm:text-base max-w-sm leading-relaxed mb-4">
+          Aidez ZÉNA à veiller sur encore plus de salariés.  
+          Chaque don sur <strong>Kengo.bzh</strong> fait briller une nouvelle bulle d’espoir.
+        </p>
 
-          <p className="text-[#212121]/80 text-sm sm:text-base max-w-sm leading-relaxed">
-            Aidez ZÉNA à veiller sur encore plus de salariés.  
-            Chaque don sur <strong>Kengo.bzh</strong> fait briller une nouvelle bulle d’espoir.
-          </p>
-
-          {/* Iframe plus compacte */}
-          <div className="flex justify-center w-full mt-2">
-            <iframe
-              scrolling="no"
-              src="https://kengo.bzh/projet-embed/5212/qvt-box"
-              style={{
-                border: "none",
-                width: "100%",
-                maxWidth: "320px",
-                height: "340px",
-                borderRadius: "14px",
-                boxShadow: "0 6px 24px rgba(91,75,138,0.25)",
-              }}
-              title="Cagnotte Kengo QVT Box"
-            />
-          </div>
-
-          <p className="text-xs text-[#212121]/60 mt-2">
-            Ensemble, faisons briller les bulles d’espoir 💫
-          </p>
+        <div className="w-full flex justify-center">
+          <iframe
+            scrolling="no"
+            src="https://kengo.bzh/projet-embed/5212/qvt-box"
+            style={{
+              border: "none",
+              width: "100%",
+              maxWidth: "320px",
+              height: "320px",
+              borderRadius: "14px",
+              boxShadow: "0 6px 24px rgba(91,75,138,0.25)",
+            }}
+            title="Cagnotte Kengo QVT Box"
+          />
         </div>
-      </section>
+
+        <p className="text-xs text-[#212121]/60 mt-2 italic">
+          Ensemble, faisons briller les bulles d’espoir 💫
+        </p>
+      </motion.section>
 
       {/* ==== FOOTER ==== */}
-      <footer className="text-center text-sm text-[#212121]/60 py-6">
+      <footer className="text-center text-sm text-[#212121]/60 py-8">
         © 2025 QVT Box — ZÉNA veille sur vos émotions 💜
       </footer>
     </div>
