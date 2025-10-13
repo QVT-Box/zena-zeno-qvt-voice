@@ -1,104 +1,92 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useRef } from "react";
 
-interface UseVoiceRecognitionProps {
-  lang?: string;
-  continuous?: boolean;
-  interimResults?: boolean;
-  onResult?: (text: string, isFinal: boolean) => void;
-}
-
-export function useVoiceRecognition({
-  lang = "fr-FR",
-  continuous = false,
-  interimResults = true,
-  onResult,
-}: UseVoiceRecognitionProps) {
+export function useVoiceRecognition({ onResult, lang = "fr-FR" }) {
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  useEffect(() => {
-    // Vérifie compatibilité navigateur
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      console.warn("❌ SpeechRecognition non supporté sur ce navigateur.");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = lang;
-    recognition.continuous = continuous;
-    recognition.interimResults = interimResults;
-
-    recognition.onstart = () => {
-      console.log("🎤 ZÉNA écoute...");
-      setIsListening(true);
-    };
-
-    recognition.onend = () => {
-      console.log("🛑 Fin d'écoute");
-      setIsListening(false);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error("⚠️ Erreur SpeechRecognition:", event.error);
-      setIsListening(false);
-    };
-
-    recognition.onresult = (event: any) => {
-      let interimTranscript = "";
-      let finalTranscript = "";
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcriptPiece = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcriptPiece + " ";
-        } else {
-          interimTranscript += transcriptPiece;
-        }
-      }
-
-      const fullTranscript = finalTranscript || interimTranscript;
-      setTranscript(fullTranscript);
-
-      if (onResult) {
-        onResult(fullTranscript.trim(), !!finalTranscript);
-      }
-    };
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      recognition.stop();
-      setIsListening(false);
-    };
-  }, [lang, continuous, interimResults, onResult]);
-
-  const start = async () => {
+  const startListening = async () => {
     try {
-      if (!recognitionRef.current) {
-        console.error("⚠️ Recognition non initialisé");
-        return;
+      // 🔊 Vérifie la dispo du micro
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        console.warn("⚠️ Web Speech API non disponible — fallback cloud.");
+        return startCloudListening();
       }
 
-      console.log("▶️ Démarrage écoute (demande permission micro)...");
-      await recognitionRef.current.start();
+      const recognition = new SpeechRecognition();
+      recognition.lang = lang;
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setIsListening(true);
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        onResult?.(text);
+      };
+
+      recognition.onerror = (event) => {
+        console.error("🎙️ SpeechRecognition error:", event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => setIsListening(false);
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (error) {
+      console.error("❌ Micro non accessible :", error);
+      alert("Autorise l’accès au micro dans ton navigateur ou ta PWA.");
+    }
+  };
+
+  const stopListening = () => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  };
+
+  // 🌩️ Fallback cloud (Supabase → Whisper)
+  const startCloudListening = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Audio = (reader.result as string).split(",")[1];
+
+          const resp = await fetch(
+            "https://mahmakmfonycckirgtwm.supabase.co/functions/v1/speech-to-text",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ audio: base64Audio, mimeType: "audio/webm" }),
+            }
+          );
+
+          const data = await resp.json();
+          if (data.text) onResult?.(data.text);
+        };
+        reader.readAsDataURL(blob);
+      };
+
+      recorder.start();
       setIsListening(true);
+      setTimeout(() => {
+        recorder.stop();
+        setIsListening(false);
+      }, 5000); // écoute 5 secondes
     } catch (err) {
-      console.error("🚫 Erreur lors du démarrage de l'écoute:", err);
-      setIsListening(false);
+      console.error("🎤 Fallback cloud error:", err);
     }
   };
 
-  const stop = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      console.log("🛑 Arrêt manuel de l'écoute");
-      setIsListening(false);
-    }
-  };
-
-  return { isListening, transcript, start, stop };
+  return { isListening, startListening, stopListening };
 }
