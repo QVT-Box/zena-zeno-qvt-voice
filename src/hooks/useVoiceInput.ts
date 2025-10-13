@@ -1,4 +1,23 @@
+// src/hooks/useVoiceInput.ts
 import { useCallback, useEffect, useRef, useState } from "react";
+
+// --- shim local minimal (évite un global.d.ts) ---
+type SpeechRec = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start(): void;
+  stop(): void;
+  onresult: ((ev: any) => void) | null;
+  onerror: ((ev: any) => void) | null;
+  onend: (() => void) | null;
+};
+type SpeechRecCtor = new () => SpeechRec;
+
+const SR: SpeechRecCtor | null =
+  typeof window !== "undefined"
+    ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
+    : null;
 
 type LangOpt = "fr-FR" | "en-US" | "auto";
 
@@ -19,7 +38,6 @@ interface UseVoiceInputReturn {
   stopListening: () => void;
 }
 
-/** Reconnaissance vocale FR/EN, stable StrictMode + mobile */
 export function useVoiceInput({
   lang = "auto",
   continuous = false,
@@ -31,58 +49,39 @@ export function useVoiceInput({
   const [transcript, setTranscript] = useState("");
   const [detectedLang, setDetectedLang] = useState<"fr" | "en" | "unknown">("unknown");
 
-  const SR =
-    (typeof window !== "undefined" && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)) ||
-    null;
-
   const isSupported = !!SR;
-
-  const recRef = useRef<SpeechRecognition | null>(null);
+  const recRef = useRef<SpeechRec | null>(null);
   const onResultRef = useRef(onResult);
   const onErrorRef = useRef(onError);
   const optionsRef = useRef({ lang, continuous, interimResults });
 
-  // garde les callbacks/options stables sans recréer l'instance
-  useEffect(() => {
-    onResultRef.current = onResult;
-  }, [onResult]);
-  useEffect(() => {
-    onErrorRef.current = onError;
-  }, [onError]);
-  useEffect(() => {
-    optionsRef.current = { lang, continuous, interimResults };
-    // si tu veux pouvoir changer la langue “à chaud”,
-    // tu peux aussi ajuster recRef.current?.lang ici quand non-listening.
-  }, [lang, continuous, interimResults]);
+  useEffect(() => { onResultRef.current = onResult; }, [onResult]);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
+  useEffect(() => { optionsRef.current = { lang, continuous, interimResults }; }, [lang, continuous, interimResults]);
 
-  // instanciation + handlers (une fois)
+  // Instanciation + handlers (une seule fois)
   useEffect(() => {
-    if (!isSupported) {
-      onErrorRef.current?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
-      return;
-    }
-    if (recRef.current) return;
+    if (!isSupported || recRef.current) return;
 
-    const recognition = new (SR as any)() as SpeechRecognition;
+    const recognition = new (SR as Required<typeof SR>)();
     recognition.lang = optionsRef.current.lang === "auto" ? "fr-FR" : (optionsRef.current.lang as string);
     recognition.continuous = !!optionsRef.current.continuous;
     recognition.interimResults = !!optionsRef.current.interimResults;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       const res = event.results[event.resultIndex];
-      const text = Array.from(res).map(r => r.transcript).join("").trim();
+      const text = Array.from(res).map((r: any) => r.transcript).join("").trim();
 
-      // détection locale (pas via l'état)
-      const isEnglish = /\b(hi|hello|how|you|thanks|please|okay|yes|no)\b/i.test(text);
-      const isFrench  = /\b(bonjour|salut|merci|oui|non|comment|ça va|ca va)\b/i.test(text);
-      const detected: "fr" | "en" | "unknown" = isEnglish ? "en" : isFrench ? "fr" : "unknown";
+      const en = /\b(hi|hello|how|you|thanks|please|okay|yes|no)\b/i.test(text);
+      const fr = /\b(bonjour|salut|merci|oui|non|comment|ça va|ca va)\b/i.test(text);
+      const detected: "fr" | "en" | "unknown" = en ? "en" : fr ? "fr" : "unknown";
 
       setDetectedLang(detected);
       setTranscript(text);
 
-      if ((res as any).isFinal) {
+      if (res.isFinal) {
         onResultRef.current?.(text, detected);
-        setTranscript(""); // optionnel : garde `text` si tu veux l’historique
+        setTranscript("");
       }
     };
 
@@ -92,13 +91,8 @@ export function useVoiceInput({
     };
 
     recognition.onend = () => {
-      // auto-restart si continuous demandé et on était en écoute
       if (optionsRef.current.continuous && isListening) {
-        try {
-          recognition.start();
-        } catch {
-          setIsListening(false);
-        }
+        try { recognition.start(); } catch { setIsListening(false); }
       } else {
         setIsListening(false);
       }
@@ -110,27 +104,25 @@ export function useVoiceInput({
       try { recRef.current?.stop(); } catch {}
       recRef.current = null;
     };
-  // ⛔️ ne mets PAS detectedLang dans les deps !
-  }, [SR, isSupported, isListening]);
+  // ⛔️ ne pas dépendre de detectedLang ici !
+  }, [isSupported, isListening]);
 
   const startListening = useCallback(() => {
     const rec = recRef.current;
     if (!rec || !isSupported) return;
 
-    // (ré)applique options récentes si besoin
     rec.lang = optionsRef.current.lang === "auto" ? "fr-FR" : (optionsRef.current.lang as string);
     rec.continuous = !!optionsRef.current.continuous;
     rec.interimResults = !!optionsRef.current.interimResults;
 
     try {
-      // éviter InvalidStateError si déjà démarré
       if (!(rec as any)._starting) {
         (rec as any)._starting = true;
         rec.start();
         setIsListening(true);
         setTimeout(() => ((rec as any)._starting = false), 0);
       }
-    } catch (e) {
+    } catch {
       (rec as any)._starting = false;
       onErrorRef.current?.("Impossible de démarrer la reconnaissance vocale.");
       setIsListening(false);
