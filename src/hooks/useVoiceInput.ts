@@ -1,112 +1,108 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface UseVoiceInputOptions {
-  lang?: "fr-FR" | "en-US";
-  onResult?: (text: string) => void;
+  lang?: "fr-FR" | "en-US" | "auto";
+  continuous?: boolean;
+  interimResults?: boolean;
+  onResult?: (text: string, detectedLang?: string) => void;
   onError?: (error: string) => void;
 }
 
 /**
- * ✅ Hook de reconnaissance vocale robuste
- * - Compatible desktop, mobile, iOS PWA
- * - Fallback automatique vers Supabase Whisper si le navigateur ne supporte pas SpeechRecognition
+ * 🎧 useVoiceInput – Hook vocal stable multilingue
+ * Corrigé pour Chrome / Safari / Vercel (SSR safe)
  */
 export function useVoiceInput({
-  lang = "fr-FR",
+  lang = "auto",
+  continuous = false,
+  interimResults = true,
   onResult,
   onError,
 }: UseVoiceInputOptions = {}) {
   const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [detectedLang, setDetectedLang] = useState<"fr" | "en" | "unknown">("unknown");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  const startListening = async () => {
-    try {
-      const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  useEffect(() => {
+    if (typeof window === "undefined") return; // sécurité SSR
 
-      if (!SpeechRecognition) {
-        console.warn("⚠️ SpeechRecognition non supporté — fallback cloud activé");
-        return await startCloudListening();
+    const SpeechRecognitionAPI =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) {
+      onError?.("La reconnaissance vocale n'est pas supportée par ce navigateur.");
+      return;
+    }
+
+    const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
+    recognition.lang = lang === "auto" ? "fr-FR" : lang;
+    recognition.continuous = continuous;
+    recognition.interimResults = interimResults;
+
+    recognition.onresult = (event: any) => {
+      if (!event.results || !event.results[event.resultIndex]) return;
+
+      const lastResult = event.results[event.resultIndex];
+      const text = lastResult[0].transcript.trim();
+
+      // Détection automatique de la langue
+      const isEnglish = /\b(hi|hello|how|you|thanks|please|okay|yes|no)\b/i.test(text);
+      const isFrench = /\b(bonjour|salut|merci|oui|non|comment|ça va)\b/i.test(text);
+      if (isEnglish) setDetectedLang("en");
+      else if (isFrench) setDetectedLang("fr");
+      else setDetectedLang("unknown");
+
+      setTranscript(text);
+
+      if (lastResult.isFinal) {
+        onResult?.(text, detectedLang);
+        setTranscript("");
       }
+    };
 
-      const recognition = new SpeechRecognition();
-      recognition.lang = lang;
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => setIsListening(true);
-
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        const text = event.results[0][0].transcript.trim();
-        if (text) onResult?.(text);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error("🎙️ SpeechRecognition error:", event.error);
-        onError?.(event.error);
-        setIsListening(false);
-      };
-
-      recognition.onend = () => setIsListening(false);
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (error) {
-      console.error("❌ Erreur démarrage micro:", error);
-      onError?.("Impossible d’activer le micro. Vérifie les autorisations.");
+    recognition.onerror = (event: any) => {
+      console.error("🎤 Erreur SpeechRecognition:", event.error);
+      onError?.(event.error);
       setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      console.log("🎧 Fin d'écoute");
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    return () => recognition.stop();
+  }, [lang, continuous, interimResults, onResult, onError, detectedLang]);
+
+  const startListening = () => {
+    try {
+      if (!recognitionRef.current) throw new Error("API vocale non initialisée");
+      recognitionRef.current.start();
+      setIsListening(true);
+      console.log("🎤 Démarrage de l'écoute via SpeechRecognition");
+    } catch (err) {
+      console.error("❌ Erreur startListening :", err);
+      onError?.("Impossible de démarrer la reconnaissance vocale.");
     }
   };
 
   const stopListening = () => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-  };
-
-  // ☁️ Fallback : envoi audio vers Supabase Whisper
-  const startCloudListening = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const chunks: Blob[] = [];
-
-      recorder.ondataavailable = (e) => chunks.push(e.data);
-      recorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: "audio/webm" });
-        const reader = new FileReader();
-
-        reader.onloadend = async () => {
-          const base64Audio = (reader.result as string).split(",")[1];
-          const resp = await fetch(
-            "https://mahmakmfonycckirgtwm.supabase.co/functions/v1/speech-to-text",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                audio: base64Audio,
-                mimeType: "audio/webm",
-              }),
-            }
-          );
-
-          const data = await resp.json();
-          if (data.text) onResult?.(data.text);
-          else onError?.("Aucune parole détectée.");
-        };
-
-        reader.readAsDataURL(blob);
-      };
-
-      recorder.start();
-      setIsListening(true);
-      setTimeout(() => {
-        recorder.stop();
-        setIsListening(false);
-      }, 5000);
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      console.log("🛑 Écoute arrêtée");
     } catch (err) {
-      console.error("🎤 Erreur fallback cloud:", err);
-      onError?.("Le micro n’a pas pu démarrer.");
+      console.error("❌ Erreur stopListening :", err);
     }
   };
 
-  return { isListening, startListening, stopListening };
+  return {
+    isListening,
+    transcript,
+    detectedLang,
+    startListening,
+    stopListening,
+  };
 }
