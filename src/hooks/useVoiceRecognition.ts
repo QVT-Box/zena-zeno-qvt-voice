@@ -1,133 +1,104 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { 
-  VoiceRecognitionFactory, 
-  IVoiceRecognitionService,
-  VoiceRecognitionMode 
-} from '@/services/VoiceRecognitionService';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect, useRef, useState } from "react";
 
-interface UseVoiceRecognitionOptions {
+interface UseVoiceRecognitionProps {
   lang?: string;
-  mode?: VoiceRecognitionMode;
   continuous?: boolean;
   interimResults?: boolean;
   onResult?: (text: string, isFinal: boolean) => void;
 }
 
-/**
- * Hook React pour gérer la reconnaissance vocale
- * Compatible mobile/desktop et prêt pour le cloud
- */
 export function useVoiceRecognition({
-  lang = 'fr-FR',
-  mode,
+  lang = "fr-FR",
   continuous = false,
   interimResults = true,
   onResult,
-}: UseVoiceRecognitionOptions = {}) {
+}: UseVoiceRecognitionProps) {
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const serviceRef = useRef<IVoiceRecognitionService | null>(null);
-  const { toast } = useToast();
+  const [transcript, setTranscript] = useState("");
+  const recognitionRef = useRef<any>(null);
 
-  // Déterminer le meilleur mode disponible
-  const effectiveMode = mode || VoiceRecognitionFactory.getBestAvailableMode();
-
-  // Initialiser le service
   useEffect(() => {
-    serviceRef.current = VoiceRecognitionFactory.create(effectiveMode, {
-      lang,
-      continuous,
-      interimResults,
-      onResult: (text, isFinal) => {
-        setTranscript(text);
-        onResult?.(text, isFinal);
-        if (isFinal) {
-          setTranscript('');
+    // Vérifie compatibilité navigateur
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      console.warn("❌ SpeechRecognition non supporté sur ce navigateur.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = lang;
+    recognition.continuous = continuous;
+    recognition.interimResults = interimResults;
+
+    recognition.onstart = () => {
+      console.log("🎤 ZÉNA écoute...");
+      setIsListening(true);
+    };
+
+    recognition.onend = () => {
+      console.log("🛑 Fin d'écoute");
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("⚠️ Erreur SpeechRecognition:", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = "";
+      let finalTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcriptPiece = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcriptPiece + " ";
+        } else {
+          interimTranscript += transcriptPiece;
         }
-      },
-      onError: (errorMsg) => {
-        setError(errorMsg);
-        setIsListening(false);
-        toast({
-          title: "Erreur microphone",
-          description: errorMsg,
-          variant: "destructive",
-        });
-      },
-      onStart: () => {
-        setIsListening(true);
-        setError(null);
-      },
-      onEnd: () => {
-        setIsListening(false);
-      },
-    });
+      }
+
+      const fullTranscript = finalTranscript || interimTranscript;
+      setTranscript(fullTranscript);
+
+      if (onResult) {
+        onResult(fullTranscript.trim(), !!finalTranscript);
+      }
+    };
+
+    recognitionRef.current = recognition;
 
     return () => {
-      serviceRef.current?.stop();
+      recognition.stop();
+      setIsListening(false);
     };
-  }, [lang, effectiveMode, continuous, interimResults, onResult, toast]);
+  }, [lang, continuous, interimResults, onResult]);
 
-  const start = useCallback(async () => {
-    console.log("🎤 [useVoiceRecognition] Tentative de démarrage...");
-    console.log("🎤 Mode effectif:", effectiveMode);
-    
-    if (!serviceRef.current) {
-      console.error("❌ Service de reconnaissance non disponible");
-      setError("Service de reconnaissance non disponible");
-      toast({
-        title: "Erreur",
-        description: "Service de reconnaissance non disponible",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log("🎤 Service créé:", serviceRef.current);
-    console.log("🎤 Service supporté?", serviceRef.current.isSupported());
-
-    if (!serviceRef.current.isSupported()) {
-      const errorMsg = effectiveMode === 'browser'
-        ? "Reconnaissance vocale non supportée sur ce navigateur. Essayez Chrome ou activez le mode cloud."
-        : "Mode cloud non encore disponible";
-      
-      console.error("❌ Service non supporté:", errorMsg);
-      setError(errorMsg);
-      toast({
-        title: "Non supporté",
-        description: errorMsg,
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const start = async () => {
     try {
-      console.log("🎤 Appel de service.start()...");
-      await serviceRef.current.start();
-      console.log("✅ Service démarré avec succès");
-    } catch (err: any) {
-      console.error("❌ Erreur lors du démarrage:", err);
-      setError(err.message);
-      toast({
-        title: "Erreur de démarrage",
-        description: err.message,
-        variant: "destructive",
-      });
+      if (!recognitionRef.current) {
+        console.error("⚠️ Recognition non initialisé");
+        return;
+      }
+
+      console.log("▶️ Démarrage écoute (demande permission micro)...");
+      await recognitionRef.current.start();
+      setIsListening(true);
+    } catch (err) {
+      console.error("🚫 Erreur lors du démarrage de l'écoute:", err);
+      setIsListening(false);
     }
-  }, [effectiveMode, toast]);
-
-  const stop = useCallback(() => {
-    serviceRef.current?.stop();
-  }, []);
-
-  return {
-    isListening,
-    transcript,
-    error,
-    start,
-    stop,
-    mode: effectiveMode,
   };
+
+  const stop = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      console.log("🛑 Arrêt manuel de l'écoute");
+      setIsListening(false);
+    }
+  };
+
+  return { isListening, transcript, start, stop };
 }
