@@ -53,8 +53,9 @@ export default function Index() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
         >
+          
           Une voix bienveillante, un regard attentif et une bulle d’écoute
-          pour mieux comprendre le bien-être au travail et en famille.
+          pour mieux comprendre le bien-être au travail.
         </motion.p>
 
         {/* CTA principaux */}
@@ -69,7 +70,7 @@ export default function Index() {
             size="lg"
             className="px-8 py-4 rounded-full text-white font-medium text-lg shadow-lg bg-gradient-to-r from-[#005B5F] to-[#4FD1C5] hover:opacity-90 transition-all"
           >
-            <Link to="/zena-chat">🎙️ Essayer ZÉNA en direct</Link>
+            <Link to="/zena-chat"> Essayer ZÉNA en direct</Link>
           </Button>
 
           <Button
