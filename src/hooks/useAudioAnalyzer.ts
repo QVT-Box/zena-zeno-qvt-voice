@@ -1,31 +1,29 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-/**
- * 🎤 useAudioAnalyzer – simulation réaliste du niveau audio de la voix IA
- * ------------------------------------------------------------
- * - Simule le mouvement de la bouche ou du halo pendant que ZÉNA parle.
- * - Génère des variations dynamiques basées sur isSpeaking.
- */
+/** Simule un niveau audio pendant que ZÉNA parle */
 export const useAudioAnalyzer = (isSpeaking: boolean) => {
   const [audioLevel, setAudioLevel] = useState(0);
-  const animationRef = useRef<number>();
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const loop = () => {
+      const t = performance.now();
+      const level = 0.2 + Math.abs(Math.sin(t / 150)) * 0.8;
+      setAudioLevel(level);
+      rafRef.current = requestAnimationFrame(loop);
+    };
+
     if (isSpeaking) {
-      const updateLevel = () => {
-        // Variation pseudo-aléatoire fluide
-        const level = 0.2 + Math.abs(Math.sin(Date.now() / 150)) * 0.8;
-        setAudioLevel(level);
-        animationRef.current = requestAnimationFrame(updateLevel);
-      };
-      updateLevel();
+      if (rafRef.current == null) rafRef.current = requestAnimationFrame(loop);
     } else {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
       setAudioLevel(0);
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     }
 
     return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     };
   }, [isSpeaking]);
 
