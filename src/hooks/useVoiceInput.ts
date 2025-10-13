@@ -8,12 +8,8 @@ interface UseVoiceInputOptions {
   onError?: (error: string) => void;
 }
 
-/**
- * 🎧 useVoiceInput – Hook vocal stable multilingue
- * Corrigé pour Chrome / Safari / Vercel (SSR safe)
- */
 export function useVoiceInput({
-  lang = "auto",
+  lang = "fr-FR",
   continuous = false,
   interimResults = true,
   onResult,
@@ -23,30 +19,34 @@ export function useVoiceInput({
   const [transcript, setTranscript] = useState("");
   const [detectedLang, setDetectedLang] = useState<"fr" | "en" | "unknown">("unknown");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const restartTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // sécurité SSR
+    if (typeof window === "undefined") return;
 
     const SpeechRecognitionAPI =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognitionAPI) {
-      onError?.("La reconnaissance vocale n'est pas supportée par ce navigateur.");
+      onError?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
       return;
     }
 
     const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
-    recognition.lang = lang === "auto" ? "fr-FR" : lang;
+    recognition.lang = lang;
     recognition.continuous = continuous;
     recognition.interimResults = interimResults;
 
-    recognition.onresult = (event: any) => {
-      if (!event.results || !event.results[event.resultIndex]) return;
+    recognition.onstart = () => {
+      console.log("🎤 ZÉNA écoute activée !");
+      setIsListening(true);
+    };
 
-      const lastResult = event.results[event.resultIndex];
-      const text = lastResult[0].transcript.trim();
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const result = event.results[event.resultIndex];
+      const text = result?.[0]?.transcript?.trim() || "";
+      if (!text) return;
 
-      // Détection automatique de la langue
       const isEnglish = /\b(hi|hello|how|you|thanks|please|okay|yes|no)\b/i.test(text);
       const isFrench = /\b(bonjour|salut|merci|oui|non|comment|ça va)\b/i.test(text);
       if (isEnglish) setDetectedLang("en");
@@ -54,34 +54,49 @@ export function useVoiceInput({
       else setDetectedLang("unknown");
 
       setTranscript(text);
-
-      if (lastResult.isFinal) {
+      if (result.isFinal && text.trim()) {
+        console.log("✅ Texte final reconnu :", text);
         onResult?.(text, detectedLang);
         setTranscript("");
       }
     };
 
     recognition.onerror = (event: any) => {
-      console.error("🎤 Erreur SpeechRecognition:", event.error);
-      onError?.(event.error);
+      console.warn("⚠️ Erreur SpeechRecognition :", event.error);
+      setIsListening(false);
+
+      // Relance douce en cas de "aborted"
+      if (event.error === "aborted" && !continuous) {
+        console.log("🔁 Redémarrage auto de l'écoute…");
+        if (restartTimeout.current) clearTimeout(restartTimeout.current);
+        restartTimeout.current = setTimeout(() => recognition.start(), 800);
+      } else {
+        onError?.(event.error);
+      }
+    };
+
+    recognition.onaudioend = () => {
+      console.log("🎧 Fin audio");
       setIsListening(false);
     };
 
     recognition.onend = () => {
-      console.log("🎧 Fin d'écoute");
+      console.log("🔚 Session d’écoute terminée");
       setIsListening(false);
     };
 
     recognitionRef.current = recognition;
-    return () => recognition.stop();
+    return () => {
+      if (restartTimeout.current) clearTimeout(restartTimeout.current);
+      recognition.stop();
+    };
   }, [lang, continuous, interimResults, onResult, onError, detectedLang]);
 
-  const startListening = () => {
+  const startListening = async () => {
     try {
       if (!recognitionRef.current) throw new Error("API vocale non initialisée");
+      console.log("▶️ Démarrage de l'écoute via SpeechRecognition");
       recognitionRef.current.start();
-      setIsListening(true);
-      console.log("🎤 Démarrage de l'écoute via SpeechRecognition");
     } catch (err) {
       console.error("❌ Erreur startListening :", err);
       onError?.("Impossible de démarrer la reconnaissance vocale.");
@@ -89,13 +104,9 @@ export function useVoiceInput({
   };
 
   const stopListening = () => {
-    try {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      console.log("🛑 Écoute arrêtée");
-    } catch (err) {
-      console.error("❌ Erreur stopListening :", err);
-    }
+    recognitionRef.current?.stop();
+    setIsListening(false);
+    console.log("🛑 Écoute arrêtée");
   };
 
   return {
