@@ -1,80 +1,59 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useRef } from "react";
 
 interface UseVoiceInputOptions {
-  lang?: "fr-FR" | "en-US" | "auto";
-  continuous?: boolean;
-  interimResults?: boolean;
-  onResult?: (text: string, detectedLang?: string) => void;
+  lang?: "fr-FR" | "en-US";
+  onResult?: (text: string) => void;
   onError?: (error: string) => void;
 }
 
 /**
- * Hook vocal multilingue (FR/EN)
- * Compatible desktop, mobile et Capacitor
+ * ✅ Hook de reconnaissance vocale robuste
+ * - Compatible desktop, mobile, iOS PWA
+ * - Fallback automatique vers Supabase Whisper si le navigateur ne supporte pas SpeechRecognition
  */
 export function useVoiceInput({
-  lang = "auto",
-  continuous = false,
-  interimResults = true,
+  lang = "fr-FR",
   onResult,
   onError,
 }: UseVoiceInputOptions = {}) {
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [detectedLang, setDetectedLang] = useState<"fr" | "en" | "unknown">("unknown");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  useEffect(() => {
-    const SpeechRecognitionAPI =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognitionAPI) {
-      onError?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
-      return;
-    }
-
-    const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
-    recognition.lang = lang === "auto" ? "fr-FR" : lang;
-    recognition.continuous = continuous;
-    recognition.interimResults = interimResults;
-
-    recognition.onresult = (event: any) => {
-      const lastResult = event.results[event.resultIndex];
-      const text = lastResult[0].transcript.trim();
-
-      // Détection simple FR/EN selon les mots clés
-      const isEnglish = /\b(hi|hello|how|you|thanks|please|okay|yes|no)\b/i.test(text);
-      const isFrench = /\b(bonjour|salut|merci|oui|non|comment|ça va)\b/i.test(text);
-
-      if (isEnglish) setDetectedLang("en");
-      else if (isFrench) setDetectedLang("fr");
-      else setDetectedLang("unknown");
-
-      setTranscript(text);
-
-      if (lastResult.isFinal) {
-        onResult?.(text, detectedLang);
-        setTranscript("");
-      }
-    };
-
-    recognition.onerror = (event: any) => {
-      onError?.(event.error);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => setIsListening(false);
-
-    recognitionRef.current = recognition;
-  }, [lang, continuous, interimResults, onResult, onError, detectedLang]);
-
-  const startListening = () => {
-    if (!recognitionRef.current) return;
+  const startListening = async () => {
     try {
-      recognitionRef.current.start();
-      setIsListening(true);
-    } catch {
-      onError?.("Impossible de démarrer la reconnaissance vocale.");
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        console.warn("⚠️ SpeechRecognition non supporté — fallback cloud activé");
+        return await startCloudListening();
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = lang;
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setIsListening(true);
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        const text = event.results[0][0].transcript.trim();
+        if (text) onResult?.(text);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("🎙️ SpeechRecognition error:", event.error);
+        onError?.(event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => setIsListening(false);
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (error) {
+      console.error("❌ Erreur démarrage micro:", error);
+      onError?.("Impossible d’activer le micro. Vérifie les autorisations.");
+      setIsListening(false);
     }
   };
 
@@ -83,11 +62,51 @@ export function useVoiceInput({
     setIsListening(false);
   };
 
-  return {
-    isListening,
-    transcript,
-    detectedLang,
-    startListening,
-    stopListening,
+  // ☁️ Fallback : envoi audio vers Supabase Whisper
+  const startCloudListening = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        const reader = new FileReader();
+
+        reader.onloadend = async () => {
+          const base64Audio = (reader.result as string).split(",")[1];
+          const resp = await fetch(
+            "https://mahmakmfonycckirgtwm.supabase.co/functions/v1/speech-to-text",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                audio: base64Audio,
+                mimeType: "audio/webm",
+              }),
+            }
+          );
+
+          const data = await resp.json();
+          if (data.text) onResult?.(data.text);
+          else onError?.("Aucune parole détectée.");
+        };
+
+        reader.readAsDataURL(blob);
+      };
+
+      recorder.start();
+      setIsListening(true);
+      setTimeout(() => {
+        recorder.stop();
+        setIsListening(false);
+      }, 5000);
+    } catch (err) {
+      console.error("🎤 Erreur fallback cloud:", err);
+      onError?.("Le micro n’a pas pu démarrer.");
+    }
   };
+
+  return { isListening, startListening, stopListening };
 }
