@@ -1,119 +1,147 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+type LangOpt = "fr-FR" | "en-US" | "auto";
 
 interface UseVoiceInputOptions {
-  lang?: "fr-FR" | "en-US" | "auto";
+  lang?: LangOpt;
   continuous?: boolean;
   interimResults?: boolean;
-  onResult?: (text: string, detectedLang?: string) => void;
+  onResult?: (text: string, detectedLang?: "fr" | "en" | "unknown") => void;
   onError?: (error: string) => void;
 }
 
+interface UseVoiceInputReturn {
+  isSupported: boolean;
+  isListening: boolean;
+  transcript: string;
+  detectedLang: "fr" | "en" | "unknown";
+  startListening: () => void;
+  stopListening: () => void;
+}
+
+/** Reconnaissance vocale FR/EN, stable StrictMode + mobile */
 export function useVoiceInput({
-  lang = "fr-FR",
+  lang = "auto",
   continuous = false,
   interimResults = true,
   onResult,
   onError,
-}: UseVoiceInputOptions = {}) {
+}: UseVoiceInputOptions = {}): UseVoiceInputReturn {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [detectedLang, setDetectedLang] = useState<"fr" | "en" | "unknown">("unknown");
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const restartTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  const SR =
+    (typeof window !== "undefined" && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)) ||
+    null;
+
+  const isSupported = !!SR;
+
+  const recRef = useRef<SpeechRecognition | null>(null);
+  const onResultRef = useRef(onResult);
+  const onErrorRef = useRef(onError);
+  const optionsRef = useRef({ lang, continuous, interimResults });
+
+  // garde les callbacks/options stables sans recréer l'instance
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    onResultRef.current = onResult;
+  }, [onResult]);
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+  useEffect(() => {
+    optionsRef.current = { lang, continuous, interimResults };
+    // si tu veux pouvoir changer la langue “à chaud”,
+    // tu peux aussi ajuster recRef.current?.lang ici quand non-listening.
+  }, [lang, continuous, interimResults]);
 
-    const SpeechRecognitionAPI =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognitionAPI) {
-      onError?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
+  // instanciation + handlers (une fois)
+  useEffect(() => {
+    if (!isSupported) {
+      onErrorRef.current?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
       return;
     }
+    if (recRef.current) return;
 
-    const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
-    recognition.lang = lang;
-    recognition.continuous = continuous;
-    recognition.interimResults = interimResults;
-
-    recognition.onstart = () => {
-      console.log("🎤 ZÉNA écoute activée !");
-      setIsListening(true);
-    };
+    const recognition = new (SR as any)() as SpeechRecognition;
+    recognition.lang = optionsRef.current.lang === "auto" ? "fr-FR" : (optionsRef.current.lang as string);
+    recognition.continuous = !!optionsRef.current.continuous;
+    recognition.interimResults = !!optionsRef.current.interimResults;
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const result = event.results[event.resultIndex];
-      const text = result?.[0]?.transcript?.trim() || "";
-      if (!text) return;
+      const res = event.results[event.resultIndex];
+      const text = Array.from(res).map(r => r.transcript).join("").trim();
 
+      // détection locale (pas via l'état)
       const isEnglish = /\b(hi|hello|how|you|thanks|please|okay|yes|no)\b/i.test(text);
-      const isFrench = /\b(bonjour|salut|merci|oui|non|comment|ça va)\b/i.test(text);
-      if (isEnglish) setDetectedLang("en");
-      else if (isFrench) setDetectedLang("fr");
-      else setDetectedLang("unknown");
+      const isFrench  = /\b(bonjour|salut|merci|oui|non|comment|ça va|ca va)\b/i.test(text);
+      const detected: "fr" | "en" | "unknown" = isEnglish ? "en" : isFrench ? "fr" : "unknown";
 
+      setDetectedLang(detected);
       setTranscript(text);
-      if (result.isFinal && text.trim()) {
-        console.log("✅ Texte final reconnu :", text);
-        onResult?.(text, detectedLang);
-        setTranscript("");
+
+      if ((res as any).isFinal) {
+        onResultRef.current?.(text, detected);
+        setTranscript(""); // optionnel : garde `text` si tu veux l’historique
       }
     };
 
     recognition.onerror = (event: any) => {
-      console.warn("⚠️ Erreur SpeechRecognition :", event.error);
       setIsListening(false);
-
-      // Relance douce en cas de "aborted"
-      if (event.error === "aborted" && !continuous) {
-        console.log("🔁 Redémarrage auto de l'écoute…");
-        if (restartTimeout.current) clearTimeout(restartTimeout.current);
-        restartTimeout.current = setTimeout(() => recognition.start(), 800);
-      } else {
-        onError?.(event.error);
-      }
-    };
-
-    recognition.onaudioend = () => {
-      console.log("🎧 Fin audio");
-      setIsListening(false);
+      onErrorRef.current?.(event?.error || "speech_error");
     };
 
     recognition.onend = () => {
-      console.log("🔚 Session d’écoute terminée");
-      setIsListening(false);
+      // auto-restart si continuous demandé et on était en écoute
+      if (optionsRef.current.continuous && isListening) {
+        try {
+          recognition.start();
+        } catch {
+          setIsListening(false);
+        }
+      } else {
+        setIsListening(false);
+      }
     };
 
-    recognitionRef.current = recognition;
+    recRef.current = recognition;
+
     return () => {
-      if (restartTimeout.current) clearTimeout(restartTimeout.current);
-      recognition.stop();
+      try { recRef.current?.stop(); } catch {}
+      recRef.current = null;
     };
-  }, [lang, continuous, interimResults, onResult, onError, detectedLang]);
+  // ⛔️ ne mets PAS detectedLang dans les deps !
+  }, [SR, isSupported, isListening]);
 
-  const startListening = async () => {
+  const startListening = useCallback(() => {
+    const rec = recRef.current;
+    if (!rec || !isSupported) return;
+
+    // (ré)applique options récentes si besoin
+    rec.lang = optionsRef.current.lang === "auto" ? "fr-FR" : (optionsRef.current.lang as string);
+    rec.continuous = !!optionsRef.current.continuous;
+    rec.interimResults = !!optionsRef.current.interimResults;
+
     try {
-      if (!recognitionRef.current) throw new Error("API vocale non initialisée");
-      console.log("▶️ Démarrage de l'écoute via SpeechRecognition");
-      recognitionRef.current.start();
-    } catch (err) {
-      console.error("❌ Erreur startListening :", err);
-      onError?.("Impossible de démarrer la reconnaissance vocale.");
+      // éviter InvalidStateError si déjà démarré
+      if (!(rec as any)._starting) {
+        (rec as any)._starting = true;
+        rec.start();
+        setIsListening(true);
+        setTimeout(() => ((rec as any)._starting = false), 0);
+      }
+    } catch (e) {
+      (rec as any)._starting = false;
+      onErrorRef.current?.("Impossible de démarrer la reconnaissance vocale.");
+      setIsListening(false);
     }
-  };
+  }, [isSupported]);
 
-  const stopListening = () => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-    console.log("🛑 Écoute arrêtée");
-  };
+  const stopListening = useCallback(() => {
+    const rec = recRef.current;
+    if (!rec) return;
+    try { rec.stop(); } finally { setIsListening(false); }
+  }, []);
 
-  return {
-    isListening,
-    transcript,
-    detectedLang,
-    startListening,
-    stopListening,
-  };
+  return { isSupported, isListening, transcript, detectedLang, startListening, stopListening };
 }
