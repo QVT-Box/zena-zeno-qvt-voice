@@ -53,6 +53,8 @@ export default function Index() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
         >
+
+
           
           Une voix bienveillante, un regard attentif et une bulle d’écoute
           pour mieux comprendre le bien-être au travail.
