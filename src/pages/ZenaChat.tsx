@@ -15,6 +15,8 @@ export default function ZenaChat() {
 
   const {
     isListening,
+    listen,
+    stopListening,
     speaking,
     thinking,
     messages,
@@ -26,6 +28,14 @@ export default function ZenaChat() {
     persona: "zena",
     language: selectedLanguage,
   });
+
+  const handleToggleListening = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      listen();
+    }
+  };
 
   const moodEmoji =
     emotionalState.mood === "positive"
@@ -177,7 +187,6 @@ export default function ZenaChat() {
           currentMessage={transcript}
           gender="female"
           language={selectedLanguage}
-          selectedLanguage={selectedLanguage}
         />
         <p className="text-xs text-gray-500 italic">
           {isListening

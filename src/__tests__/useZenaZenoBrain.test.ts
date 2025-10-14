@@ -70,7 +70,7 @@ describe('useZenaZenoBrain', () => {
     );
 
     expect(typeof result.current.onUserSpeak).toBe('function');
-    expect(typeof result.current.startListening).toBe('function');
+    expect(typeof result.current.listen).toBe('function');
     expect(typeof result.current.stopListening).toBe('function');
   });
 

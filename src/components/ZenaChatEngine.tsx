@@ -20,7 +20,7 @@ export default function ZenaChatEngine({ gender, role }: ZenaChatEngineProps) {
 
   const {
     isListening,
-    startListening,
+    listen,
     stopListening,
     speaking,
     thinking,
@@ -33,6 +33,14 @@ export default function ZenaChatEngine({ gender, role }: ZenaChatEngineProps) {
     persona,
     language: "auto",
   });
+
+  const handleToggleListening = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      listen();
+    }
+  };
 
   return (
     <div className="w-full bg-white/70 backdrop-blur-lg border border-[#A4D4AE]/40 rounded-3xl shadow-xl p-6 md:p-10 space-y-6 animate-fade-in">

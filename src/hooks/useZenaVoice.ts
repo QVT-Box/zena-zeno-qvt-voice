@@ -33,7 +33,6 @@ export function useZenaVoice({
 }: UseZenaVoiceOptions = {}) {
   // STT (écoute micro) — on branche onResult pour remonter les finals
   const {
-    isSupported: sttSupported,
     isListening,
     transcript,
     detectedLang,
@@ -48,6 +47,10 @@ export function useZenaVoice({
       if (text && onFinalResult) onFinalResult(text, (dl as any) || "unknown");
     },
   });
+
+  // Vérifier si STT est supporté
+  const sttSupported = typeof window !== 'undefined' && 
+    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) ? true : false;
 
   // TTS (parole)
   const {
