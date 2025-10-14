@@ -1,13 +1,9 @@
-// src/hooks/useSpeechSynthesis.ts
-import { useEffect, useMemo, useRef, useState } from "react";
-
-type Lang = "fr-FR" | "en-US";
-type Gender = "female" | "male";
+import { useEffect, useState, useRef } from "react";
 
 interface SpeakOptions {
   text: string;
-  lang?: Lang;
-  gender?: Gender;
+  lang?: "fr-FR" | "en-US";
+  gender?: "female" | "male";
   rate?: number;
   pitch?: number;
   volume?: number;
@@ -19,45 +15,29 @@ interface UseSpeechSynthesis {
   stop: () => void;
   speaking: boolean;
   availableVoices: SpeechSynthesisVoice[];
-  isSupported: boolean;
 }
 
+/**
+ * Hook universel pour la synthèse vocale multilingue
+ * - Gère automatiquement les voix masculine/féminine
+ * - Support FR/EN
+ * - Compatible Web + Capacitor
+ */
 export function useSpeechSynthesis(): UseSpeechSynthesis {
-  const isSupported = typeof window !== "undefined" && "speechSynthesis" in window;
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [speaking, setSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
+  // Chargement des voix disponibles
   useEffect(() => {
-    if (!isSupported) return;
-    const load = () => setVoices(window.speechSynthesis.getVoices() || []);
-    load();
-
-    const handler = load;
-    window.speechSynthesis.addEventListener?.("voiceschanged", handler as any);
-    const prev = (window.speechSynthesis as any).onvoiceschanged;
-    (window.speechSynthesis as any).onvoiceschanged = handler;
-
-    return () => {
-      window.speechSynthesis.removeEventListener?.("voiceschanged", handler as any);
-      (window.speechSynthesis as any).onvoiceschanged = prev ?? null;
+    const loadVoices = () => {
+      const voices = speechSynthesis.getVoices();
+      setAvailableVoices(voices);
     };
-  }, [isSupported]);
 
-  const pickVoice = useMemo(() => {
-    return (lang: Lang, gender: Gender) => {
-      const exact = voices.filter(v => v.lang === lang);
-      const pref  = voices.filter(v => v.lang.startsWith(lang.slice(0, 2)));
-      const pool = exact.length ? exact : pref;
-
-      const gendered = pool.find(v =>
-        gender === "female"
-          ? /female|woman|fémin|Google.*(fran|en)/i.test(v.name)
-          : /male|man|mascul|Google.*(fran|en)/i.test(v.name)
-      );
-      return gendered || pool[0] || voices[0] || null;
-    };
-  }, [voices]);
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }, []);
 
   const speak = ({
     text,
@@ -68,32 +48,42 @@ export function useSpeechSynthesis(): UseSpeechSynthesis {
     volume = 1,
     onEnd,
   }: SpeakOptions) => {
-    if (!isSupported || !text) return;
+    if (!text || typeof window === "undefined") return;
 
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang;
-      u.rate = rate;
-      u.pitch = pitch;
-      u.volume = volume;
-      u.voice = pickVoice(lang, gender);
+    // Nettoyage avant nouvelle lecture
+    speechSynthesis.cancel();
 
-      u.onstart = () => setSpeaking(true);
-      u.onend = () => { setSpeaking(false); onEnd?.(); };
-      u.onerror = () => setSpeaking(false);
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = rate;
+    utterance.pitch = pitch;
+    utterance.volume = volume;
 
-      utteranceRef.current = u;
-      window.speechSynthesis.speak(u);
-    } catch {
+    // Sélection automatique de la voix
+    const matchingVoice =
+      availableVoices.find((v) =>
+        gender === "female"
+          ? /female|woman|Google français/i.test(v.name) && v.lang.startsWith(lang.slice(0, 2))
+          : /male|man|homme|Google français/i.test(v.name) && v.lang.startsWith(lang.slice(0, 2))
+      ) ||
+      availableVoices.find((v) => v.lang.startsWith(lang.slice(0, 2)));
+
+    utterance.voice = matchingVoice || null;
+
+    utterance.onstart = () => setSpeaking(true);
+    utterance.onend = () => {
       setSpeaking(false);
-    }
+      onEnd?.();
+    };
+
+    utteranceRef.current = utterance;
+    speechSynthesis.speak(utterance);
   };
 
   const stop = () => {
-    if (!isSupported) return;
-    try { window.speechSynthesis.cancel(); } finally { setSpeaking(false); }
+    speechSynthesis.cancel();
+    setSpeaking(false);
   };
 
-  return { speak, stop, speaking, availableVoices: voices, isSupported };
+  return { speak, stop, speaking, availableVoices };
 }
