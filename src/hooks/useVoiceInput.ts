@@ -1,3 +1,4 @@
+// src/hooks/useVoiceInput.ts
 import { useEffect, useRef, useState } from "react";
 
 interface UseVoiceInputOptions {
@@ -10,7 +11,8 @@ interface UseVoiceInputOptions {
 
 /**
  * Hook vocal multilingue (FR/EN)
- * Compatible desktop, mobile et Capacitor
+ * - Chrome/Edge desktop + Chrome Android: OK
+ * - iOS/Safari: SpeechRecognition non supporté (onError sera appelé)
  */
 export function useVoiceInput({
   lang = "auto",
@@ -22,65 +24,137 @@ export function useVoiceInput({
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [detectedLang, setDetectedLang] = useState<"fr" | "en" | "unknown">("unknown");
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const onResultRef = useRef(onResult);
+  const onErrorRef = useRef(onError);
+  const optionsRef = useRef({ lang, continuous, interimResults });
+  const startingRef = useRef(false);
+  const manualStopRef = useRef(false);
+
+  useEffect(() => { onResultRef.current = onResult; }, [onResult]);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
+  useEffect(() => { optionsRef.current = { lang, continuous, interimResults }; }, [lang, continuous, interimResults]);
+
+  // Pré-autorise le micro pour éviter "not-allowed" silencieux
+  async function ensureMicPermission(): Promise<boolean> {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return true;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
   useEffect(() => {
-    const SpeechRecognitionAPI =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (typeof window === "undefined") return;
 
-    if (!SpeechRecognitionAPI) {
-      onError?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
+    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      onErrorRef.current?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
       return;
     }
 
-    const recognition = new SpeechRecognitionAPI() as SpeechRecognition;
-    recognition.lang = lang === "auto" ? "fr-FR" : lang;
-    recognition.continuous = continuous;
-    recognition.interimResults = interimResults;
+    const recognition = new SR() as SpeechRecognition;
+    recognition.lang = optionsRef.current.lang === "auto" ? "fr-FR" : (optionsRef.current.lang as string);
+    recognition.continuous = !!optionsRef.current.continuous;
+    recognition.interimResults = !!optionsRef.current.interimResults;
 
     recognition.onresult = (event: any) => {
       const lastResult = event.results[event.resultIndex];
-      const text = lastResult[0].transcript.trim();
+      const text = lastResult[0]?.transcript?.trim?.() ?? "";
 
-      // Détection simple FR/EN selon les mots clés
+      // Détecte FR/EN à partir du texte courant (pas le state)
       const isEnglish = /\b(hi|hello|how|you|thanks|please|okay|yes|no)\b/i.test(text);
-      const isFrench = /\b(bonjour|salut|merci|oui|non|comment|ça va)\b/i.test(text);
+      const isFrench  = /\b(bonjour|salut|merci|oui|non|comment|ça va|ca va)\b/i.test(text);
+      const dl: "fr" | "en" | "unknown" = isEnglish ? "en" : isFrench ? "fr" : "unknown";
 
-      if (isEnglish) setDetectedLang("en");
-      else if (isFrench) setDetectedLang("fr");
-      else setDetectedLang("unknown");
-
+      setDetectedLang(dl);
       setTranscript(text);
 
       if (lastResult.isFinal) {
-        onResult?.(text, detectedLang);
+        onResultRef.current?.(text, dl); // <-- utilise la valeur calculée, pas le state
         setTranscript("");
       }
     };
 
     recognition.onerror = (event: any) => {
-      onError?.(event.error);
+      const code = event?.error || "speech_error";
+      startingRef.current = false;
       setIsListening(false);
+
+      const nice =
+        code === "not-allowed"         ? "Permission micro refusée."
+      : code === "audio-capture"       ? "Aucun micro détecté."
+      : code === "no-speech"           ? "Aucune parole détectée."
+      : code === "aborted"             ? "Reconnaissance interrompue."
+      : code === "network"             ? "Erreur réseau."
+      : code === "service-not-allowed" ? "Service de reconnaissance non autorisé."
+      : `Erreur de reconnaissance: ${code}`;
+
+      onErrorRef.current?.(nice);
     };
 
-    recognition.onend = () => setIsListening(false);
+    recognition.onend = () => {
+      startingRef.current = false;
+      if (optionsRef.current.continuous && !manualStopRef.current) {
+        try {
+          recognition.start(); // auto-restart si continuous
+        } catch {
+          setIsListening(false);
+        }
+      } else {
+        setIsListening(false);
+        manualStopRef.current = false;
+      }
+    };
 
     recognitionRef.current = recognition;
-  }, [lang, continuous, interimResults, onResult, onError, detectedLang]);
+    return () => {
+      try { recognition.stop(); } catch {}
+      recognitionRef.current = null;
+    };
+    // IMPORTANT: ne pas dépendre de detectedLang/onResult/onError pour éviter re-instanciation
+  }, []); 
 
-  const startListening = () => {
-    if (!recognitionRef.current) return;
+  const startListening = async () => {
+    const rec = recognitionRef.current;
+    if (!rec) {
+      onErrorRef.current?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
+      return;
+    }
+    if (isListening || startingRef.current) return;
+
+    manualStopRef.current = false;
+
+    if (!(await ensureMicPermission())) {
+      onErrorRef.current?.("Accès au micro refusé. Vérifie les permissions navigateur/OS.");
+      return;
+    }
+
+    // Applique les options à l’instant du démarrage
+    rec.lang = optionsRef.current.lang === "auto" ? "fr-FR" : (optionsRef.current.lang as string);
+    rec.continuous = !!optionsRef.current.continuous;
+    rec.interimResults = !!optionsRef.current.interimResults;
+
     try {
-      recognitionRef.current.start();
+      startingRef.current = true;
+      rec.start();
       setIsListening(true);
     } catch {
-      onError?.("Impossible de démarrer la reconnaissance vocale.");
+      startingRef.current = false;
+      setIsListening(false);
+      onErrorRef.current?.("Impossible de démarrer la reconnaissance vocale.");
     }
   };
 
   const stopListening = () => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
+    const rec = recognitionRef.current;
+    if (!rec) return;
+    manualStopRef.current = true;
+    try { rec.stop(); } finally { setIsListening(false); startingRef.current = false; }
   };
 
   return {
