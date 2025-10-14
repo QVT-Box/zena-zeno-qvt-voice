@@ -6,10 +6,6 @@ verify_jwt = false
 [functions.speech-to-text]
 verify_jwt = false
 
-[functions.zena-analyze]
-# Analyse émotionnelle et scoring QVT
-verify_jwt = false
-
 [functions.generate-emotional-weather]
 # Météo émotionnelle avec Mistral + ChatGPT + Lovable AI
 verify_jwt = false

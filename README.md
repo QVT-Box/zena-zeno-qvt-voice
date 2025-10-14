@@ -1,73 +1,201 @@
-# Welcome to your Lovable project
+# ZÉNA - Assistant QVT avec IA et RAG
 
-## Project info
+## 🎯 Présentation du projet
 
-**URL**: https://lovable.dev/projects/ebb766cc-dc12-4d64-a580-db96bef091f0
+**ZÉNA** (et **ZÉNO**) est un assistant vocal intelligent dédié à la Qualité de Vie au Travail (QVT). Il combine reconnaissance vocale, synthèse vocale, analyse émotionnelle et un système RAG (Retrieval-Augmented Generation) multi-tenant pour fournir des conseils personnalisés aux entreprises.
 
-## How can I edit this code?
+## ✨ Fonctionnalités principales
 
-There are several ways of editing your application.
+### 🎤 Interface vocale
+- Reconnaissance vocale multilingue (FR/EN)
+- Synthèse vocale avec voix féminine (ZÉNA) et masculine (ZÉNO)
+- Avatar animé réagissant aux émotions
 
-**Use Lovable**
+### 🧠 Intelligence artificielle
+- Analyse émotionnelle en temps réel
+- Recommandations personnalisées de boxes QVT
+- Support OpenAI et Mistral
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/ebb766cc-dc12-4d64-a580-db96bef091f0) and start prompting.
+### 📚 Système RAG Multi-tenant
+- Upload et indexation de documents QVT par entreprise (TXT, MD)
+- Recherche sémantique avec pgvector
+- Réponses contextualisées basées sur les documents de l'entreprise
 
-Changes made via Lovable will be committed automatically to this repo.
+### 📊 Tableau de bord
+- Suivi du score QVT personnel
+- Historique des conversations
+- Analytics et insights
 
-**Use your preferred IDE**
+## 🚀 Technologies utilisées
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React, TypeScript, Tailwind CSS, shadcn-ui, Framer Motion
+- **Backend**: Supabase (Lovable Cloud)
+  - PostgreSQL + pgvector pour le RAG
+  - Edge Functions (Deno)
+  - Storage pour les documents
+  - Auth avec RLS
+- **IA**: OpenAI (embeddings + chat), Mistral
+- **Tests**: Vitest, React Testing Library
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📁 Structure du projet
 
-Follow these steps:
+```
+src/
+├── components/        # Composants UI
+│   ├── ui/           # shadcn components
+│   ├── ZenaAvatar.tsx
+│   ├── VoiceControl.tsx
+│   └── ...
+├── hooks/            # Custom hooks
+│   ├── useZenaZenoBrain.ts  # Cerveau IA + chat
+│   ├── useZenaVoice.ts      # Orchestration vocale
+│   └── ...
+├── pages/            # Pages de l'app
+│   ├── Index.tsx
+│   ├── ZenaChat.tsx
+│   ├── Dashboard.tsx
+│   ├── OnboardingUpload.tsx  # Upload documents RAG
+│   └── ...
+├── data/             # Données statiques
+└── __tests__/        # Tests unitaires
+
+supabase/
+└── functions/
+    ├── qvt-ai/              # Chat avec RAG
+    ├── ingest-kb/           # Indexation documents
+    ├── generate-emotional-weather/  # Analyse émotionnelle
+    └── speech-to-text/      # Transcription vocale
+```
+
+## 🛠️ Installation et démarrage
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone le dépôt
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Installe les dépendances
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Configure les variables d'environnement (automatique avec Lovable Cloud)
+# VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY
+
+# Démarre le serveur de développement
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🔐 Configuration des secrets Supabase
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Les clés API suivantes doivent être configurées dans Supabase :
 
-**Use GitHub Codespaces**
+- `OPENAI_API_KEY` - Pour embeddings et chat GPT
+- `MISTRAL_API_KEY` - Pour chat Mistral (optionnel)
+- `SUPABASE_SERVICE_ROLE_KEY` - Auto-configuré
+- `LOVABLE_API_KEY` - Auto-configuré
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🧪 Tests
 
-## What technologies are used for this project?
+```sh
+# Lance tous les tests
+npm run test
 
-This project is built with:
+# Mode watch pour le développement
+npm run test:watch
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Avec rapport de couverture
+npm run test:coverage
+```
 
-## How can I deploy this project?
+## 🎨 Utilisation du système RAG
 
-Simply open [Lovable](https://lovable.dev/projects/ebb766cc-dc12-4d64-a580-db96bef091f0) and click on Share -> Publish.
+### 1. Créer un tenant et ajouter des membres
 
-## Can I connect a custom domain to my Lovable project?
+```typescript
+// Créer une entreprise (tenant)
+const { data: tenant } = await supabase
+  .from('tenants')
+  .insert({ name: 'Mon Entreprise' })
+  .select()
+  .single();
 
-Yes, you can!
+// Ajouter un membre
+await supabase.from('tenant_members').insert({
+  tenant_id: tenant.id,
+  user_id: user.id,
+  role: 'admin'
+});
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### 2. Uploader des documents QVT
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```tsx
+import OnboardingUpload from '@/pages/OnboardingUpload';
+
+<OnboardingUpload 
+  tenantId={tenantId}
+  onComplete={() => console.log('Docs indexés!')}
+/>
+```
+
+### 3. Chat avec RAG
+
+```typescript
+const res = await fetch(`${SUPABASE_URL}/functions/v1/qvt-ai`, {
+  method: 'POST',
+  body: JSON.stringify({
+    tenant_id: tenantId,     // Active le RAG
+    text: 'Comment réduire le stress au travail?',
+    persona: 'zena',         // ou 'zeno'
+    provider: 'openai',      // ou 'mistral'
+    lang: 'fr',
+    k: 5                     // Nombre de chunks à récupérer
+  })
+});
+
+const { reply, mood, used_chunks } = await res.json();
+```
+
+## 📚 API Edge Functions
+
+### `qvt-ai` - Chat avec RAG
+Génère des réponses contextualisées en utilisant les documents de l'entreprise.
+
+**Paramètres:**
+- `text` (required): Question de l'utilisateur
+- `tenant_id` (optional): ID du tenant pour activer le RAG
+- `persona`: "zena" | "zeno"
+- `provider`: "openai" | "mistral"
+- `lang`: "fr" | "en"
+- `k`: Nombre de chunks à récupérer (défaut: 5)
+
+### `ingest-kb` - Indexation documents
+Ingère et indexe des documents pour le RAG.
+
+**Paramètres:**
+- `tenant_id` (required): ID du tenant
+- `objects` (required): Liste des fichiers à indexer
+- `lang`: "fr" | "en"
+- `tags`: Tags pour catégoriser
+- `bucket`: Nom du bucket storage (défaut: "kb")
+
+## 🎯 Roadmap
+
+- [x] Interface vocale avec ZÉNA/ZÉNO
+- [x] Analyse émotionnelle temps réel
+- [x] Système RAG multi-tenant avec pgvector
+- [x] Upload et indexation de documents
+- [x] Support OpenAI et Mistral
+- [ ] Support PDF et DOCX (via Unstructured API)
+- [ ] Analytics d'entreprise
+- [ ] Intégration Microsoft Teams / Slack
+- [ ] Application mobile (Capacitor)
+
+## 🔗 Liens utiles
+
+- **Lovable Project**: https://lovable.dev/projects/ebb766cc-dc12-4d64-a580-db96bef091f0
+- **Documentation Supabase**: https://supabase.com/docs
+- **Documentation pgvector**: https://github.com/pgvector/pgvector
+
+## 📝 Licence
+
+Ce projet est privé et confidentiel.
