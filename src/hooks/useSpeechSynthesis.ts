@@ -75,13 +75,23 @@ export function useSpeechSynthesis(): UseSpeechSynthesis {
       const sameBase = availableVoices.filter((v) => v.lang?.slice(0, 2).toLowerCase() === base);
       const pool = exact.length ? exact : sameBase.length ? sameBase : availableVoices;
 
+      console.log(`[useSpeechSynthesis] Sélection voix pour ${lang} ${gender}:`, {
+        availableCount: availableVoices.length,
+        poolCount: pool.length,
+        poolNames: pool.map(v => `${v.name} (${v.lang})`),
+      });
+
+      // Regex amélioré pour détecter les voix françaises féminines
       const genderRe =
         gender === "female"
-          ? /(female|woman|fem|fémin|Femme|Girl|Wavenet-[A|C|F]|Neural.*Female|Google.*(Female|Femme))/i
-          : /(male|man|masc|Homme|Boy|Wavenet-[B|D]|Neural.*Male|Google.*(Male|Homme))/i;
+          ? /(female|woman|fem|fémin|Femme|Girl|Hortense|Julie|Celine|Denise|Audrey|Léa|Amelie|Virginie|Wavenet-[A|C|F]|Neural.*Female|Google.*(Female|Femme)|fr-FR-.*Female|Microsoft.*FR.*Female)/i
+          : /(male|man|masc|Homme|Boy|Thomas|Paul|Henri|Claude|Alain|Wavenet-[B|D]|Neural.*Male|Google.*(Male|Homme)|fr-FR-.*Male|Microsoft.*FR.*Male)/i;
 
       const byGender = pool.find((v) => genderRe.test(v.name));
-      return byGender || pool[0] || null;
+      const selected = byGender || pool[0] || null;
+      
+      console.log(`[useSpeechSynthesis] Voix sélectionnée:`, selected ? `${selected.name} (${selected.lang})` : 'AUCUNE');
+      return selected;
     };
   }, [availableVoices]);
 

@@ -13,6 +13,14 @@ export default function ZenaChat() {
   const { user, loading, signOut } = useAuth();
   const [selectedLanguage, setSelectedLanguage] = useState<"fr-FR" | "en-US">("fr-FR");
 
+  // Détection du support vocal
+  const isMobileSafari = typeof navigator !== 'undefined' && 
+    /iPad|iPhone|iPod/.test(navigator.userAgent) && 
+    !(window as any).MSStream;
+  
+  const sttSupported = typeof window !== 'undefined' && 
+    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+
   const {
     isListening,
     listen,
@@ -181,22 +189,46 @@ export default function ZenaChat() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <VoiceControl
-          onToggleListening={handleToggleListening}
-          isListening={isListening}
-          transcript={transcript}
-          isSpeaking={speaking}
-          gender="female"
-        />
-        <p className="text-xs text-gray-500 italic">
-          {isListening
-            ? selectedLanguage === "fr-FR" 
-              ? " ZÉNA vous écoute..." 
-              : " ZÉNA is listening..."
-            : selectedLanguage === "fr-FR"
-              ? "Appuyez sur le micro pour parler à ZÉNA"
-              : "Press the mic to talk to ZÉNA"}
-        </p>
+        {!sttSupported ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+            <p className="text-sm text-amber-800 font-medium mb-2">
+              {selectedLanguage === "fr-FR" 
+                ? "⚠️ Reconnaissance vocale non disponible"
+                : "⚠️ Voice recognition not available"}
+            </p>
+            <p className="text-xs text-amber-700">
+              {selectedLanguage === "fr-FR" 
+                ? "Votre navigateur ne supporte pas la reconnaissance vocale. Utilisez Chrome ou Edge sur ordinateur ou Android."
+                : "Your browser doesn't support voice recognition. Use Chrome or Edge on desktop or Android."}
+            </p>
+            {isMobileSafari && (
+              <p className="text-xs text-amber-700 mt-2">
+                {selectedLanguage === "fr-FR"
+                  ? "Safari iOS ne supporte pas encore cette fonctionnalité. 📱"
+                  : "Safari iOS doesn't support this feature yet. 📱"}
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <VoiceControl
+              onToggleListening={handleToggleListening}
+              isListening={isListening}
+              transcript={transcript}
+              isSpeaking={speaking}
+              gender="female"
+            />
+            <p className="text-xs text-gray-500 italic">
+              {isListening
+                ? selectedLanguage === "fr-FR" 
+                  ? " ZÉNA vous écoute..." 
+                  : " ZÉNA is listening..."
+                : selectedLanguage === "fr-FR"
+                  ? "Appuyez sur le micro pour parler à ZÉNA"
+                  : "Press the mic to talk to ZÉNA"}
+            </p>
+          </>
+        )}
       </motion.div>
 
       {/* ==== ÉTAT ÉMOTIONNEL ==== */}
