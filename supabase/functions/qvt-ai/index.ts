@@ -3,8 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const supa = createClient(
@@ -12,12 +12,17 @@ const supa = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY");
+// Provider keys
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");     // utilisé pour embeddings + (option) chat
+const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY");   // utilisé si provider = mistral
 
-const EMB_MODEL = "text-embedding-3-small";
+// Models
+const EMB_MODEL = "text-embedding-3-small"; // 1536 dims
 const OPENAI_CHAT = "gpt-4o-mini";
 const MISTRAL_CHAT = "mistral-small-latest";
+
+// RAG hardening: évite d'appeler le retrieval si pas de clé embeddings
+const EMBEDDINGS_ENABLED = Boolean(OPENAI_API_KEY); // simple: on garde OpenAI pour embeddings
 
 type Body = {
   tenant_id?: string;
@@ -33,56 +38,39 @@ function personaSystem(p: "zena" | "zeno" = "zena", lang: "fr" | "en" = "fr") {
   const zenoFR = `Tu es ZÉNO, coach QVT pour salariés et managers, calme, structuré, concis, non médical.`;
   const zenaEN = `You are ZÉNA, a warm, empathetic workplace wellbeing coach. No medical advice.`;
   const zenoEN = `You are ZÉNO, a calm, structured workplace wellbeing coach. No medical advice.`;
-  return lang === "en"
-    ? p === "zena"
-      ? zenaEN
-      : zenoEN
-    : p === "zena"
-    ? zenaFR
-    : zenoFR;
+  return lang === "en" ? (p === "zena" ? zenaEN : zenoEN) : (p === "zena" ? zenaFR : zenoFR);
 }
 
 function detectMood(t: string): "positive" | "neutral" | "negative" | "distress" {
   const s = t.toLowerCase();
-  if (/(suicide|me faire du mal|plus envie|détresse|detresse)/.test(s))
-    return "distress";
-  if (/(stress|épuis|epuis|burnout|angoisse|anxieux|fatigué|fatigue)/.test(s))
-    return "negative";
-  if (/(bien|motivé|motivation|heureux|content|confiant)/.test(s))
-    return "positive";
+  if (/(suicide|me faire du mal|plus envie|détresse|detresse)/.test(s)) return "distress";
+  if (/(stress|épuis|epuis|burnout|angoisse|anxieux|fatigué|fatigue)/.test(s)) return "negative";
+  if (/(bien|motivé|motivation|heureux|content|confiant)/.test(s)) return "positive";
   return "neutral";
 }
 
-function styleFor(
-  m: ReturnType<typeof detectMood>,
-  lang: "fr" | "en"
-): string {
+function styleFor(m: ReturnType<typeof detectMood>, lang: "fr" | "en"): string {
   const FR = {
-    distress:
-      "Parle doucement, rassure, oriente vers lignes d'écoute/urgent + référent interne.",
-    negative:
-      "Empathique, normalise l'émotion, propose 2 actions concrètes rapides.",
+    distress: "Parle doucement, rassure, oriente vers lignes d'écoute/urgent + référent interne.",
+    negative: "Empathique, normalise l'émotion, propose 2 actions concrètes rapides.",
     positive: "Valorise l'élan, propose 1 action pour entretenir.",
     neutral: "Curiosité bienveillante, questions ouvertes, synthèse brève.",
   };
   const EN = {
-    distress:
-      "Speak softly, reassure, recommend helplines/urgent care + internal contact.",
+    distress: "Speak softly, reassure, recommend helplines/urgent care + internal contact.",
     negative: "Empathetic, normalize emotion, propose 2 concrete quick actions.",
     positive: "Reinforce momentum with 1 small action.",
     neutral: "Warm curiosity, open questions, brief synthesis.",
   };
-  const dict = lang === "en" ? EN : FR;
-  return dict[m];
+  return (lang === "en" ? EN : FR)[m];
 }
 
+// --- Embeddings (OpenAI) ---
 async function embed(text: string) {
+  if (!OPENAI_API_KEY) throw new Error("Missing OPENAI_API_KEY for embeddings");
   const res = await fetch("https://api.openai.com/v1/embeddings", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_API_KEY}` },
     body: JSON.stringify({ model: EMB_MODEL, input: text }),
   });
   if (!res.ok) throw new Error(`embed ${res.status}`);
@@ -90,31 +78,29 @@ async function embed(text: string) {
   return json.data[0].embedding as number[];
 }
 
+// --- Retrieval (RPC) ---
+// ⚠️ IMPORTANT: on passe le tableau number[] directement (PAS de JSON.stringify)
+// La fonction SQL doit être :
+//   create or replace function match_chunks(p_tenant_id uuid, p_query_embedding vector(1536), p_match_count int default 5) ...
 async function retrieve(tenant_id: string, qEmbedding: number[], k = 5) {
   const { data, error } = await supa.rpc("match_chunks", {
     p_tenant_id: tenant_id,
-    p_query_embedding: JSON.stringify(qEmbedding),
+    p_query_embedding: qEmbedding,  // ✅ FIX: pas de stringify
     p_match_count: k,
   });
   if (error) {
     console.error("[qvt-ai] Error retrieving chunks:", error);
     throw error;
   }
-  return (data || []) as {
-    title: string;
-    content: string;
-    tags: string[];
-    similarity: number;
-  }[];
+  return (data || []) as { title: string; content: string; tags: string[]; similarity: number }[];
 }
 
+// --- Chat providers ---
 async function callOpenAI(messages: any[]) {
+  if (!OPENAI_API_KEY) throw new Error("Missing OPENAI_API_KEY for chat");
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_API_KEY}` },
     body: JSON.stringify({ model: OPENAI_CHAT, messages, temperature: 0.7 }),
   });
   if (!res.ok) throw new Error(`openai ${res.status}`);
@@ -123,46 +109,31 @@ async function callOpenAI(messages: any[]) {
 }
 
 async function callMistral(messages: any[]) {
+  if (!MISTRAL_API_KEY) throw new Error("Missing MISTRAL_API_KEY for chat");
   const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${MISTRAL_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: MISTRAL_CHAT,
-      messages,
-      temperature: 0.7,
-    }),
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${MISTRAL_API_KEY}` },
+    body: JSON.stringify({ model: MISTRAL_CHAT, messages, temperature: 0.7 }),
   });
   if (!res.ok) throw new Error(`mistral ${res.status}`);
   const j = await res.json();
   return j.choices?.[0]?.message?.content?.trim() ?? "";
 }
 
+// --- Utils: on évite d'inonder le prompt avec trop de contexte
+function clampContext(ctx: string, maxChars = 8000) {
+  return ctx.length > maxChars ? ctx.slice(0, maxChars) + "\n[…]" : ctx;
+}
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const {
-      tenant_id,
-      text,
-      persona = "zena",
-      lang = "fr",
-      provider = "openai",
-      k = 5,
-    } = (await req.json()) as Body;
+    const { tenant_id, text, persona = "zena", lang = "fr", provider = "openai", k = 5 } = (await req.json()) as Body;
 
-    if (!text) {
-      return new Response(JSON.stringify({ error: "missing text" }), {
-        status: 400,
-        headers: corsHeaders,
-      });
+    if (!text?.trim()) {
+      return new Response(JSON.stringify({ error: "missing text" }), { status: 400, headers: corsHeaders });
     }
-
-    console.log(`[qvt-ai] Processing request for persona ${persona}, lang ${lang}, provider ${provider}`);
 
     const mood = detectMood(text);
     const style = styleFor(mood, lang);
@@ -170,18 +141,16 @@ serve(async (req) => {
     let ctx = "";
     let used_chunks = 0;
 
-    // Si un tenant_id est fourni, faire du RAG
-    if (tenant_id) {
+    // RAG seulement si tenant + embeddings dispo
+    if (tenant_id && EMBEDDINGS_ENABLED) {
       try {
-        console.log(`[qvt-ai] Retrieving context for tenant ${tenant_id}`);
         const qEmb = await embed(text);
         const chunks = await retrieve(tenant_id, qEmb, k);
         used_chunks = chunks.length;
-        ctx = chunks.map((c, i) => `- ${c.title ?? "Doc"} : ${c.content}`).join("\n");
-        console.log(`[qvt-ai] Retrieved ${used_chunks} chunks`);
+        ctx = chunks.map((c) => `- ${c.title ?? "Doc"} : ${c.content}`).join("\n");
+        ctx = clampContext(ctx); // ✅ évite dépassement de tokens
       } catch (err) {
-        console.error("[qvt-ai] Error in RAG retrieval:", err);
-        // Continue sans contexte
+        console.error("[qvt-ai] RAG retrieval failed (continuing without context):", err);
       }
     }
 
@@ -189,46 +158,26 @@ serve(async (req) => {
     const consignes =
       lang === "en"
         ? `Use the internal context when relevant. If missing, say so and suggest generic options.
-         End with 1–3 concrete actions suitable for the company.
-         Style hint: ${style}`
+           End with 1–3 concrete actions suitable for the company.
+           Style hint: ${style}`
         : `Utilise le contexte interne quand pertinent. S'il manque, dis-le et propose des pistes génériques.
-         Termine par 1–3 actions concrètes adaptées à l'entreprise.
-         Indice de style: ${style}`;
+           Termine par 1–3 actions concrètes adaptées à l'entreprise.
+           Indice de style : ${style}`;
 
     const messages = [
       { role: "system", content: sys },
       ...(ctx
-        ? [
-            {
-              role: "system",
-              content:
-                (lang === "en" ? "[Internal context]\n" : "[Contexte interne]\n") +
-                ctx,
-            },
-          ]
+        ? [{ role: "system", content: (lang === "en" ? "[Internal context]\n" : "[Contexte interne]\n") + ctx }]
         : []),
-      {
-        role: "system",
-        content:
-          (lang === "en" ? "[Guidelines]\n" : "[Consignes]\n") + consignes,
-      },
+      { role: "system", content: (lang === "en" ? "[Guidelines]\n" : "[Consignes]\n") + consignes },
       { role: "user", content: text },
     ];
 
-    console.log(`[qvt-ai] Calling ${provider} API`);
-    const reply =
-      provider === "mistral"
-        ? await callMistral(messages)
-        : await callOpenAI(messages);
+    const reply = provider === "mistral" ? await callMistral(messages) : await callOpenAI(messages);
 
-    console.log(`[qvt-ai] Response generated successfully`);
-
-    return new Response(
-      JSON.stringify({ reply, mood, used_chunks }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ reply, mood, used_chunks }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (e: any) {
     console.error("[qvt-ai] Fatal error:", e);
     return new Response(JSON.stringify({ error: String(e?.message || e) }), {
