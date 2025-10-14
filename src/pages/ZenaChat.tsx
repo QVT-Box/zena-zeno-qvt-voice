@@ -182,11 +182,11 @@ export default function ZenaChat() {
         transition={{ delay: 0.4 }}
       >
         <VoiceControl
-          onSpeechRecognized={onUserSpeak}
+          onToggleListening={handleToggleListening}
+          isListening={isListening}
+          transcript={transcript}
           isSpeaking={speaking}
-          currentMessage={transcript}
           gender="female"
-          language={selectedLanguage}
         />
         <p className="text-xs text-gray-500 italic">
           {isListening

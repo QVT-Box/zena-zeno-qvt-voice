@@ -2,38 +2,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import VoiceControl from '@/components/VoiceControl';
 
-// Mock du hook useVoiceRecognition
-vi.mock('@/hooks/useVoiceRecognition', () => ({
-  useVoiceRecognition: () => ({
-    isListening: false,
-    transcript: '',
-    error: null,
-    start: vi.fn(),
-    stop: vi.fn(),
-    mode: 'browser',
-  }),
-}));
-
-// Mock du toast
-vi.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({
-    toast: vi.fn(),
-  }),
-}));
-
 describe('VoiceControl', () => {
-  const mockOnSpeechRecognized = vi.fn();
+  const mockOnToggleListening = vi.fn();
 
   beforeEach(() => {
-    mockOnSpeechRecognized.mockClear();
+    mockOnToggleListening.mockClear();
   });
 
   it('doit afficher le bouton micro', () => {
     const { container } = render(
       <VoiceControl
-        onSpeechRecognized={mockOnSpeechRecognized}
+        onToggleListening={mockOnToggleListening}
+        isListening={false}
+        transcript=""
         isSpeaking={false}
-        currentMessage=""
       />
     );
 
@@ -44,9 +26,10 @@ describe('VoiceControl', () => {
   it('doit afficher le message par défaut quand aucun texte', () => {
     const { container } = render(
       <VoiceControl
-        onSpeechRecognized={mockOnSpeechRecognized}
+        onToggleListening={mockOnToggleListening}
+        isListening={false}
+        transcript=""
         isSpeaking={false}
-        currentMessage=""
       />
     );
 
@@ -54,20 +37,12 @@ describe('VoiceControl', () => {
   });
 
   it('doit afficher le transcript quand disponible', () => {
-    const { rerender, container } = render(
+    const { container } = render(
       <VoiceControl
-        onSpeechRecognized={mockOnSpeechRecognized}
+        onToggleListening={mockOnToggleListening}
+        isListening={false}
+        transcript="Bonjour Zena"
         isSpeaking={false}
-        currentMessage=""
-      />
-    );
-
-    // Simuler un transcript
-    rerender(
-      <VoiceControl
-        onSpeechRecognized={mockOnSpeechRecognized}
-        isSpeaking={false}
-        currentMessage="Bonjour Zena"
       />
     );
 
@@ -77,12 +52,26 @@ describe('VoiceControl', () => {
   it('doit afficher l\'état "ZÉNA parle" quand isSpeaking est true', () => {
     const { container } = render(
       <VoiceControl
-        onSpeechRecognized={mockOnSpeechRecognized}
+        onToggleListening={mockOnToggleListening}
+        isListening={false}
+        transcript=""
         isSpeaking={true}
-        currentMessage=""
       />
     );
 
     expect(container.textContent).toContain('ZÉNA parle');
+  });
+
+  it('doit afficher l\'état "ZÉNA vous écoute" quand isListening est true', () => {
+    const { container } = render(
+      <VoiceControl
+        onToggleListening={mockOnToggleListening}
+        isListening={true}
+        transcript=""
+        isSpeaking={false}
+      />
+    );
+
+    expect(container.textContent).toContain('ZÉNA vous écoute');
   });
 });

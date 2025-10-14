@@ -125,7 +125,18 @@ export function useVoiceInput({
       onErrorRef.current?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
       return;
     }
-    if (isListening || startingRef.current) return;
+    
+    // ✅ Vérification renforcée
+    if (isListening || startingRef.current) {
+      console.warn('[useVoiceInput] Reconnaissance déjà en cours, ignoré');
+      return;
+    }
+
+    // ✅ Stop propre si déjà actif (safety)
+    try {
+      rec.stop();
+      await new Promise(r => setTimeout(r, 300)); // Attendre la fin propre
+    } catch {}
 
     manualStopRef.current = false;
 
@@ -134,7 +145,7 @@ export function useVoiceInput({
       return;
     }
 
-    // Applique les options à l’instant du démarrage
+    // Applique les options à l'instant du démarrage
     rec.lang = optionsRef.current.lang === "auto" ? "fr-FR" : (optionsRef.current.lang as string);
     rec.continuous = !!optionsRef.current.continuous;
     rec.interimResults = !!optionsRef.current.interimResults;
@@ -143,10 +154,17 @@ export function useVoiceInput({
       startingRef.current = true;
       rec.start();
       setIsListening(true);
-    } catch {
+      console.log('✅ [useVoiceInput] Reconnaissance démarrée');
+    } catch (err: any) {
+      console.error('❌ [useVoiceInput] Erreur start():', err); // ✅ Log l'erreur réelle
       startingRef.current = false;
       setIsListening(false);
-      onErrorRef.current?.("Impossible de démarrer la reconnaissance vocale.");
+      
+      // ✅ Message selon le type d'erreur
+      const msg = err.message?.includes('already')
+        ? "La reconnaissance vocale est déjà active."
+        : "Impossible de démarrer la reconnaissance vocale.";
+      onErrorRef.current?.(msg);
     }
   };
 

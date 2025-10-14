@@ -1,74 +1,28 @@
 import { motion } from "framer-motion";
 import { Mic, MicOff } from "lucide-react";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { useEffect } from "react";
 
 interface VoiceControlProps {
-  onSpeechRecognized: (text: string) => void;
+  onToggleListening: () => void;
+  isListening: boolean;
+  transcript: string;
   isSpeaking: boolean;
-  currentMessage: string;
   gender?: "female" | "male";
-  language?: "fr-FR" | "en-US";
 }
 
 /**
- * 🎙️ VoiceControl – ZÉNA QVT Box (version corrigée)
+ * 🎙️ VoiceControl – ZÉNA QVT Box (Composant UI pur)
  * -----------------------------------------------------------
- * ✅ Intègre useVoiceInput (SpeechRecognition API)
- * ✅ Fonctionne sur mobile, desktop & PWA
  * ✅ Halo animé (turquoise/violet)
- * ✅ Détection active / arrêt + transcript temps réel
+ * ✅ Affichage du transcript en temps réel
+ * ✅ La logique vocale est gérée par useZenaZenoBrain
  */
 export default function VoiceControl({
-  onSpeechRecognized,
+  onToggleListening,
+  isListening,
+  transcript,
   isSpeaking,
-  currentMessage,
   gender = "female",
-  language = "fr-FR",
 }: VoiceControlProps) {
-  const {
-    isListening,
-    transcript,
-    startListening,
-    stopListening,
-    detectedLang,
-  } = useVoiceInput({
-    lang: language,
-    continuous: false,
-    interimResults: true,
-    onResult: (text) => {
-      if (text.trim()) {
-        console.log("✅ Texte reconnu :", text);
-        onSpeechRecognized(text.trim());
-      }
-    },
-    onError: (error) => {
-      console.error("❌ Erreur de reconnaissance vocale :", error);
-      alert("Erreur micro : " + error);
-    },
-  });
-
-  const handleToggleListening = async () => {
-    try {
-      if (isListening) {
-        console.log("🛑 Arrêt de l'écoute");
-        stopListening();
-      } else {
-        console.log("▶️ Démarrage de l'écoute");
-        await startListening();
-      }
-    } catch (e) {
-      console.error("🎤 Erreur au démarrage de l'écoute :", e);
-    }
-  };
-
-  // 🔍 Debug console pour vérifier l’état de la capture
-  useEffect(() => {
-    console.log("🎧 Transcript actuel :", transcript);
-    console.log("🎧 État d’écoute :", isListening);
-    console.log("🌍 Langue détectée :", detectedLang);
-  }, [transcript, isListening, detectedLang]);
-
   // 🌈 Couleur du halo selon le genre de la voix
   const auraColor =
     gender === "female"
@@ -103,7 +57,7 @@ export default function VoiceControl({
 
         {/* Bouton principal micro */}
         <motion.button
-          onClick={handleToggleListening}
+          onClick={onToggleListening}
           className={`relative z-10 w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-full shadow-lg transition-all focus:outline-none 
             ${
               isListening
@@ -114,7 +68,7 @@ export default function VoiceControl({
             scale: isListening ? [1, 1.08, 1] : [1, 0.98, 1],
           }}
           transition={{ duration: 1.5, repeat: Infinity }}
-          aria-label={isListening ? "Arrêter l’écoute" : "Démarrer l’écoute"}
+          aria-label={isListening ? "Arrêter l'écoute" : "Démarrer l'écoute"}
         >
           {isListening ? <MicOff size={32} /> : <Mic size={32} />}
         </motion.button>
@@ -126,10 +80,10 @@ export default function VoiceControl({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        {transcript || currentMessage ? (
-          <p className="leading-relaxed">{transcript || currentMessage}</p>
+        {transcript ? (
+          <p className="leading-relaxed">{transcript}</p>
         ) : (
-          <p className="italic text-gray-400">Votre voix s’affichera ici...</p>
+          <p className="italic text-gray-400">Votre voix s'affichera ici...</p>
         )}
       </motion.div>
 
