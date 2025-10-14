@@ -45,7 +45,6 @@ export function useZenaZenoBrain({
   });
   const [recommendedBox, setRecommendedBox] = useState<RecommendedBox | null>(null);
 
-  // Orchestration TTS+STT (anti-écho intégré)
   const {
     say,
     listen,            // démarre l'écoute micro (STT)
