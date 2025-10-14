@@ -1,6 +1,8 @@
 // src/hooks/useZenaZenoBrain.ts
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useZenaVoice } from "@/hooks/useZenaVoice";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 type Persona = "zena" | "zeno";
 type LangOpt = "auto" | "fr-FR" | "en-US";
@@ -37,6 +39,7 @@ export function useZenaZenoBrain({
   persona = "zena",
   language = "auto",
 }: UseZenaZenoBrainOptions) {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [thinking, setThinking] = useState(false);
   const [emotionalState, setEmotionalState] = useState<EmotionalState>({
@@ -44,6 +47,29 @@ export function useZenaZenoBrain({
     score: 8,
   });
   const [recommendedBox, setRecommendedBox] = useState<RecommendedBox | null>(null);
+  const currentSessionId = useRef<string | null>(null);
+
+  // Créer une session au premier rendu
+  useEffect(() => {
+    const createSession = async () => {
+      const { data, error } = await supabase
+        .from('conversation_sessions')
+        .insert({
+          user_id: user?.id || null,
+          persona,
+          language: language === "auto" ? "fr-FR" : language,
+        })
+        .select('id')
+        .single();
+
+      if (!error && data) {
+        currentSessionId.current = data.id;
+        console.log('[useZenaZenoBrain] Session créée:', data.id);
+      }
+    };
+
+    createSession();
+  }, [user, persona, language]);
 
   // Orchestration TTS+STT (anti-écho intégré)
   const {
@@ -67,49 +93,37 @@ export function useZenaZenoBrain({
   },
 });
 
-  // Réponse émotionnelle locale
+  // 🧠 Génération de réponse IA via edge function
   const generateAIResponse = async (userText: string): Promise<string> => {
-    const lower = userText.toLowerCase();
-    let response = "";
-    let mood: EmotionalState["mood"] = "neutral";
-    let score = 8;
-    let box: RecommendedBox | null = null;
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-emotional-weather', {
+        body: {
+          text: userText,
+          persona,
+          language: detectedLang === "fr" ? "fr" : "en",
+          userId: user?.id,
+          sessionId: currentSessionId.current
+        }
+      });
 
-    if (/(stress|fatigue)/.test(lower)) {
-      response =
-        persona === "zena"
-          ? "Je ressens un peu de tension. Prends un instant pour respirer profondément 💨"
-          : "Je comprends, la fatigue pèse. Prends un peu de recul.";
-      mood = "negative";
-      score = 5;
-      box = {
-        name: "Box Relax & Respire",
-        theme: "Détente & Sérénité",
-        description: "Une box pensée pour apaiser le mental et retrouver ton calme.",
-      };
-    } else if (/(bien|motivé|motivation|heureux|content)/.test(lower)) {
-      response =
-        persona === "zena"
-          ? "Ça me fait plaisir de te sentir dans une bonne énergie 🌞"
-          : "Excellente vibe aujourd’hui, continue sur cette lancée !";
-      mood = "positive";
-      score = 12;
-      box = {
-        name: "Box Vitalité & Motivation",
-        theme: "Énergie & Confiance",
-        description: "Des produits pour entretenir ta belle énergie !",
-      };
-    } else {
-      response =
-        persona === "zena"
-          ? "Merci pour ton partage. Dis-m’en un peu plus sur ce que tu ressens ? 💬"
-          : "Je t’écoute, veux-tu approfondir un peu ce que tu ressens ?";
+      if (error) {
+        console.error('[useZenaZenoBrain] Erreur edge function:', error);
+        throw error;
+      }
+
+      // Mise à jour de l'état émotionnel
+      setEmotionalState({ mood: data.mood, score: data.score });
+      
+      // Mise à jour de la box recommandée
+      setRecommendedBox(data.recommendedBox);
+
+      return data.reply;
+    } catch (err) {
+      console.error('[useZenaZenoBrain] Erreur génération:', err);
+      return persona === "zena" 
+        ? "Désolée, je n'ai pas pu analyser ton message pour le moment. 💔"
+        : "Je rencontre une difficulté technique. Peux-tu réessayer ?";
     }
-
-    await new Promise((r) => setTimeout(r, 800));
-    setEmotionalState({ mood, score });
-    setRecommendedBox(box);
-    return response;
   };
 
   // Quand l’utilisateur parle (texte final)

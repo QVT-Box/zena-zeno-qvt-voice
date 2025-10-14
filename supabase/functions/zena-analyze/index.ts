@@ -74,7 +74,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("❌ Erreur analyse:", err);
     return new Response(
-      JSON.stringify({ error: err.message || "Erreur inconnue" }),
+      JSON.stringify({ error: err instanceof Error ? err.message : "Erreur inconnue" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
