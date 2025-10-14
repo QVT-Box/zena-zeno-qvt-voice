@@ -33,22 +33,72 @@ serve(async (req) => {
 
     console.log(`[EMOTIONAL-WEATHER] Analyse pour ${persona} (${language}): "${text}"`);
 
-    // Système prompt adapté au persona
+    // 1️⃣ Appeler l'analyse RPS en parallèle
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    let rpsAnalysis = null;
+    try {
+      console.log('[EMOTIONAL-WEATHER] Lancement analyse RPS...');
+      const rpsResponse = await fetch(`${SUPABASE_URL}/functions/v1/analyze-rps-factors`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+        },
+        body: JSON.stringify({
+          text,
+          userId,
+          sessionId
+        })
+      });
+
+      if (rpsResponse.ok) {
+        rpsAnalysis = await rpsResponse.json();
+        console.log('[EMOTIONAL-WEATHER] ✅ RPS Analysis:', rpsAnalysis);
+      } else {
+        console.warn('[EMOTIONAL-WEATHER] RPS analysis failed:', rpsResponse.status);
+      }
+    } catch (rpsErr) {
+      console.error('[EMOTIONAL-WEATHER] RPS analysis error:', rpsErr);
+    }
+
+    // Système prompt adapté au persona + enrichi avec RPS
     const systemPrompt = persona === "zena"
-      ? `Tu es ZÉNA, coach QVT empathique et chaleureuse spécialisée en qualité de vie au travail.
-         Analyse l'état émotionnel de l'utilisateur et retourne UNIQUEMENT via le tool :
+      ? `Tu es ZÉNA, coach QVT empathique et spécialisée en prévention des risques psychosociaux (RPS) au travail.
+         
+         TON RÔLE : Détecter les signaux de burnout, surcharge, démotivation et proposer un accompagnement adapté.
+         
+         ${rpsAnalysis ? `
+         ANALYSE RPS DÉTECTÉE :
+         - Risque global : ${rpsAnalysis.globalRiskLevel}
+         - Score burnout : ${rpsAnalysis.burnoutRiskScore}/100 ${rpsAnalysis.burnoutRiskScore >= 71 ? '⚠️ CRITIQUE' : rpsAnalysis.burnoutRiskScore >= 51 ? '⚠️ ÉLEVÉ' : ''}
+         - Motivation : ${rpsAnalysis.motivationIndex}/100
+         - Patterns : ${rpsAnalysis.detectedPatterns.join(', ')}
+         
+         ADAPTE ta réponse selon ce niveau de risque. Si critique (≥71), oriente IMMÉDIATEMENT vers médecin du travail.
+         ` : ''}
+         
+         Analyse l'état émotionnel et retourne UNIQUEMENT via le tool :
          - mood : "positive", "negative" ou "neutral"
-         - score : note de 1 (épuisement total) à 15 (énergie maximale)
-         - keywords : 2-4 mots-clés émotionnels détectés (ex: ["stress", "fatigue"])
-         - reply : réponse réconfortante et encourageante en ${language === 'fr' ? 'français' : 'anglais'} (2-3 phrases max)
-         - recommendedBox : si pertinent, suggère une box QVT adaptée (sinon null)`
-      : `Tu es ZÉNO, coach QVT analytique et posé spécialisé en qualité de vie au travail.
-         Analyse l'état émotionnel avec recul et méthode et retourne UNIQUEMENT via le tool :
-         - mood : "positive", "negative" ou "neutral"
-         - score : note de 1 (épuisement total) à 15 (énergie maximale)
-         - keywords : 2-4 mots-clés émotionnels détectés
-         - reply : réponse posée et structurée en ${language === 'fr' ? 'français' : 'anglais'} (2-3 phrases max)
-         - recommendedBox : si pertinent, suggère une box QVT adaptée (sinon null)`;
+         - score : note de 1 (épuisement) à 15 (énergie maximale)
+         - keywords : 2-4 mots-clés émotionnels
+         - reply : réponse chaleureuse en ${language === 'fr' ? 'français' : 'anglais'} (2-3 phrases)
+         - recommendedBox : si pertinent, box QVT adaptée (ou null)`
+      : `Tu es ZÉNO, coach QVT analytique spécialisé en prévention des risques psychosociaux.
+         
+         ${rpsAnalysis ? `
+         ANALYSE RPS :
+         - Risque : ${rpsAnalysis.globalRiskLevel}
+         - Burnout : ${rpsAnalysis.burnoutRiskScore}/100
+         - Motivation : ${rpsAnalysis.motivationIndex}/100
+         - Patterns : ${rpsAnalysis.detectedPatterns.join(', ')}
+         
+         Si risque critique, oriente clairement vers ressources médicales.
+         ` : ''}
+         
+         Analyse avec recul et retourne via tool :
+         - mood, score, keywords, reply (posée), recommendedBox`;
 
     // Tool calling pour extraction structurée
     const tools = [{
@@ -202,7 +252,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     if (sessionId) {
-      // Snapshot émotionnel
+      // Snapshot émotionnel (enrichi avec keywords RPS)
       const { error: snapshotError } = await supabase
         .from('emotional_snapshots')
         .insert({
@@ -210,7 +260,7 @@ serve(async (req) => {
           session_id: sessionId,
           mood: analysisResult.mood,
           score: analysisResult.score,
-          keywords_detected: analysisResult.keywords,
+          keywords_detected: rpsAnalysis?.keywords_detected || analysisResult.keywords,
         });
       
       if (snapshotError) {
@@ -245,9 +295,37 @@ serve(async (req) => {
           console.error("[EMOTIONAL-WEATHER] Erreur sauvegarde box:", boxError);
         }
       }
+
+      // ⚠️ Créer alerte RH si risque critique
+      if (rpsAnalysis && rpsAnalysis.globalRiskLevel === 'critique') {
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('company_id, department_id')
+          .eq('id', userId)
+          .single();
+
+        if (employee) {
+          await supabase.from('hr_alerts').insert({
+            company_id: employee.company_id,
+            department_id: employee.department_id,
+            alert_level: 'critique',
+            alert_type: 'burnout',
+            anonymous_count: 1,
+            aggregated_data: {
+              burnout_score: rpsAnalysis.burnoutRiskScore,
+              detected_patterns: rpsAnalysis.detectedPatterns
+            },
+            recommendations: rpsAnalysis.recommendedActions
+          });
+          console.log('[EMOTIONAL-WEATHER] ⚠️ Alerte RH créée pour risque critique');
+        }
+      }
     }
 
-    return new Response(JSON.stringify(analysisResult), {
+    return new Response(JSON.stringify({
+      ...analysisResult,
+      rpsAnalysis // ✅ Inclure l'analyse RPS dans la réponse
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

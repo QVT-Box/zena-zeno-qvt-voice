@@ -4,6 +4,7 @@ import ZenaChat from "@/pages/ZenaChat";
 import Auth from "@/pages/Auth";
 import WellnessHub from "@/pages/WellnessHub";
 import Dashboard from "@/pages/Dashboard";
+import DashboardRH from "@/pages/DashboardRH";
 import { Toaster } from "@/components/ui/sonner";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -48,6 +49,9 @@ function App() {
 
           {/*  Dashboard personnel */}
           <Route path="/dashboard" element={<Dashboard />} />
+
+          {/*  Dashboard RH – Prévention RPS */}
+          <Route path="/dashboard-rh" element={<DashboardRH />} />
 
           {/*  Redirection par défaut */}
           <Route path="*" element={<Navigate to="/" replace />} />

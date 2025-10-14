@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_aggregated: {
+        Row: {
+          aggregation_period: string
+          at_risk_users: number | null
+          avg_autonomy: number | null
+          avg_burnout_risk: number | null
+          avg_emotional_demands: number | null
+          avg_intensity_work: number | null
+          avg_job_insecurity: number | null
+          avg_motivation_index: number | null
+          avg_social_relations: number | null
+          avg_value_conflicts: number | null
+          company_id: string | null
+          created_at: string | null
+          critical_users: number | null
+          department_id: string | null
+          id: string
+          mood_distribution: Json | null
+          period_end: string
+          period_start: string
+          risk_distribution: Json | null
+          total_users: number | null
+        }
+        Insert: {
+          aggregation_period: string
+          at_risk_users?: number | null
+          avg_autonomy?: number | null
+          avg_burnout_risk?: number | null
+          avg_emotional_demands?: number | null
+          avg_intensity_work?: number | null
+          avg_job_insecurity?: number | null
+          avg_motivation_index?: number | null
+          avg_social_relations?: number | null
+          avg_value_conflicts?: number | null
+          company_id?: string | null
+          created_at?: string | null
+          critical_users?: number | null
+          department_id?: string | null
+          id?: string
+          mood_distribution?: Json | null
+          period_end: string
+          period_start: string
+          risk_distribution?: Json | null
+          total_users?: number | null
+        }
+        Update: {
+          aggregation_period?: string
+          at_risk_users?: number | null
+          avg_autonomy?: number | null
+          avg_burnout_risk?: number | null
+          avg_emotional_demands?: number | null
+          avg_intensity_work?: number | null
+          avg_job_insecurity?: number | null
+          avg_motivation_index?: number | null
+          avg_social_relations?: number | null
+          avg_value_conflicts?: number | null
+          company_id?: string | null
+          created_at?: string | null
+          critical_users?: number | null
+          department_id?: string | null
+          id?: string
+          mood_distribution?: Json | null
+          period_end?: string
+          period_start?: string
+          risk_distribution?: Json | null
+          total_users?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_aggregated_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_aggregated_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_articles: {
         Row: {
           author: string
@@ -466,6 +550,131 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_alerts: {
+        Row: {
+          acknowledged: boolean | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          actions_taken: string | null
+          aggregated_data: Json | null
+          alert_level: string
+          alert_type: string
+          anonymous_count: number
+          company_id: string | null
+          created_at: string | null
+          department_id: string | null
+          id: string
+          recommendations: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+        }
+        Insert: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          actions_taken?: string | null
+          aggregated_data?: Json | null
+          alert_level: string
+          alert_type: string
+          anonymous_count?: number
+          company_id?: string | null
+          created_at?: string | null
+          department_id?: string | null
+          id?: string
+          recommendations?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+        }
+        Update: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          actions_taken?: string | null
+          aggregated_data?: Json | null
+          alert_level?: string
+          alert_type?: string
+          anonymous_count?: number
+          company_id?: string | null
+          created_at?: string | null
+          department_id?: string | null
+          id?: string
+          recommendations?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_alerts_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intervention_logs: {
+        Row: {
+          actions_taken: Json
+          created_at: string | null
+          follow_up_at: string | null
+          follow_up_required: boolean | null
+          id: string
+          outcome: string | null
+          protocol_key: string
+          protocol_level: string | null
+          rps_snapshot: Json | null
+          session_id: string | null
+          trigger_conditions: Json | null
+          user_feedback: string | null
+          user_id: string | null
+        }
+        Insert: {
+          actions_taken: Json
+          created_at?: string | null
+          follow_up_at?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          outcome?: string | null
+          protocol_key: string
+          protocol_level?: string | null
+          rps_snapshot?: Json | null
+          session_id?: string | null
+          trigger_conditions?: Json | null
+          user_feedback?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          actions_taken?: Json
+          created_at?: string | null
+          follow_up_at?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          outcome?: string | null
+          protocol_key?: string
+          protocol_level?: string | null
+          rps_snapshot?: Json | null
+          session_id?: string | null
+          trigger_conditions?: Json | null
+          user_feedback?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intervention_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kb_chunks: {
         Row: {
           content: string
@@ -602,6 +811,74 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      rps_tracking: {
+        Row: {
+          autonomy_score: number | null
+          burnout_risk_score: number | null
+          created_at: string | null
+          detected_patterns: Json | null
+          emotional_demands_score: number | null
+          global_risk_level: string | null
+          id: string
+          intensity_work_score: number | null
+          job_insecurity_score: number | null
+          keywords_detected: string[] | null
+          motivation_index: number | null
+          recommended_actions: string[] | null
+          session_id: string | null
+          social_relations_score: number | null
+          timestamp: string
+          user_id: string | null
+          value_conflicts_score: number | null
+        }
+        Insert: {
+          autonomy_score?: number | null
+          burnout_risk_score?: number | null
+          created_at?: string | null
+          detected_patterns?: Json | null
+          emotional_demands_score?: number | null
+          global_risk_level?: string | null
+          id?: string
+          intensity_work_score?: number | null
+          job_insecurity_score?: number | null
+          keywords_detected?: string[] | null
+          motivation_index?: number | null
+          recommended_actions?: string[] | null
+          session_id?: string | null
+          social_relations_score?: number | null
+          timestamp?: string
+          user_id?: string | null
+          value_conflicts_score?: number | null
+        }
+        Update: {
+          autonomy_score?: number | null
+          burnout_risk_score?: number | null
+          created_at?: string | null
+          detected_patterns?: Json | null
+          emotional_demands_score?: number | null
+          global_risk_level?: string | null
+          id?: string
+          intensity_work_score?: number | null
+          job_insecurity_score?: number | null
+          keywords_detected?: string[] | null
+          motivation_index?: number | null
+          recommended_actions?: string[] | null
+          session_id?: string | null
+          social_relations_score?: number | null
+          timestamp?: string
+          user_id?: string | null
+          value_conflicts_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rps_tracking_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -864,6 +1141,14 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      calculate_aggregated_analytics: {
+        Args: {
+          p_company_id: string
+          p_department_id?: string
+          p_period?: string
+        }
+        Returns: undefined
       }
       get_user_company_id: {
         Args: { _user_id: string }
