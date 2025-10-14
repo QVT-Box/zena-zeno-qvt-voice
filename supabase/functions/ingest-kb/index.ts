@@ -1,5 +1,6 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,10 +23,10 @@ type Body = {
   bucket?: string;
 };
 
-function sha256(s: string) {
+async function sha256(s: string) {
   const data = new TextEncoder().encode(s);
-  const digest = crypto.subtle.digestSync("SHA-256", data as any);
-  return Array.from(new Uint8Array(digest as any))
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
 }
@@ -88,7 +89,7 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
   return j.data.map((d: any) => d.embedding);
 }
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -170,16 +171,18 @@ Deno.serve(async (req) => {
         const embeddings = await embedBatch(chunks);
         console.log(`[ingest-kb] Generated ${embeddings.length} embeddings`);
 
-        const rows = chunks.map((content, i) => ({
-          tenant_id,
-          source_id: src.id,
-          title: obj.name ?? "Document QVT",
-          content,
-          lang,
-          tags,
-          content_sha256: sha256(content),
-          embedding: JSON.stringify(embeddings[i]),
-        }));
+        const rows = await Promise.all(
+          chunks.map(async (content, i) => ({
+            tenant_id,
+            source_id: src.id,
+            title: obj.name ?? "Document QVT",
+            content,
+            lang,
+            tags,
+            content_sha256: await sha256(content),
+            embedding: JSON.stringify(embeddings[i]),
+          }))
+        );
 
         const { error: e2 } = await supa.from("kb_chunks").insert(rows);
         if (e2) {
