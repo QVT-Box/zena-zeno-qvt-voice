@@ -47,21 +47,25 @@ export function useZenaZenoBrain({
 
   // Orchestration TTS+STT (anti-écho intégré)
   const {
-    say,
-    listen,            // démarre l'écoute micro (STT)
-    stopListening,     // stop l'écoute
-    isListening,       // état STT
-    isSpeaking,        // état TTS
-    transcript,        // texte entendu (intermédiaire puis vidé au final)
-    detectedLang,      // "fr" | "en" | "unknown"
-    audioLevel,        // 0..1 pour anim
-  } = useZenaVoice({
-    lang: language === "auto" ? "fr-FR" : (language as "fr-FR" | "en-US"),
-    gender: persona === "zena" ? "female" : "male",
-    sttLang: language,        // "auto" ou "fr-FR"/"en-US"
-    continuous: true,
-    interimResults: true,
-  });
+  say,
+  listen,
+  stopListening,
+  isListening,
+  isSpeaking,
+  transcript,
+  detectedLang,
+  audioLevel,
+} = useZenaVoice({
+  lang: language === "auto" ? "fr-FR" : (language as "fr-FR" | "en-US"),
+  gender: persona === "zena" ? "female" : "male",
+  sttLang: language,
+  continuous: true,
+  interimResults: true,
+  onFinalResult: (finalText) => {
+    // 💡 Dès qu’on a un résultat FINAL du micro, on déclenche le cerveau
+    onUserSpeak(finalText);
+  },
+});
 
   // Réponse émotionnelle locale
   const generateAIResponse = async (userText: string): Promise<string> => {
