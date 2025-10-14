@@ -13,3 +13,8 @@ verify_jwt = false
 [functions.ingest-kb]
 # Ingestion et indexation RAG des documents QVT
 verify_jwt = false
+[functions.analyze-rps-factors]
+verify_jwt = false
+
+[functions.analyze-rps-factors]
+verify_jwt = false
