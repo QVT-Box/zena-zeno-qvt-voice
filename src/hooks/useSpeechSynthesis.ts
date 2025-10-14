@@ -1,13 +1,18 @@
-import { useEffect, useState, useRef } from "react";
+// src/hooks/useSpeechSynthesis.ts
+import { useEffect, useMemo, useRef, useState } from "react";
+
+type Lang = "fr-FR" | "en-US";
+type Gender = "female" | "male";
 
 interface SpeakOptions {
   text: string;
-  lang?: "fr-FR" | "en-US";
-  gender?: "female" | "male";
-  rate?: number;
-  pitch?: number;
-  volume?: number;
+  lang?: Lang;
+  gender?: Gender;
+  rate?: number;   // 0.1 – 10
+  pitch?: number;  // 0 – 2
+  volume?: number; // 0 – 1
   onEnd?: () => void;
+  mode?: "replace" | "queue"; // replace = cancel avant de parler, queue = ajoute
 }
 
 interface UseSpeechSynthesis {
@@ -15,29 +20,72 @@ interface UseSpeechSynthesis {
   stop: () => void;
   speaking: boolean;
   availableVoices: SpeechSynthesisVoice[];
+  isSupported: boolean;
 }
 
-/**
- * Hook universel pour la synthèse vocale multilingue
- * - Gère automatiquement les voix masculine/féminine
- * - Support FR/EN
- * - Compatible Web + Capacitor
- */
 export function useSpeechSynthesis(): UseSpeechSynthesis {
+  const isSupported =
+    typeof window !== "undefined" && typeof window.speechSynthesis !== "undefined";
+
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [speaking, setSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Chargement des voix disponibles
+  // Chargement fiable des voix (event + petit polling si liste vide)
   useEffect(() => {
-    const loadVoices = () => {
-      const voices = speechSynthesis.getVoices();
-      setAvailableVoices(voices);
-    };
+    if (!isSupported) return;
 
-    loadVoices();
-    speechSynthesis.onvoiceschanged = loadVoices;
-  }, []);
+    const load = () => setAvailableVoices(window.speechSynthesis.getVoices() || []);
+    load();
+
+    const onVoices = () => load();
+    // certains navigateurs utilisent encore onvoiceschanged=fn
+    (window.speechSynthesis as any).onvoiceschanged = onVoices;
+    // d’autres préfèrent addEventListener
+    window.speechSynthesis.addEventListener?.("voiceschanged", onVoices);
+
+    // fallback: si la liste est vide au 1er render, on repoll quelques fois
+    let tries = 0;
+    const id = setInterval(() => {
+      const v = window.speechSynthesis.getVoices();
+      if (v && v.length > 0) {
+        setAvailableVoices(v);
+        clearInterval(id);
+      } else if (++tries > 10) {
+        clearInterval(id);
+      }
+    }, 250);
+
+    return () => {
+      try {
+        window.speechSynthesis.removeEventListener?.("voiceschanged", onVoices);
+        (window.speechSynthesis as any).onvoiceschanged = null;
+      } catch {}
+      clearInterval(id);
+    };
+  }, [isSupported]);
+
+  // Sélection de voix robuste (langue → même famille → genre)
+  const pickVoice = useMemo(() => {
+    return (lang: Lang, gender: Gender) => {
+      if (!availableVoices.length) return null;
+
+      const base = lang.slice(0, 2).toLowerCase();
+      const exact = availableVoices.filter((v) => v.lang?.toLowerCase() === lang.toLowerCase());
+      const sameBase = availableVoices.filter((v) => v.lang?.slice(0, 2).toLowerCase() === base);
+      const pool = exact.length ? exact : sameBase.length ? sameBase : availableVoices;
+
+      const genderRe =
+        gender === "female"
+          ? /(female|woman|fem|fémin|Femme|Girl|Wavenet-[A|C|F]|Neural.*Female|Google.*(Female|Femme))/i
+          : /(male|man|masc|Homme|Boy|Wavenet-[B|D]|Neural.*Male|Google.*(Male|Homme))/i;
+
+      const byGender = pool.find((v) => genderRe.test(v.name));
+      return byGender || pool[0] || null;
+    };
+  }, [availableVoices]);
+
+  const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 
   const speak = ({
     text,
@@ -47,43 +95,43 @@ export function useSpeechSynthesis(): UseSpeechSynthesis {
     pitch = 1,
     volume = 1,
     onEnd,
+    mode = "replace",
   }: SpeakOptions) => {
-    if (!text || typeof window === "undefined") return;
+    if (!isSupported || !text) return;
 
-    // Nettoyage avant nouvelle lecture
-    speechSynthesis.cancel();
+    // iOS/Safari exigent souvent un "user gesture" (click/tap) préalable.
+    // Si besoin, appelle speak depuis un handler de clic.
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang;
-    utterance.rate = rate;
-    utterance.pitch = pitch;
-    utterance.volume = volume;
+    if (mode === "replace") window.speechSynthesis.cancel();
 
-    // Sélection automatique de la voix
-    const matchingVoice =
-      availableVoices.find((v) =>
-        gender === "female"
-          ? /female|woman|Google français/i.test(v.name) && v.lang.startsWith(lang.slice(0, 2))
-          : /male|man|homme|Google français/i.test(v.name) && v.lang.startsWith(lang.slice(0, 2))
-      ) ||
-      availableVoices.find((v) => v.lang.startsWith(lang.slice(0, 2)));
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = clamp(rate, 0.1, 2);     // valeurs extrêmes souvent instables
+    u.pitch = clamp(pitch, 0, 2);
+    u.volume = clamp(volume, 0, 1);
 
-    utterance.voice = matchingVoice || null;
+    u.voice = pickVoice(lang, gender);
 
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => {
+    u.onstart = () => setSpeaking(true);
+    u.onend = () => {
       setSpeaking(false);
       onEnd?.();
     };
+    u.onerror = () => setSpeaking(false);
 
-    utteranceRef.current = utterance;
-    speechSynthesis.speak(utterance);
+    utteranceRef.current = u;
+    window.speechSynthesis.speak(u);
   };
 
   const stop = () => {
-    speechSynthesis.cancel();
-    setSpeaking(false);
+    if (!isSupported) return;
+    try {
+      window.speechSynthesis.cancel();
+    } finally {
+      setSpeaking(false);
+      utteranceRef.current = null;
+    }
   };
 
-  return { speak, stop, speaking, availableVoices };
+  return { speak, stop, speaking, availableVoices, isSupported };
 }
