@@ -13,3 +13,7 @@ verify_jwt = false
 [functions.generate-emotional-weather]
 # Météo émotionnelle avec Mistral + ChatGPT + Lovable AI
 verify_jwt = false
+
+[functions.ingest-kb]
+# Ingestion et indexation RAG des documents QVT
+verify_jwt = false
