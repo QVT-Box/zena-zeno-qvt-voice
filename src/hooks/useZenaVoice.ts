@@ -13,12 +13,15 @@ interface UseZenaVoiceOptions {
   sttLang?: "auto" | Lang;     // langue STT
   continuous?: boolean;        // STT: redémarre automatiquement
   interimResults?: boolean;    // STT: résultats intermédiaires
+  /** 👇 NOUVEAU: appelé quand le STT produit un résultat FINAL */
+  onFinalResult?: (text: string, detected: "fr" | "en" | "unknown") => void;
 }
 
 /**
  * 🌿 useZenaVoice — Orchestrateur voix
  * - Pause l'écoute (STT) pendant que ça parle (TTS), puis la relance après.
  * - Retourne le niveau audio simulé pour animer un halo/bouche.
+ * - Remonte les résultats finaux du STT via onFinalResult.
  */
 export function useZenaVoice({
   lang = "fr-FR",
@@ -26,8 +29,9 @@ export function useZenaVoice({
   sttLang = "auto",
   continuous = true,
   interimResults = true,
+  onFinalResult,
 }: UseZenaVoiceOptions = {}) {
-  // STT (écoute micro)
+  // STT (écoute micro) — on branche onResult pour remonter les finals
   const {
     isSupported: sttSupported,
     isListening,
@@ -35,7 +39,15 @@ export function useZenaVoice({
     detectedLang,
     startListening,
     stopListening,
-  } = useVoiceInput({ lang: sttLang, continuous, interimResults });
+  } = useVoiceInput({
+    lang: sttLang,
+    continuous,
+    interimResults,
+    onResult: (text, dl) => {
+      // <- TEXTE FINAL du micro
+      if (text && onFinalResult) onFinalResult(text, (dl as any) || "unknown");
+    },
+  });
 
   // TTS (parole)
   const {
@@ -51,7 +63,7 @@ export function useZenaVoice({
   // Faut-il relancer l'écoute après la fin du TTS ?
   const resumeAfterSpeak = useRef(false);
 
-  // Nettoyage au démontage : on arrête tout proprement
+  // Cleanup
   useEffect(() => {
     return () => {
       try { stopTTS(); } catch {}
@@ -61,9 +73,7 @@ export function useZenaVoice({
   }, []);
 
   /**
-   * 🔊 Fait parler (TTS) en évitant l'effet larsen
-   * - met en pause le STT pendant la parole
-   * - relance l'écoute juste après la fin
+   * 🔊 Fait parler (TTS) en évitant larsen
    */
   const say = useCallback(
     (text: string, opts?: { lang?: Lang; gender?: Gender }) => {
@@ -77,11 +87,9 @@ export function useZenaVoice({
         text,
         lang: opts?.lang ?? lang,
         gender: opts?.gender ?? gender,
-        // on pourrait aussi exposer rate/pitch/volume ici si besoin
         onEnd: () => {
           if (resumeAfterSpeak.current) {
             resumeAfterSpeak.current = false;
-            // petit délai pour laisser le moteur TTS se libérer
             setTimeout(() => startListening(), 150);
           }
         },
@@ -106,13 +114,13 @@ export function useZenaVoice({
     stopListening,
 
     // états
-    isSpeaking,      // TTS en cours ?
-    isListening,     // STT en cours ?
-    transcript,      // texte entendu (intermédiaire/vidé au final)
-    detectedLang,    // "fr" | "en" | "unknown"
-    audioLevel,      // 0..1 pour animer
+    isSpeaking,
+    isListening,
+    transcript,
+    detectedLang,
+    audioLevel,
 
-    // infos de support (utile pour UI/fallback)
+    // support
     sttSupported,
     ttsSupported,
   };
