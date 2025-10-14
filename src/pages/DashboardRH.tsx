@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertTriangle, TrendingUp, Users, Activity, Bell, CheckCircle2, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { getAlertLevelColor, getAlertTypeLabel } from "@/utils/alertHelpers";
 
 interface HRAlert {
   id: string;
@@ -113,25 +115,6 @@ export default function DashboardRH() {
     }
   };
 
-  const getAlertLevelColor = (level: string) => {
-    switch (level) {
-      case 'critique': return 'destructive';
-      case 'élevé': return 'default';
-      case 'modéré': return 'secondary';
-      default: return 'outline';
-    }
-  };
-
-  const getAlertTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      burnout: '🔥 Burnout',
-      démotivation: '😔 Démotivation',
-      isolement_social: '🤐 Isolement',
-      surcharge: '⚡ Surcharge',
-      conflits_valeurs: '⚖️ Conflits de valeurs'
-    };
-    return labels[type] || type;
-  };
 
   if (loading) {
     return (
@@ -171,56 +154,34 @@ export default function DashboardRH() {
         {/* Métriques globales */}
         {analytics && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Utilisateurs Actifs</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.total_users}</div>
-                <p className="text-xs text-muted-foreground mt-1">Cette semaine</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Risque Burnout Moyen</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{Math.round(analytics.avg_burnout_risk)}/100</div>
-                <Progress 
-                  value={analytics.avg_burnout_risk} 
-                  className="mt-2"
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Personnes à Risque</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{analytics.at_risk_users}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {analytics.total_users > 0 
-                    ? Math.round((analytics.at_risk_users / analytics.total_users) * 100)
-                    : 0}% du total
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Situations Critiques</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-destructive">{analytics.critical_users}</div>
-                <p className="text-xs text-muted-foreground mt-1">Nécessitent intervention</p>
-              </CardContent>
-            </Card>
+            <MetricCard 
+              title="Utilisateurs Actifs"
+              value={analytics.total_users}
+              icon={Users}
+              description="Cette semaine"
+            />
+            
+            <MetricCard 
+              title="Risque Burnout Moyen"
+              value={`${Math.round(analytics.avg_burnout_risk)}/100`}
+              icon={Activity}
+            >
+              <Progress value={analytics.avg_burnout_risk} className="mt-2" />
+            </MetricCard>
+            
+            <MetricCard 
+              title="Personnes à Risque"
+              value={analytics.at_risk_users}
+              icon={AlertTriangle}
+              description={`${analytics.total_users > 0 ? Math.round((analytics.at_risk_users / analytics.total_users) * 100) : 0}% du total`}
+            />
+            
+            <MetricCard 
+              title="Situations Critiques"
+              value={analytics.critical_users}
+              icon={AlertTriangle}
+              description="Nécessitent intervention"
+            />
           </div>
         )}
 
