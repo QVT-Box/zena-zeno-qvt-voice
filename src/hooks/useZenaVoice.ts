@@ -1,108 +1,81 @@
-// src/hooks/useZenaVoice.ts
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useVoiceInput } from "./useVoiceInput";
-import { useSpeechSynthesis } from "./useSpeechSynthesis";
-
-type Status = "idle" | "listening" | "speaking";
+import { useEffect, useRef, useState } from "react";
+import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
+import { useAudioAnalyzer } from "@/hooks/useAudioAnalyzer";
 
 interface UseZenaVoiceOptions {
-  sttLang?: "fr-FR" | "en-US" | "auto";
-  continuous?: boolean;
-  interimResults?: boolean;
-  ttsLang?: "fr-FR" | "en-US";
-  ttsGender?: "female" | "male";
-  autoResumeListeningAfterSpeak?: boolean;
+  lang?: "fr-FR" | "en-US";
+  gender?: "female" | "male";
+  rate?: number;
+  pitch?: number;
+  volume?: number;
 }
 
+/**
+ * 🌿 useZenaVoice
+ * -------------------------------------------------------
+ * Hook combiné : synthèse vocale + halo émotionnel
+ * - Fait parler ZÉNA ou ZÉNO
+ * - Anime automatiquement le halo ou les lèvres pendant la parole
+ * - Supporte français / anglais
+ */
 export function useZenaVoice({
-  sttLang = "auto",
-  continuous = false,
-  interimResults = true,
-  ttsLang = "fr-FR",
-  ttsGender = "female",
-  autoResumeListeningAfterSpeak = true,
+  lang = "fr-FR",
+  gender = "female",
+  rate = gender === "female" ? 1 : 0.95,
+  pitch = gender === "female" ? 1.1 : 0.9,
+  volume = 1,
 }: UseZenaVoiceOptions = {}) {
-  const [status, setStatus] = useState<Status>("idle");
-  const resumeAfterSpeakRef = useRef(false);
+  const { speak, stop, speaking } = useSpeechSynthesis();
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [lastText, setLastText] = useState<string | null>(null);
+  const audioLevel = useAudioAnalyzer(isSpeaking);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
-  // STT
-  const {
-    isSupported: sttSupported,
-    isListening,
-    transcript,
-    detectedLang,
-    startListening,
-    stopListening,
-  } = useVoiceInput({
-    lang: sttLang,
-    continuous,
-    interimResults,
-    onError: () => setStatus("idle"),
-  });
-
-  // TTS
-  const { speak, stop: stopTTS, speaking, isSupported: ttsSupported } = useSpeechSynthesis();
-
-  // gardes d’orchestration
   useEffect(() => {
-    if (speaking) setStatus("speaking");
-    else if (isListening) setStatus("listening");
-    else setStatus("idle");
-  }, [speaking, isListening]);
+    setIsSpeaking(speaking);
+  }, [speaking]);
 
-  // API: dire quelque chose (coupe STT pendant TTS)
-  const say = useCallback(
-    (text: string, opts?: { lang?: "fr-FR" | "en-US"; gender?: "female" | "male" }) => {
-      if (!ttsSupported) return;
-      const wasListening = isListening;
-      if (wasListening) stopListening();
+  /**
+   * 🔊 Fait parler ZÉNA / ZÉNO
+   */
+  const say = (text: string, onEnd?: () => void) => {
+    if (!text) return;
+    clearTimeout(timeoutRef.current);
+    setLastText(text);
+    setIsSpeaking(true);
 
-      if (autoResumeListeningAfterSpeak && wasListening) {
-        resumeAfterSpeakRef.current = true;
-      }
+    speak({
+      text,
+      lang,
+      gender,
+      rate,
+      pitch,
+      volume,
+      onEnd: () => {
+        setIsSpeaking(false);
+        onEnd?.();
+      },
+    });
 
-      speak({
-        text,
-        lang: opts?.lang ?? ttsLang,
-        gender: opts?.gender ?? ttsGender,
-        onEnd: () => {
-          if (autoResumeListeningAfterSpeak && resumeAfterSpeakRef.current) {
-            resumeAfterSpeakRef.current = false;
-            // petit délai pour éviter la capture de la fin TTS
-            setTimeout(() => startListening(), 150);
-          }
-        },
-      });
-    },
-    [ttsSupported, isListening, stopListening, speak, ttsLang, ttsGender, autoResumeListeningAfterSpeak, startListening]
-  );
+    // Sécurité : forcer la fin après 15s max
+    timeoutRef.current = setTimeout(() => {
+      setIsSpeaking(false);
+    }, 15000);
+  };
 
-  const listen = useCallback(() => {
-    if (!sttSupported) return;
-    if (speaking) stopTTS();
-    startListening();
-  }, [sttSupported, speaking, stopTTS, startListening]);
-
-  const stopAll = useCallback(() => {
-    stopListening();
-    stopTTS();
-    resumeAfterSpeakRef.current = false;
-  }, [stopListening, stopTTS]);
+  /**
+   * ⏹️ Stoppe la parole immédiatement
+   */
+  const stopSpeaking = () => {
+    stop();
+    setIsSpeaking(false);
+  };
 
   return {
-    // status global
-    status,               // "idle" | "listening" | "speaking"
-    // STT
-    sttSupported,
-    isListening,
-    transcript,
-    detectedLang,
-    listen,
-    // TTS
-    ttsSupported,
-    speaking,
     say,
-    // global
-    stopAll,
+    stopSpeaking,
+    isSpeaking,
+    audioLevel,
+    lastText,
   };
 }
