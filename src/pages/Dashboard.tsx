@@ -1,8 +1,13 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Link as RouterLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, MessageCircle, BookOpen, Award } from "lucide-react";
+import { TrendingUp, MessageCircle, BookOpen, Award, Shield } from "lucide-react";
+import MagicAmbiance from "@/components/MagicAmbiance";
 
 /**
  * 📊 Dashboard QVT Personnel
@@ -11,7 +16,9 @@ import { TrendingUp, MessageCircle, BookOpen, Award } from "lucide-react";
  */
 export default function Dashboard() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-secondary/5 pb-20 md:pb-6">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-secondary/5 pb-20 md:pb-6 relative overflow-hidden">
+      {/* Ambiance magique */}
+      <MagicAmbiance intensity="light" />
       {/* Header */}
       <header className="bg-background/80 backdrop-blur-sm border-b border-border sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
@@ -20,11 +27,19 @@ export default function Dashboard() {
               <h1 className="text-2xl font-bold text-foreground">Mon tableau de bord</h1>
               <p className="text-sm text-muted-foreground">Votre bien-être en un coup d'œil</p>
             </div>
-            <Link to="/">
-              <Button variant="ghost" size="sm">
-                Retour
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              <RouterLink to="/dashboard-rh">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  <span className="hidden sm:inline">Dashboard RH</span>
+                </Button>
+              </RouterLink>
+              <RouterLink to="/">
+                <Button variant="ghost" size="sm">
+                  Retour
+                </Button>
+              </RouterLink>
+            </div>
           </div>
         </div>
       </header>

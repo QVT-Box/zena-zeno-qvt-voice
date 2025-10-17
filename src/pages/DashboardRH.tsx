@@ -13,6 +13,7 @@ import { getAlertLevelColor, getAlertTypeLabel } from "@/utils/alertHelpers";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { RiskAlerts } from "@/components/dashboard/RiskAlerts";
 import { EmotionalHeatmap } from "@/components/dashboard/EmotionalHeatmap";
+import MagicAmbiance from "@/components/MagicAmbiance";
 
 interface HRAlert {
   id: string;
@@ -168,8 +169,11 @@ export default function DashboardRH() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background relative overflow-hidden">
+      {/* Ambiance magique douce */}
+      <MagicAmbiance intensity="light" />
+      
+      <div className="container mx-auto px-4 py-8 max-w-7xl relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">

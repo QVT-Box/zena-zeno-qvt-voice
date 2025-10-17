@@ -12,6 +12,7 @@ import { EmotionalWeather } from "@/components/EmotionalWeather";
 import { EmotionalFeedback } from "@/components/EmotionalFeedback";
 import { ConversationMemory } from "@/components/ConversationMemory";
 import { SupportResourcesModal } from "@/components/SupportResourcesModal";
+import MagicAmbiance from "@/components/MagicAmbiance";
 
 export default function ZenaChat() {
   const navigate = useNavigate();
@@ -85,6 +86,9 @@ export default function ZenaChat() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-[#212121] font-sans relative overflow-hidden">
+      {/* ==== Ambiance magique ==== */}
+      <MagicAmbiance intensity="heavy" />
+      
       {/* ==== Halo et ambiance ==== */}
       <div
         className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-[#4FD1C5]/30 rounded-full blur-[120px] -z-10 animate-breathe"

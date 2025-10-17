@@ -1,10 +1,14 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import ZenaAvatar from "@/components/ZenaAvatar";
+import MagicAmbiance from "@/components/MagicAmbiance";
 
 export default function Index() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-[#212121] font-sans overflow-y-auto relative">
+      {/* ==== Ambiance magique ==== */}
+      <MagicAmbiance intensity="medium" />
+      
       {/* ==== Halo d'ambiance général ==== */}
       <div
         className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-[#4FD1C5]/30 rounded-full blur-[120px] -z-10 animate-breathe"
@@ -16,9 +20,9 @@ export default function Index() {
       />
 
       {/* ==== HERO ZÉNA ==== */}
-      <header className="flex flex-col items-center justify-center text-center px-6 pt-44 md:pt-52">
-        {/* Avatar ZÉNA avec halo */}
-        <div className="relative w-40 h-40 md:w-52 md:h-52 rounded-full overflow-hidden shadow-2xl ring-4 ring-[#4FD1C5]/20 mb-4">
+      <header className="flex flex-col items-center justify-center text-center px-6 pt-20 md:pt-28">
+        {/* Avatar ZÉNA visible en entier */}
+        <div className="relative">
           <ZenaAvatar isSpeaking={false} emotion="neutral" />
         </div>
 
@@ -113,8 +117,23 @@ export default function Index() {
       </section>
 
       {/* ==== FOOTER ==== */}
-      <footer className="py-6 text-center text-sm text-[#6b7280]">
-        © 2025 QVT Box — Made with 💜 en Bretagne
+      <footer className="py-8 text-center text-sm text-[#6b7280] space-y-4">
+        {/* Accès Dashboard RH */}
+        <div className="mb-6">
+          <Link
+            to="/dashboard-rh"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium text-base shadow-md
+                       bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] text-white hover:opacity-90 transition-all"
+          >
+            <span>🛡️</span>
+            Accès Dashboard RH (Prévention RPS)
+          </Link>
+          <p className="text-xs mt-2 text-gray-500">
+            Réservé aux responsables RH et managers
+          </p>
+        </div>
+        
+        <p>© 2025 QVT Box — Made with 💜 en Bretagne</p>
       </footer>
     </div>
   );
