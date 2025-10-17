@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { getAlertLevelColor, getAlertTypeLabel } from "@/utils/alertHelpers";
+import { TrendChart } from "@/components/dashboard/TrendChart";
+import { RiskAlerts } from "@/components/dashboard/RiskAlerts";
+import { EmotionalHeatmap } from "@/components/dashboard/EmotionalHeatmap";
 
 interface HRAlert {
   id: string;
@@ -42,6 +45,43 @@ export default function DashboardRH() {
   const [alerts, setAlerts] = useState<HRAlert[]>([]);
   const [analytics, setAnalytics] = useState<AggregatedAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Données mockées pour les nouveaux composants (à remplacer par de vraies données)
+  const trendData = [
+    { date: "Lun", score: 65 },
+    { date: "Mar", score: 58 },
+    { date: "Mer", score: 52 },
+    { date: "Jeu", score: 48 },
+    { date: "Ven", score: 55 },
+    { date: "Sam", score: 62 },
+    { date: "Dim", score: 60 },
+  ];
+
+  const riskAlerts = [
+    {
+      id: "1",
+      department: "Marketing",
+      atRiskCount: 3,
+      avgScore: 42,
+      trend: "decreasing" as const,
+    },
+    {
+      id: "2",
+      department: "IT",
+      atRiskCount: 2,
+      avgScore: 38,
+      trend: "stable" as const,
+    },
+  ];
+
+  const departmentData = [
+    { name: "Marketing", avgScore: 42, userCount: 8, trend: "down" as const },
+    { name: "IT", avgScore: 38, userCount: 12, trend: "stable" as const },
+    { name: "RH", avgScore: 72, userCount: 5, trend: "up" as const },
+    { name: "Finance", avgScore: 55, userCount: 7, trend: "stable" as const },
+    { name: "Commercial", avgScore: 68, userCount: 15, trend: "up" as const },
+    { name: "Logistique", avgScore: 48, userCount: 9, trend: "down" as const },
+  ];
 
   useEffect(() => {
     if (!user) {
@@ -149,6 +189,16 @@ export default function DashboardRH() {
             </div>
           </div>
           <Shield className="w-12 h-12 text-primary/20" />
+        </div>
+
+        {/* Graphique de tendance */}
+        <div className="mb-8">
+          <TrendChart data={trendData} />
+        </div>
+
+        {/* Alertes préventives */}
+        <div className="mb-8">
+          <RiskAlerts alerts={riskAlerts} />
         </div>
 
         {/* Métriques globales */}
@@ -268,6 +318,11 @@ export default function DashboardRH() {
             )}
           </CardContent>
         </Card>
+
+        {/* Heatmap émotionnelle */}
+        <div className="mb-8">
+          <EmotionalHeatmap departments={departmentData} />
+        </div>
 
         {/* Analyse des 6 dimensions RPS */}
         {analytics && (

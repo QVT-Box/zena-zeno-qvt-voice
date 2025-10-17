@@ -8,11 +8,17 @@ import ZenaAvatar from "@/components/ZenaAvatar";
 import { Button } from "@/components/ui/button";
 import { Globe, LogOut } from "lucide-react";
 import { SupportResources } from "@/components/SupportResources";
+import { EmotionalWeather } from "@/components/EmotionalWeather";
+import { EmotionalFeedback } from "@/components/EmotionalFeedback";
+import { ConversationMemory } from "@/components/ConversationMemory";
+import { SupportResourcesModal } from "@/components/SupportResourcesModal";
 
 export default function ZenaChat() {
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
   const [selectedLanguage, setSelectedLanguage] = useState<"fr-FR" | "en-US">("fr-FR");
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [conversationKeyPoints, setConversationKeyPoints] = useState<string[]>([]);
 
   // Détection du support vocal
   const isMobileSafari = typeof navigator !== 'undefined' && 
@@ -38,6 +44,29 @@ export default function ZenaChat() {
     persona: "zena",
     language: selectedLanguage,
   });
+
+  // Détection automatique du besoin d'aide (score critique)
+  useEffect(() => {
+    if (emotionalState.score <= 5 && supportResources.length > 0 && !showSupportModal) {
+      // Délai pour ne pas être trop intrusif
+      const timer = setTimeout(() => {
+        setShowSupportModal(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [emotionalState.score, supportResources.length]);
+
+  // Extraire les points clés des messages pour la mémoire
+  useEffect(() => {
+    if (messages.length >= 2) {
+      const recentUserMessages = messages
+        .filter(m => m.from === "user")
+        .slice(-3)
+        .map(m => m.text);
+      
+      setConversationKeyPoints(recentUserMessages);
+    }
+  }, [messages]);
 
   const handleToggleListening = () => {
     if (isListening) {
@@ -233,42 +262,48 @@ export default function ZenaChat() {
         )}
       </motion.div>
 
-      {/* ==== ÉTAT ÉMOTIONNEL ==== */}
-      <motion.div
-        className="mt-8 text-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 shadow-inner w-full max-w-xs border border-[#4FD1C5]/30"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-      >
-        <p className="text-sm text-[#212121]/80 font-medium mb-2">
-          <span className="font-semibold">
-            {selectedLanguage === "fr-FR" ? "État émotionnel :" : "Emotional state:"}
-          </span> {moodEmoji}{" "}
-          {emotionalState.mood === "positive"
-            ? selectedLanguage === "fr-FR" ? "Positif" : "Positive"
-            : emotionalState.mood === "negative"
-            ? selectedLanguage === "fr-FR" ? "Fragile" : "Fragile"
-            : selectedLanguage === "fr-FR" ? "Neutre" : "Neutral"}
-        </p>
+      {/* ==== MÉTÉO ÉMOTIONNELLE ==== */}
+      <div className="mt-8 w-full max-w-md">
+        <EmotionalWeather 
+          score={emotionalState.score}
+          mood={emotionalState.mood}
+          language={selectedLanguage}
+          scoreHistory={[9, 8, 10, 7, 8, 9, emotionalState.score]}
+        />
+      </div>
 
-        <div className="w-full bg-[#EAF4F3] rounded-full h-3 overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5]"
-            initial={{ width: 0 }}
-            animate={{ width: `${(emotionalState.score / 15) * 100}%` }}
-            transition={{ duration: 0.8 }}
+      {/* ==== FEEDBACK EMPATHIQUE ==== */}
+      {messages.length > 0 && (
+        <div className="mt-4 w-full max-w-md">
+          <EmotionalFeedback 
+            score={emotionalState.score}
+            language={selectedLanguage}
           />
         </div>
-        <p className="text-xs text-gray-600 mt-1">
-          {selectedLanguage === "fr-FR" ? "Score QVT :" : "QVT Score:"}{" "}
-          <span className="font-semibold">{emotionalState.score}</span> / 15
-        </p>
-      </motion.div>
+      )}
+
+      {/* ==== MÉMOIRE CONVERSATIONNELLE ==== */}
+      {conversationKeyPoints.length > 0 && (
+        <div className="mt-4">
+          <ConversationMemory 
+            keyPoints={conversationKeyPoints}
+            language={selectedLanguage}
+          />
+        </div>
+      )}
 
       {/* ==== RESSOURCES D'AIDE ==== */}
       {supportResources.length > 0 && (
         <SupportResources resources={supportResources} language={selectedLanguage} />
       )}
+
+      {/* ==== MODAL D'ORIENTATION ==== */}
+      <SupportResourcesModal
+        isOpen={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+        resources={supportResources}
+        language={selectedLanguage}
+      />
 
       {/* ==== BOX RECOMMANDÉE ==== */}
       {recommendedBox && (
