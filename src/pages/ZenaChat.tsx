@@ -7,6 +7,7 @@ import VoiceControl from "@/components/VoiceControl";
 import ZenaAvatar from "@/components/ZenaAvatar";
 import { Button } from "@/components/ui/button";
 import { Globe, LogOut } from "lucide-react";
+import { SupportResources } from "@/components/SupportResources";
 
 export default function ZenaChat() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function ZenaChat() {
     messages,
     emotionalState,
     recommendedBox,
+    supportResources,
     onUserSpeak,
     transcript,
   } = useZenaZenoBrain({
@@ -262,6 +264,11 @@ export default function ZenaChat() {
           <span className="font-semibold">{emotionalState.score}</span> / 15
         </p>
       </motion.div>
+
+      {/* ==== RESSOURCES D'AIDE ==== */}
+      {supportResources.length > 0 && (
+        <SupportResources resources={supportResources} language={selectedLanguage} />
+      )}
 
       {/* ==== BOX RECOMMANDÉE ==== */}
       {recommendedBox && (

@@ -23,6 +23,15 @@ interface RecommendedBox {
   description: string;
 }
 
+interface SupportResource {
+  id: string;
+  resource_type: string;
+  name: string;
+  phone?: string;
+  url?: string;
+  description: string;
+}
+
 interface UseZenaZenoBrainOptions {
   persona: Persona;
   language?: LangOpt;
@@ -47,6 +56,7 @@ export function useZenaZenoBrain({
     score: 8,
   });
   const [recommendedBox, setRecommendedBox] = useState<RecommendedBox | null>(null);
+  const [supportResources, setSupportResources] = useState<SupportResource[]>([]);
   const currentSessionId = useRef<string | null>(null);
 
   // Créer une session au premier rendu
@@ -116,6 +126,12 @@ export function useZenaZenoBrain({
       
       // Mise à jour de la box recommandée
       setRecommendedBox(data.recommendedBox);
+      
+      // Mise à jour des ressources d'aide si disponibles
+      if (data.supportResources && data.supportResources.length > 0) {
+        setSupportResources(data.supportResources);
+        console.log('[useZenaZenoBrain] 🆘 Ressources d\'aide reçues:', data.supportResources.length);
+      }
 
       return data.reply;
     } catch (err) {
@@ -149,6 +165,7 @@ export function useZenaZenoBrain({
     // émotions & reco
     emotionalState,
     recommendedBox,
+    supportResources,
 
     // voix & écoute
     speaking: isSpeaking,

@@ -33,9 +33,29 @@ serve(async (req) => {
 
     console.log(`[EMOTIONAL-WEATHER] Analyse pour ${persona} (${language}): "${text}"`);
 
-    // 1️⃣ Appeler l'analyse RPS en parallèle
+    // 1️⃣ Appeler l'analyse RPS + charger historique conversation
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Charger les 5 derniers messages pour mémoire conversationnelle
+    let conversationHistory: any[] = [];
+    if (sessionId) {
+      const { data: historyData } = await supabase
+        .from('conversation_messages')
+        .select('from_role, text')
+        .eq('session_id', sessionId)
+        .order('timestamp', { ascending: false })
+        .limit(5);
+      
+      if (historyData) {
+        conversationHistory = historyData.reverse().map(msg => ({
+          role: msg.from_role === 'user' ? 'user' : 'assistant',
+          content: msg.text
+        }));
+        console.log('[EMOTIONAL-WEATHER] 📜 Historique chargé:', conversationHistory.length, 'messages');
+      }
+    }
     
     let rpsAnalysis = null;
     try {
@@ -98,11 +118,19 @@ serve(async (req) => {
          - Motivation : ${rpsAnalysis.motivationIndex}/100
          - Patterns détectés : ${rpsAnalysis.detectedPatterns.join(', ')}
          
-         ADAPTE ta réponse selon ce niveau de risque :
-         - Si CRITIQUE (≥71) : parle doucement, rassure profondément, oriente IMMÉDIATEMENT vers médecin du travail ou lignes d'écoute
-         - Si ÉLEVÉ (51-70) : normalise l'émotion, propose 2 actions concrètes rapides et accessibles
-         - Si MODÉRÉ : valorise la prise de conscience, encourage 1-2 actions préventives
-         ` : ''}
+          ADAPTE ta réponse selon ce niveau de risque :
+          - Si CRITIQUE (≥71) : parle doucement, rassure profondément, oriente IMMÉDIATEMENT vers médecin du travail ou lignes d'écoute. 
+            Termine ta réponse par une question de suivi adaptée au risque détecté.
+          - Si ÉLEVÉ (51-70) : normalise l'émotion, propose 2 actions concrètes rapides et accessibles. 
+            Pose une question ouverte pour approfondir le contexte : "Depuis combien de temps te sens-tu comme ça ?"
+          - Si MODÉRÉ : valorise la prise de conscience, encourage 1-2 actions préventives.
+            Demande : "Qu'est-ce qui te pèse le plus aujourd'hui ?"
+          
+          ${conversationHistory.length > 0 ? `
+          📜 HISTORIQUE DE LA CONVERSATION (${conversationHistory.length} messages précédents) :
+          Utilise ce contexte pour faire des liens : "Tu m'as dit tout à l'heure que..., comment ça évolue ?"
+          ` : ''}
+          ` : ''}
          
          ⚖️ RÈGLES ÉTHIQUES ABSOLUES
          - Confidentialité totale : tu ne collectes jamais d'informations personnelles identifiables
@@ -173,6 +201,7 @@ serve(async (req) => {
 
     const messages = [
       { role: "system", content: systemPrompt },
+      ...conversationHistory, // Intégrer l'historique
       { role: "user", content: text }
     ];
 
@@ -290,10 +319,6 @@ serve(async (req) => {
     }
 
     // 💾 Sauvegarder dans Supabase
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     if (sessionId) {
       // Snapshot émotionnel (enrichi avec keywords RPS)
       const { error: snapshotError } = await supabase
@@ -365,9 +390,25 @@ serve(async (req) => {
       }
     }
 
+    // 🆘 Si risque critique, proposer des ressources d'aide
+    let supportResources = null;
+    if (rpsAnalysis && (rpsAnalysis.burnoutRiskScore >= 71 || rpsAnalysis.globalRiskLevel === 'critique')) {
+      const { data: resources } = await supabase
+        .from('support_resources')
+        .select('*')
+        .in('resource_type', ['urgence', 'medecin', 'externe'])
+        .limit(3);
+      
+      if (resources && resources.length > 0) {
+        supportResources = resources;
+        console.log('[EMOTIONAL-WEATHER] 🆘 Ressources d\'aide proposées:', resources.length);
+      }
+    }
+
     return new Response(JSON.stringify({
       ...analysisResult,
-      rpsAnalysis // ✅ Inclure l'analyse RPS dans la réponse
+      rpsAnalysis, // ✅ Inclure l'analyse RPS dans la réponse
+      supportResources // ✅ Inclure les ressources d'aide si risque critique
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

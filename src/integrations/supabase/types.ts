@@ -930,6 +930,42 @@ export type Database = {
           },
         ]
       }
+      support_resources: {
+        Row: {
+          country: string | null
+          created_at: string | null
+          description: string
+          id: string
+          name: string
+          phone: string | null
+          resource_type: string
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          name: string
+          phone?: string | null
+          resource_type: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          resource_type?: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       teams: {
         Row: {
           company_id: string
