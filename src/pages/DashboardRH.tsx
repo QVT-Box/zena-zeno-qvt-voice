@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,36 @@ export default function DashboardRH() {
   const [alerts, setAlerts] = useState<HRAlert[]>([]);
   const [analytics, setAnalytics] = useState<AggregatedAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+
+  // Vérification des droits d'accès
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!user) {
+        toast.error('Vous devez être connecté');
+        navigate('/auth');
+        return;
+      }
+
+      // Vérifier si l'utilisateur a le rôle 'company_admin' ou 'manager'
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .in('role', ['company_admin', 'manager'])
+        .maybeSingle();
+
+      if (error || !data) {
+        toast.error('Accès réservé aux RH et managers');
+        navigate('/dashboard');
+        return;
+      }
+
+      setHasAccess(true);
+    };
+
+    checkAccess();
+  }, [user, navigate]);
 
   // Données mockées pour les nouveaux composants (à remplacer par de vraies données)
   const trendData = [
@@ -85,13 +116,12 @@ export default function DashboardRH() {
   ];
 
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
+    if (!user || !hasAccess) {
       return;
     }
 
     fetchDashboardData();
-  }, [user, navigate]);
+  }, [user, hasAccess]);
 
   const fetchDashboardData = async () => {
     try {

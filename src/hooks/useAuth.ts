@@ -36,12 +36,13 @@ export const useAuth = () => {
       let companyId: string;
 
       // Vérifier si un code entreprise est fourni
-      if (companyCode) {
-        const { data: inviteData, error: inviteError } = await supabase
+      if (companyCode && companyCode.trim()) {
+        // Pour éviter les erreurs de type TypeScript, on utilise un any temporaire
+        const { data: inviteData, error: inviteError } = await (supabase as any)
           .from('company_invite_codes')
           .select('company_id')
           .eq('code', companyCode.toUpperCase())
-          .single();
+          .maybeSingle();
 
         if (inviteError || !inviteData) {
           toast.error('Code entreprise invalide');
@@ -64,7 +65,7 @@ export const useAuth = () => {
           toast.error('Erreur lors de la création de votre espace');
           return { error: companyError };
         }
-        companyId = company.id;
+        companyId = company!.id;
       }
 
       // Créer le compte utilisateur

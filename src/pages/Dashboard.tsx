@@ -15,6 +15,27 @@ import MagicAmbiance from "@/components/MagicAmbiance";
  * Vue d'ensemble de l'état de bien-être de l'utilisateur
  */
 export default function Dashboard() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [hasRhAccess, setHasRhAccess] = useState(false);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .in('role', ['company_admin', 'manager'])
+        .maybeSingle();
+      
+      setHasRhAccess(!!data);
+    };
+    
+    checkRole();
+  }, [user]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-secondary/5 pb-20 md:pb-6 relative overflow-hidden">
       {/* Ambiance magique */}
@@ -28,12 +49,14 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground">Votre bien-être en un coup d'œil</p>
             </div>
             <div className="flex gap-2">
-              <RouterLink to="/dashboard-rh">
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  <span className="hidden sm:inline">Dashboard RH</span>
-                </Button>
-              </RouterLink>
+              {hasRhAccess && (
+                <RouterLink to="/dashboard-rh">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    <span className="hidden sm:inline">Dashboard RH</span>
+                  </Button>
+                </RouterLink>
+              )}
               <RouterLink to="/">
                 <Button variant="ghost" size="sm">
                   Retour

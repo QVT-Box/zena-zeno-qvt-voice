@@ -5,6 +5,7 @@ import Auth from "@/pages/Auth";
 import WellnessHub from "@/pages/WellnessHub";
 import Dashboard from "@/pages/Dashboard";
 import DashboardRH from "@/pages/DashboardRH";
+import OnboardingCompany from "@/pages/OnboardingCompany";
 import { Toaster } from "@/components/ui/sonner";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -52,6 +53,9 @@ function App() {
 
           {/*  Dashboard RH – Prévention RPS */}
           <Route path="/dashboard-rh" element={<DashboardRH />} />
+
+          {/*  Onboarding entreprise */}
+          <Route path="/onboarding-company" element={<OnboardingCompany />} />
 
           {/*  Redirection par défaut */}
           <Route path="*" element={<Navigate to="/" replace />} />

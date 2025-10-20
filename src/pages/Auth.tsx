@@ -19,7 +19,7 @@ const signUpSchema = z.object({
   confirmPassword: z.string(),
   firstName: z.string().min(2, 'Le prénom est requis'),
   lastName: z.string().min(2, 'Le nom est requis'),
-  companyId: z.string().uuid('ID entreprise invalide'),
+  companyCode: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
@@ -79,12 +79,12 @@ const Auth = () => {
       confirmPassword: formData.get('confirmPassword') as string,
       firstName: formData.get('firstName') as string,
       lastName: formData.get('lastName') as string,
-      companyId: formData.get('companyId') as string,
+      companyCode: (formData.get('companyCode') as string) || undefined,
     };
 
     try {
       signUpSchema.parse(data);
-      await signUp(data.email, data.password, data.companyId, data.firstName, data.lastName);
+      await signUp(data.email, data.password, data.firstName, data.lastName, data.companyCode);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
@@ -194,16 +194,18 @@ const Auth = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="companyId">ID Entreprise</Label>
+                  <Label htmlFor="companyCode">Code entreprise (optionnel)</Label>
                   <Input
-                    id="companyId"
-                    name="companyId"
+                    id="companyCode"
+                    name="companyCode"
                     type="text"
-                    placeholder="UUID de votre entreprise"
-                    required
+                    placeholder="Ex: QVTBOX-ABC123"
                   />
-                  {errors.companyId && (
-                    <p className="text-sm text-destructive">{errors.companyId}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Laissez vide pour créer un compte personnel
+                  </p>
+                  {errors.companyCode && (
+                    <p className="text-sm text-destructive">{errors.companyCode}</p>
                   )}
                 </div>
                 <div className="space-y-2">
