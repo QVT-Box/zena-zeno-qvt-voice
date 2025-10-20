@@ -30,10 +30,44 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, companyId: string, firstName: string, lastName: string) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, companyCode?: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
+      let companyId: string;
+
+      // Vérifier si un code entreprise est fourni
+      if (companyCode) {
+        const { data: inviteData, error: inviteError } = await supabase
+          .from('company_invite_codes')
+          .select('company_id')
+          .eq('code', companyCode.toUpperCase())
+          .single();
+
+        if (inviteError || !inviteData) {
+          toast.error('Code entreprise invalide');
+          return { error: new Error('Code entreprise invalide') };
+        }
+        companyId = inviteData.company_id;
+      } else {
+        // Créer automatiquement une entreprise personnelle
+        const { data: company, error: companyError } = await supabase
+          .from('companies')
+          .insert({
+            name: `Compte personnel - ${firstName} ${lastName}`,
+            industry: 'Individual',
+            employee_count: 1
+          })
+          .select('id')
+          .single();
+
+        if (companyError) {
+          toast.error('Erreur lors de la création de votre espace');
+          return { error: companyError };
+        }
+        companyId = company.id;
+      }
+
+      // Créer le compte utilisateur
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -50,6 +84,9 @@ export const useAuth = () => {
       if (error) throw error;
       
       if (data.user) {
+        // Lier les données anonymes si elles existent
+        await linkAnonymousData(data.user.id);
+        
         toast.success('Compte créé avec succès !');
         navigate('/zena-chat');
       }
@@ -58,6 +95,25 @@ export const useAuth = () => {
     } catch (error: any) {
       toast.error(error.message || 'Erreur lors de l\'inscription');
       return { error };
+    }
+  };
+
+  const linkAnonymousData = async (userId: string) => {
+    const sessionToken = localStorage.getItem('anonymous_session_token');
+    if (!sessionToken) return;
+
+    try {
+      // Mettre à jour les sessions anonymes
+      await supabase
+        .from('conversation_sessions')
+        .update({ user_id: userId })
+        .eq('id', sessionToken)
+        .is('user_id', null);
+
+      // Supprimer le token
+      localStorage.removeItem('anonymous_session_token');
+    } catch (error) {
+      console.error('Erreur lors de la liaison des données anonymes:', error);
     }
   };
 

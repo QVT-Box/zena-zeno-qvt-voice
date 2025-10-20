@@ -20,6 +20,18 @@ export default function ZenaChat() {
   const [selectedLanguage, setSelectedLanguage] = useState<"fr-FR" | "en-US">("fr-FR");
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [conversationKeyPoints, setConversationKeyPoints] = useState<string[]>([]);
+  const [showSaveProgressCTA, setShowSaveProgressCTA] = useState(false);
+
+  // Gestion du token de session anonyme
+  useEffect(() => {
+    if (!user) {
+      let sessionToken = localStorage.getItem('anonymous_session_token');
+      if (!sessionToken) {
+        sessionToken = crypto.randomUUID();
+        localStorage.setItem('anonymous_session_token', sessionToken);
+      }
+    }
+  }, [user]);
 
   // Détection du support vocal
   const isMobileSafari = typeof navigator !== 'undefined' && 
@@ -67,7 +79,12 @@ export default function ZenaChat() {
       
       setConversationKeyPoints(recentUserMessages);
     }
-  }, [messages]);
+
+    // Afficher CTA après 3 échanges pour utilisateurs non connectés
+    if (!user && messages.length >= 6 && !showSaveProgressCTA) {
+      setShowSaveProgressCTA(true);
+    }
+  }, [messages, user, showSaveProgressCTA]);
 
   const handleToggleListening = () => {
     if (isListening) {
@@ -308,6 +325,44 @@ export default function ZenaChat() {
         resources={supportResources}
         language={selectedLanguage}
       />
+
+      {/* ==== CTA SAUVEGARDER MES PROGRÈS ==== */}
+      {showSaveProgressCTA && !user && (
+        <motion.div
+          className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-30 max-w-md mx-4"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+        >
+          <div className="bg-gradient-to-r from-[#5B4B8A] to-[#4FD1C5] text-white px-6 py-4 rounded-2xl shadow-2xl">
+            <p className="text-sm mb-3 font-medium">
+              💾 {selectedLanguage === "fr-FR" 
+                ? "Vous avez eu plusieurs échanges avec ZÉNA !" 
+                : "You've had several exchanges with ZÉNA!"}
+            </p>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => navigate('/auth')} 
+                variant="secondary" 
+                size="sm"
+                className="flex-1"
+              >
+                {selectedLanguage === "fr-FR" 
+                  ? "Créer mon compte" 
+                  : "Create account"}
+              </Button>
+              <Button 
+                onClick={() => setShowSaveProgressCTA(false)} 
+                variant="ghost" 
+                size="sm"
+                className="text-white hover:bg-white/20"
+              >
+                {selectedLanguage === "fr-FR" ? "Plus tard" : "Later"}
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ==== BOX RECOMMANDÉE ==== */}
       {recommendedBox && (
