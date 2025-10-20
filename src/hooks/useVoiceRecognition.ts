@@ -1,27 +1,47 @@
-// src/hooks/useVoiceRecognition.ts
-import { useEffect } from "react";
-import { useVoiceInput } from "./useVoiceInput";
+import { useEffect, useState } from "react";
 
-// Types utiles (pas besoin que useVoiceInput exporte son interface)
-export type UseVoiceRecognitionOptions = Parameters<typeof useVoiceInput>[0];
-export type UseVoiceRecognitionReturn = ReturnType<typeof useVoiceInput>;
+export function useVoiceRecognition() {
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState<string>("");
 
-// Avertissement (une seule fois par session)
-let __warned = false;
-
-/**
- * ⚠️ Déprécié : préférez `useVoiceInput`.
- * Wrapper pour compat : même API que `useVoiceInput`, avec un warning auto.
- */
-export function useVoiceRecognition(
-  options?: UseVoiceRecognitionOptions
-): UseVoiceRecognitionReturn {
   useEffect(() => {
-    if (!__warned && typeof window !== "undefined") {
-      console.warn("[ZÉNA] `useVoiceRecognition` est déprécié. Utilisez `useVoiceInput`.");
-      __warned = true;
+    if (!("webkitSpeechRecognition" in window)) {
+      console.warn("Reconnaissance vocale non supportée par ce navigateur");
+      return;
     }
-  }, []);
 
-  return useVoiceInput(options as any);
+    const SpeechRecognition = (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "fr-FR";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event: any) => {
+      const text = event.results[0][0].transcript;
+      setTranscript(text);
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Erreur SpeechRecognition:", event.error);
+      setIsListening(false);
+    };
+
+    if (isListening) {
+      try {
+        recognition.start();
+        console.log("🎙️ Micro activé...");
+      } catch (err) {
+        console.warn("Impossible de démarrer la reconnaissance :", err);
+      }
+    } else {
+      recognition.stop();
+    }
+
+    return () => {
+      recognition.abort();
+    };
+  }, [isListening]);
+
+  return { isListening, setIsListening, transcript };
 }
