@@ -13,6 +13,7 @@ import { EmotionalFeedback } from "@/components/EmotionalFeedback";
 import { ConversationMemory } from "@/components/ConversationMemory";
 import { SupportResourcesModal } from "@/components/SupportResourcesModal";
 import MagicAmbiance from "@/components/MagicAmbiance";
+import { startSession, sendMessage } from "@/lib/zenaApi";
 
 export default function ZenaChat() {
   const navigate = useNavigate();
