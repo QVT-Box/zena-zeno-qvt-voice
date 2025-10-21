@@ -1,47 +1,58 @@
+// src/hooks/useVoiceRecognition.ts
 import { useEffect, useState } from "react";
 
 export function useVoiceRecognition() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState<string>("");
+  const [supported, setSupported] = useState<boolean>(true);
 
   useEffect(() => {
-    if (!("webkitSpeechRecognition" in window)) {
-      console.warn("Reconnaissance vocale non supportée par ce navigateur");
+    const win = window as any;
+    const SpeechRecognition = win.webkitSpeechRecognition || win.SpeechRecognition;
+    if (!SpeechRecognition) {
+      setSupported(false);
       return;
     }
 
-    const SpeechRecognition = (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.lang = "fr-FR";
     recognition.continuous = false;
     recognition.interimResults = false;
 
     recognition.onresult = (event: any) => {
-      const text = event.results[0][0].transcript;
-      setTranscript(text);
+      const text = event.results?.[0]?.[0]?.transcript ?? "";
+      if (text) setTranscript(text);
       setIsListening(false);
     };
 
     recognition.onerror = (event: any) => {
-      console.error("Erreur SpeechRecognition:", event.error);
+      console.warn("SpeechRecognition error:", event?.error);
       setIsListening(false);
     };
 
     if (isListening) {
       try {
         recognition.start();
-        console.log("🎙️ Micro activé...");
       } catch (err) {
-        console.warn("Impossible de démarrer la reconnaissance :", err);
+        console.warn("Cannot start recognition:", err);
+        setIsListening(false);
       }
     } else {
-      recognition.stop();
+      try {
+        recognition.stop();
+      } catch {
+        // ignore
+      }
     }
 
     return () => {
-      recognition.abort();
+      try {
+        recognition.abort();
+      } catch {
+        // ignore
+      }
     };
   }, [isListening]);
 
-  return { isListening, setIsListening, transcript };
+  return { isListening, setIsListening, transcript, supported };
 }
