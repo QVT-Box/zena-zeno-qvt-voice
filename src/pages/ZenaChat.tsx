@@ -12,20 +12,21 @@ export default function ZenaChat() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [manualText, setManualText] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Démarre une session à l'arrivée
+  // Démarrage automatique d'une session à l'arrivée
   useEffect(() => {
     (async () => {
       try {
         const id = await startSession("voice");
         setSessionId(id);
       } catch (e) {
-        console.error("startSession error:", e);
+        console.error("❌ Erreur création session Zéna :", e);
       }
     })();
   }, []);
 
-  // Quand on a un transcript depuis la voix -> envoie immédiatement
+  // Quand la voix capte un texte
   useEffect(() => {
     if (!transcript || !sessionId) return;
     onSend(transcript);
@@ -34,68 +35,112 @@ export default function ZenaChat() {
 
   async function onSend(text: string) {
     if (!text.trim() || !sessionId) return;
-    setMessages((m) => [...m, { from: "user", text }]);
+
+    setMessages((prev) => [...prev, { from: "user", text }]);
+    setLoading(true);
     try {
       const ai = await sendMessage(sessionId, text);
-      setMessages((m) => [...m, { from: "zena", text: ai.response_text }]);
-      speak(ai.response_text);
+      const responseText = ai.response_text || "Je vous écoute.";
+      setMessages((prev) => [...prev, { from: "zena", text: responseText }]);
+
+      // 🔊 Lecture vocale de la réponse
+      speak({
+        text: responseText,
+        lang: "fr-FR",
+        gender: "female",
+        rate: 1,
+        pitch: 1,
+      });
     } catch (e) {
-      console.error("sendMessage error:", e);
+      console.error("❌ Erreur envoi message :", e);
+      setMessages((prev) => [
+        ...prev,
+        { from: "zena", text: "Je n’ai pas compris, pouvez-vous répéter ?" },
+      ]);
     } finally {
       setManualText("");
+      setLoading(false);
     }
   }
 
-  const showManualInput = !supported; // si pas support vocal → montre le champ texte
-
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-slate-50 to-slate-100">
-      <div className="w-full max-w-2xl rounded-2xl shadow bg-white p-4">
-        <h1 className="text-xl font-semibold mb-3">Zéna – IA émotionnelle</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 p-6">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-6">
+        <h1 className="text-2xl font-semibold mb-4 text-center text-emerald-800">
+          🌿 Zéna – Votre IA émotionnelle
+        </h1>
 
-        <div className="h-[40vh] overflow-y-auto border rounded-lg p-3 mb-4 bg-slate-50">
+        <div className="h-[50vh] overflow-y-auto border rounded-xl p-4 mb-4 bg-slate-50">
+          {messages.length === 0 && (
+            <p className="text-slate-500 italic">
+              Cliquez sur 🎙️ pour parler à Zéna, ou écrivez-lui.
+            </p>
+          )}
+
           {messages.map((m, i) => (
-            <div key={i} className={`mb-2 ${m.from === "zena" ? "text-indigo-700" : "text-slate-800"}`}>
-              <span className="font-medium">{m.from === "zena" ? "Zéna" : "Moi"} :</span> {m.text}
+            <div
+              key={i}
+              className={`mb-3 ${
+                m.from === "zena"
+                  ? "text-indigo-700 text-left"
+                  : "text-gray-800 text-right"
+              }`}
+            >
+              <span className="font-medium">
+                {m.from === "zena" ? "Zéna" : "Moi"} :
+              </span>{" "}
+              {m.text}
             </div>
           ))}
-          {messages.length === 0 && (
-            <div className="text-slate-500">Parlez en cliquant sur le micro, ou écrivez votre message ci-dessous.</div>
-          )}
         </div>
 
-        {/* Bouton micro (si supporté) */}
+        {/* Bouton micro */}
         {supported && (
           <button
             onClick={() => setIsListening(!isListening)}
-            className={`w-full py-3 rounded-xl text-white font-medium transition ${
-              isListening ? "bg-rose-600" : "bg-emerald-600"
+            disabled={loading}
+            className={`w-full py-3 rounded-xl text-white font-medium mb-3 transition ${
+              isListening
+                ? "bg-rose-600 animate-pulse"
+                : loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-emerald-600 hover:bg-emerald-700"
             }`}
           >
-            {isListening ? "🎙️ Parlez, j’écoute…" : "🎙️ Activer le micro"}
+            {isListening
+              ? "🎙️ Parlez, j’écoute…"
+              : loading
+              ? "⏳ Zéna réfléchit…"
+              : "🎤 Activer le micro"}
           </button>
         )}
 
-        {/* Entrée manuelle (toujours visible comme secours discret) */}
-        <div className="mt-3 flex gap-2">
+        {/* Entrée manuelle */}
+        <div className="flex gap-2">
           <input
             value={manualText}
             onChange={(e) => setManualText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSend(manualText)}
-            placeholder="Écrire à Zéna (secours si micro KO)…"
-            className="flex-1 px-3 py-2 border rounded-lg outline-none focus:ring focus:ring-indigo-200"
+            placeholder="Écrire à Zéna (si le micro ne marche pas)…"
+            className="flex-1 px-3 py-2 border rounded-lg outline-none focus:ring focus:ring-emerald-200"
           />
           <button
             onClick={() => onSend(manualText)}
-            className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium"
+            disabled={!manualText.trim() || loading}
+            className={`px-4 py-2 rounded-lg text-white font-medium ${
+              !manualText.trim() || loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
           >
             Envoyer
           </button>
         </div>
 
         {!supported && (
-          <p className="mt-2 text-sm text-amber-700">
-            ⚠️ La reconnaissance vocale n’est pas supportée par ce navigateur. Utilisez le champ texte.
+          <p className="mt-2 text-sm text-amber-700 text-center">
+            ⚠️ Ce navigateur ne supporte pas la reconnaissance vocale.
+            Utilisez le champ texte.
           </p>
         )}
       </div>
