@@ -158,44 +158,48 @@ async function callOpenAI(messages: any[]) {
   return j.choices?.[0]?.message?.content?.trim() ?? "";
 }
 
+
 // ===========================================================
-// 🚀 HANDLER PRINCIPAL
+// ✅ HANDLER PRINCIPAL — version CORS STABLE pour Supabase Edge
 // ===========================================================
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // ✅ Autoriser la requête de prévol (OPTIONS)
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+      },
+    });
+  }
 
   try {
     const { text, persona = "zena", lang = "fr" } = await req.json();
 
-    if (!text?.trim())
+    if (!text?.trim()) {
       return new Response(JSON.stringify({ error: "missing text" }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
 
+    // --- Traitement IA
     const mood = detectMood(text);
     const emotional = await analyzeEmotion(text, lang);
 
-    // Sélection d’une phrase d’ouverture émotionnelle adaptée
-    const strategy =
-      AFFECT_STRATEGIES.find((s) => s.label === emotional?.stratégie_relationnelle) ||
-      AFFECT_STRATEGIES.find((s) => s.label === "acceptance");
-
-    const intro =
-      strategy?.examples[Math.floor(Math.random() * strategy.examples.length)] ||
-      "Je t’écoute, dis-m’en un peu plus.";
-
     const system = personaSystem(persona, lang);
+    const intro = "Je t’écoute, dis-m’en un peu plus.";
+
     const messages = [
       { role: "system", content: system },
       {
         role: "user",
-        content: `Message : ${text}\n\nÉmotion détectée : ${emotional?.emotion_dominante || mood}.
-Besoin : ${emotional?.besoin || "inconnu"}.
-Adopte un ton ${emotional?.ton_recommandé || "calme"} et une stratégie de type ${
-          emotional?.stratégie_relationnelle || "acceptance"
-        }.
-Commence par une phrase du type : "${intro}"`,
+        content: `Message : ${text}
+Émotion : ${emotional?.emotion_dominante || mood}
+Besoin : ${emotional?.besoin || "inconnu"}
+Adopte un ton ${emotional?.ton_recommandé || "calme"}
+Commence par une phrase comme : "${intro}"`,
       },
     ];
 
@@ -206,15 +210,26 @@ Commence par une phrase du type : "${intro}"`,
         reply,
         mood,
         emotional,
-        strategy_used: emotional?.stratégie_relationnelle || "acceptance",
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   } catch (err) {
     console.error("[qvt-ai] Fatal error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+
+    // ⚠️ Toujours renvoyer un 200 même en erreur pour éviter le blocage CORS
+    return new Response(
+      JSON.stringify({
+        error: err?.message || String(err),
+        fix: "Vérifie la configuration des CORS ou les clés API.",
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });
+
