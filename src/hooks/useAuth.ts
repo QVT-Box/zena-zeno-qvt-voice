@@ -192,3 +192,14 @@ export const useAuth = () => {
     signInAnonymously, // ✅ pour Zéna en mode libre
   };
 };
+// ✅ compatibilité anonyme
+export async function signInAnonymously(): Promise<string> {
+  const { data, error } = await supabase
+    .from("conversation_sessions")
+    .insert([{ context: "anonymous" }])
+    .select("id")
+    .single();
+  if (error) throw error;
+  localStorage.setItem("zena_session_id", data.id);
+  return data.id;
+}
