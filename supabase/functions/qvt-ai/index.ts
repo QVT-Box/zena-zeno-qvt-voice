@@ -160,16 +160,18 @@ async function callOpenAI(messages: any[]) {
 
 
 // ===========================================================
-// ✅ HANDLER PRINCIPAL — version CORS STABLE pour Supabase Edge
+// ✅ HANDLER PRINCIPAL — VERSION CORS ULTRA-STABLE
 // ===========================================================
 serve(async (req) => {
-  // ✅ Autoriser la requête de prévol (OPTIONS)
+  // --- Étape 1 : répondre correctement au "preflight" (OPTIONS)
   if (req.method === "OPTIONS") {
     return new Response("ok", {
       status: 200,
       headers: {
-        ...corsHeaders,
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+        "Access-Control-Max-Age": "86400",
       },
     });
   }
@@ -180,17 +182,19 @@ serve(async (req) => {
     if (!text?.trim()) {
       return new Response(JSON.stringify({ error: "missing text" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
+          "Content-Type": "application/json",
+        },
       });
     }
 
-    // --- Traitement IA
+    // --- Ton code IA principal
     const mood = detectMood(text);
     const emotional = await analyzeEmotion(text, lang);
-
     const system = personaSystem(persona, lang);
-    const intro = "Je t’écoute, dis-m’en un peu plus.";
 
+    const intro = "Je t’écoute, raconte-moi ce que tu ressens.";
     const messages = [
       { role: "system", content: system },
       {
@@ -206,30 +210,31 @@ Commence par une phrase comme : "${intro}"`,
     const reply = await callOpenAI(messages);
 
     return new Response(
-      JSON.stringify({
-        reply,
-        mood,
-        emotional,
-      }),
+      JSON.stringify({ reply, mood, emotional }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
+          "Content-Type": "application/json",
+        },
       }
     );
   } catch (err) {
     console.error("[qvt-ai] Fatal error:", err);
 
-    // ⚠️ Toujours renvoyer un 200 même en erreur pour éviter le blocage CORS
+    // ⚠️ Même en cas d’erreur → renvoyer 200 pour éviter blocage CORS
     return new Response(
       JSON.stringify({
-        error: err?.message || String(err),
-        fix: "Vérifie la configuration des CORS ou les clés API.",
+        error: err?.message || "Unknown error",
+        fix: "Check API keys or function logs.",
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
+          "Content-Type": "application/json",
+        },
       }
     );
   }
 });
-
