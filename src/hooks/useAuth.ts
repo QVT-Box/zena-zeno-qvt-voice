@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabaseClient"; // ✅ chemin unique vers TON client Supabase
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
