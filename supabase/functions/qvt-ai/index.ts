@@ -137,12 +137,17 @@ Message: """${text}"""`;
     }),
   });
 
-  const j = await res.json();
-  try {
-    return JSON.parse(j.choices?.[0]?.message?.content || "{}");
-  } catch {
-    return null;
-  }
+  const j = await r.json();
+const raw = j.choices?.[0]?.message?.content || "";
+console.log("[ZENA] Raw OpenAI response:", raw);
+
+try {
+  const parsed = JSON.parse(raw);
+  return parsed;
+} catch (err) {
+  console.error("[ZENA] ❌ Failed to parse emotion JSON:", err, "Raw:", raw);
+  return { emotion_dominante: "inconnue", intensité: 0.0, besoin: "non défini", ton_recommandé: "rassurant" };
+}
 }
 
 // ===========================================================
