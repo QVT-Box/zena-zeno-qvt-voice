@@ -1,64 +1,77 @@
 // src/lib/zenaApi.ts
-import { supabase } from "./supabase";
+import { supabase } from "@/integrations/supabase/client";
 
-export async function startSession(context?: string) {
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth?.user) {
-    // crée une session anonyme si tu utilises l’auth anonyme, sinon oblige login
-    // await supabase.auth.signInAnonymously(); // si activé
-    // re-check
-  }
-  const user = (await supabase.auth.getUser()).data.user;
-  if (!user) throw new Error("Utilisateur non authentifié");
+type AIResult = {
+  reply?: string;
+  response_text?: string;
+  mood?: string;
+  used_chunks?: number;
+  emotional?: {
+    emotion_dominante?: string;
+    intensité?: number;
+    besoin?: string;
+    ton_recommandé?: string;
+    dominant_emotion?: string;
+    intensity?: number;
+    underlying_need?: string;
+    tone_hint?: string;
+  };
+};
 
+const TENANT_ID = import.meta.env.VITE_TENANT_ID || null;
+
+// ✅ Création de session (anonyme possible)
+export async function startSession(context: string = "voice") {
   const { data, error } = await supabase
     .from("conversation_sessions")
-    .insert({ user_id: user.id, context: context ?? "voice" })
+    .insert([{ context }])
     .select("id")
     .single();
+
   if (error) throw error;
   return data.id as string;
 }
 
-export async function sendMessage(sessionId: string, text: string) {
-  // 1) message user -> DB
-  const { error: e1 } = await supabase
-    .from("conversation_messages")
-    .insert({ session_id: sessionId, sender: "user", content: text });
+// ✅ Envoi de message à Zéna via la fonction qvt-ai
+export async function sendMessage(sessionId: string, text: string): Promise<AIResult> {
+  // Enregistre le message utilisateur
+  const { error: e1 } = await supabase.from("conversation_messages").insert({
+    session_id: sessionId,
+    role: "user",
+    text,
+  });
   if (e1) throw e1;
 
-  // 2) appel à la Function qvt-ai
-  const token = (await supabase.auth.getSession()).data.session?.access_token;
-  const res = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qvt-ai`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ sessionId, text }),
-    }
-  );
+  // Appelle la fonction IA
+  const { data: aiData, error: fxError } = await supabase.functions.invoke("qvt-ai", {
+    body: {
+      tenant_id: TENANT_ID,
+      text,
+      persona: "zena",
+      lang: "fr",
+      provider: "openai",
+      k: 5,
+    },
+  });
+  if (fxError) throw fxError;
 
-  if (!res.ok) throw new Error(`qvt-ai error: ${res.status}`);
-  const payload = (await res.json()) as {
-    response_text: string;
-    dominant_emotion?: string;
-    emotion_score?: number;
-    recommendations?: string[];
-  };
+  const payload: AIResult = aiData || {};
+  const responseText = payload.reply || payload.response_text || "Je t’écoute.";
 
-  // 3) réponse zéna -> DB
+  // Enregistre la réponse IA + émotion
+  const emotion = payload.emotional
+    ? payload.emotional
+    : payload.mood
+    ? { emotion_dominante: payload.mood }
+    : null;
+
   const { error: e2 } = await supabase.from("conversation_messages").insert({
     session_id: sessionId,
-    sender: "zena",
-    content: payload.response_text,
-    emotion: payload.dominant_emotion ?? null,
-    score: payload.emotion_score ?? null,
+    role: "zena",
+    text: responseText,
+    emotion,
   });
   if (e2) throw e2;
 
   return payload;
 }
-
