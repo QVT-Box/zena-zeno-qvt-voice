@@ -109,44 +109,51 @@ async function analyzeEmotion(text: string, lang: "fr" | "en") {
 
   const prompt =
     lang === "fr"
-      ? `Analyse ce message selon les modèles Karasek, Siegrist et la psychologie positive.
-Renvoie un JSON avec :
-- emotion_dominante : [joie, calme, stress, tristesse, colère, fatigue, isolement]
-- intensité : 0–1
-- besoin : [repos, reconnaissance, soutien, sens, lien]
-- ton_recommandé : [rassurant, motivant, calme, doux, énergisant]
-- stratégie_relationnelle : l’une de [positive_engagement, acceptance, negative_engagement, rejection]
+      ? `Tu es une IA émotionnelle. Analyse le message suivant et renvoie un JSON strict avec :
+{
+  "emotion_dominante": "joie|calme|stress|tristesse|colère|fatigue|isolement",
+  "intensité": 0-1,
+  "besoin": "repos|reconnaissance|soutien|sens|lien",
+  "ton_recommandé": "rassurant|motivante|calme|doux|énergisant",
+  "stratégie_relationnelle": "positive_engagement|acceptance|negative_engagement|rejection"
+}
 Message : """${text}"""
-Réponds uniquement en JSON.`
-      : `Analyze this message emotionally (Karasek, Siegrist, WHO).
-Return JSON:
-- dominant_emotion
-- intensity
-- underlying_need
-- tone_hint
-- relational_strategy: one of [positive_engagement, acceptance, negative_engagement, rejection]
+Réponds uniquement en JSON, sans explication ni texte supplémentaire.`
+      : `Analyze the message below and respond ONLY with valid JSON:
+{
+  "dominant_emotion": "joy|calm|stress|sadness|anger|fatigue|isolation",
+  "intensity": 0-1,
+  "underlying_need": "rest|recognition|support|meaning|connection",
+  "tone_hint": "reassuring|motivating|calm|gentle|energizing",
+  "relational_strategy": "positive_engagement|acceptance|negative_engagement|rejection"
+}
 Message: """${text}"""`;
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_API_KEY}` },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+    },
     body: JSON.stringify({
       model: OPENAI_CHAT,
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.4,
+      temperature: 0.2,
+      response_format: { type: "json_object" }, // ✅ force OpenAI à renvoyer du JSON
     }),
   });
 
   const j = await res.json();
-  const raw = j.choices?.[0]?.message?.content || "";
-  console.log("[ZENA] Raw OpenAI response:", raw);
+  console.log("[ZENA] Raw OpenAI response:", j);
 
   try {
-    const parsed = JSON.parse(raw);
+    const parsed = j.choices?.[0]?.message?.content
+      ? JSON.parse(j.choices[0].message.content)
+      : j;
     console.log("[ZENA] ✅ Emotion parsed:", parsed);
     return parsed;
   } catch (err) {
-    console.error("[ZENA] ❌ Failed to parse emotion JSON:", err, "Raw:", raw);
+    console.error("[ZENA] ❌ Failed to parse emotion JSON:", err);
     return {
       emotion_dominante: "inconnue",
       intensité: 0.0,
