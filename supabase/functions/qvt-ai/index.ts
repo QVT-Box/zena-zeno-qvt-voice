@@ -102,7 +102,7 @@ function detectMood(t: string): "positive" | "neutral" | "negative" | "distress"
 }
 
 // ===========================================================
-// 🧠 ANALYSE ÉMOTIONNELLE AVANCÉE
+// 🧠 ANALYSE ÉMOTIONNELLE AVANCÉE (corrigée et robuste)
 // ===========================================================
 async function analyzeEmotion(text: string, lang: "fr" | "en") {
   if (!OPENAI_API_KEY) return null;
@@ -137,17 +137,23 @@ Message: """${text}"""`;
     }),
   });
 
-  const j = await r.json();
-const raw = j.choices?.[0]?.message?.content || "";
-console.log("[ZENA] Raw OpenAI response:", raw);
+  const j = await res.json();
+  const raw = j.choices?.[0]?.message?.content || "";
+  console.log("[ZENA] Raw OpenAI response:", raw);
 
-try {
-  const parsed = JSON.parse(raw);
-  return parsed;
-} catch (err) {
-  console.error("[ZENA] ❌ Failed to parse emotion JSON:", err, "Raw:", raw);
-  return { emotion_dominante: "inconnue", intensité: 0.0, besoin: "non défini", ton_recommandé: "rassurant" };
-}
+  try {
+    const parsed = JSON.parse(raw);
+    console.log("[ZENA] ✅ Emotion parsed:", parsed);
+    return parsed;
+  } catch (err) {
+    console.error("[ZENA] ❌ Failed to parse emotion JSON:", err, "Raw:", raw);
+    return {
+      emotion_dominante: "inconnue",
+      intensité: 0.0,
+      besoin: "non défini",
+      ton_recommandé: "rassurant",
+    };
+  }
 }
 
 // ===========================================================
@@ -163,12 +169,11 @@ async function callOpenAI(messages: any[]) {
   return j.choices?.[0]?.message?.content?.trim() ?? "";
 }
 
-
 // ===========================================================
 // ✅ HANDLER PRINCIPAL — VERSION CORS ULTRA-STABLE
 // ===========================================================
 serve(async (req) => {
-  // --- Étape 1 : répondre correctement au "preflight" (OPTIONS)
+  // --- OPTIONS (CORS preflight)
   if (req.method === "OPTIONS") {
     return new Response("ok", {
       status: 200,
@@ -194,7 +199,7 @@ serve(async (req) => {
       });
     }
 
-    // --- Ton code IA principal
+    // --- IA principale
     const mood = detectMood(text);
     const emotional = await analyzeEmotion(text, lang);
     const system = personaSystem(persona, lang);
@@ -207,7 +212,7 @@ serve(async (req) => {
         content: `Message : ${text}
 Émotion : ${emotional?.emotion_dominante || mood}
 Besoin : ${emotional?.besoin || "inconnu"}
-Adopte un ton ${emotional?.ton_recommandé || "calme"}
+Adopte un ton ${emotional?.ton_recommandé || "calme"}.
 Commence par une phrase comme : "${intro}"`,
       },
     ];
@@ -227,14 +232,13 @@ Commence par une phrase comme : "${intro}"`,
   } catch (err) {
     console.error("[qvt-ai] Fatal error:", err);
 
-    // ⚠️ Même en cas d’erreur → renvoyer 200 pour éviter blocage CORS
     return new Response(
       JSON.stringify({
         error: err?.message || "Unknown error",
         fix: "Check API keys or function logs.",
       }),
       {
-        status: 200,
+        status: 200, // ⚠️ pour éviter blocage CORS
         headers: {
           "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
           "Content-Type": "application/json",
