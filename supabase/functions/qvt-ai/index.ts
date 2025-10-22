@@ -1,5 +1,5 @@
 // ===========================================================
-// 🌿 ZÉNA - IA ÉMOTIONNELLE QVT BOX (version enrichie 2025)
+// 🌿 ZÉNA - IA ÉMOTIONNELLE QVT BOX (version finale 2025)
 // ===========================================================
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
@@ -22,69 +22,19 @@ const supa = createClient(
 );
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-const EMB_MODEL = "text-embedding-3-small";
 const OPENAI_CHAT = "gpt-4o-mini";
-
-// ===========================================================
-// 💬 STRATÉGIES RELATIONNELLES (Human Affect Model)
-// ===========================================================
-const AFFECT_STRATEGIES = [
-  {
-    label: "positive_engagement",
-    description: "Reconnecter positivement à sa situation ou à ses émotions.",
-    examples: [
-      "Je t’écoute, raconte-moi ce qui s’est passé.",
-      "Tu as déjà surmonté pire, tu peux le faire.",
-      "On peut réfléchir ensemble à une solution.",
-      "Ce n’est pas si grave, tu vas t’en sortir.",
-      "Je comprends ta colère, mais tu peux la canaliser différemment.",
-    ],
-  },
-  {
-    label: "acceptance",
-    description: "Valider, soutenir ou détendre la relation.",
-    examples: [
-      "Je suis là pour toi, quoi qu’il arrive.",
-      "Tu comptes beaucoup pour nous.",
-      "Ça arrive à tout le monde, ne t’en veux pas.",
-      "Allez, on se prend un café pour en parler ?",
-      "Tu me fais sourire, même dans les moments difficiles.",
-    ],
-  },
-  {
-    label: "negative_engagement",
-    description: "Faire émerger une prise de conscience difficile mais utile.",
-    examples: [
-      "Tu vois les conséquences de ton retard ?",
-      "Franchement, tu pourrais faire un effort.",
-      "Tu m’as vraiment déçu sur ce coup-là.",
-      "Tu ne te rends pas compte du mal que tu fais.",
-      "Je t’en parle parce que ça ne peut plus continuer comme ça.",
-    ],
-  },
-  {
-    label: "rejection",
-    description: "Exprimer la distance ou le désengagement.",
-    examples: [
-      "Je n’ai pas envie d’en parler avec toi.",
-      "Fais ce que tu veux, ça m’est égal.",
-      "Tu exagères toujours.",
-      "C’est ridicule de réagir comme ça.",
-      "… (silence ou absence de réponse prolongée)",
-    ],
-  },
-];
 
 // ===========================================================
 // 🎭 PERSONA SYSTEM
 // ===========================================================
+
 function personaSystem(p: "zena" | "zeno" = "zena", lang: "fr" | "en" = "fr") {
   const zenaFR = `Tu es ZÉNA, intelligence émotionnelle de QVT Box.
 Tu incarnes la bienveillance active : une présence douce et lucide.
-Tu t’appuies sur les théories de Karasek, Siegrist et les recherches OMS sur le bien-être au travail.
-Ton but : aider les personnes à retrouver équilibre, sens et énergie.`;
+Tu t’appuies sur les modèles de Karasek et Siegrist, et sur la psychologie positive.
+Ton but : aider la personne à retrouver équilibre, sens et énergie.`;
 
-  const zenoFR = `Tu es ZÉNO, coach analytique QVT.
+  const zenoFR = `Tu es ZÉNO, coach analytique de QVT Box.
 Tu analyses calmement les causes du stress et aides à agir avec méthode.`;
 
   return p === "zena" ? zenaFR : zenoFR;
@@ -93,36 +43,38 @@ Tu analyses calmement les causes du stress et aides à agir avec méthode.`;
 // ===========================================================
 // ❤️ DÉTECTION D’HUMEUR
 // ===========================================================
+
 function detectMood(t: string): "positive" | "neutral" | "negative" | "distress" {
   const s = t.toLowerCase();
   if (/(suicide|me faire du mal|plus envie|détresse|detresse|désespoir)/.test(s)) return "distress";
-  if (/(stress|épuis|epuis|burnout|angoisse|fatigué|fatigue|colère|triste)/.test(s)) return "negative";
-  if (/(bien|motivé|motivation|heureux|content|confiant|serein)/.test(s)) return "positive";
+  if (/(stress|épuis|burnout|angoisse|fatigué|fatigue|colère|triste)/.test(s)) return "negative";
+  if (/(bien|motivé|heureux|content|confiant|serein)/.test(s)) return "positive";
   return "neutral";
 }
 
 // ===========================================================
-// 🧠 ANALYSE ÉMOTIONNELLE AVANCÉE (corrigée et robuste)
+// 🧠 ANALYSE ÉMOTIONNELLE (robuste, forcée en JSON)
 // ===========================================================
+
 async function analyzeEmotion(text: string, lang: "fr" | "en") {
   if (!OPENAI_API_KEY) return null;
 
   const prompt =
     lang === "fr"
-      ? `Tu es une IA émotionnelle. Analyse le message suivant et renvoie un JSON strict avec :
+      ? `Tu es une IA émotionnelle. Analyse le message suivant et renvoie un JSON strict :
 {
   "emotion_dominante": "joie|calme|stress|tristesse|colère|fatigue|isolement",
-  "intensité": 0-1,
+  "intensité": nombre entre 0 et 1,
   "besoin": "repos|reconnaissance|soutien|sens|lien",
   "ton_recommandé": "rassurant|motivante|calme|doux|énergisant",
   "stratégie_relationnelle": "positive_engagement|acceptance|negative_engagement|rejection"
 }
 Message : """${text}"""
-Réponds uniquement en JSON, sans explication ni texte supplémentaire.`
-      : `Analyze the message below and respond ONLY with valid JSON:
+Réponds uniquement en JSON, sans texte explicatif.`
+      : `Analyze the message and respond ONLY with valid JSON:
 {
   "dominant_emotion": "joy|calm|stress|sadness|anger|fatigue|isolation",
-  "intensity": 0-1,
+  "intensity": number between 0 and 1,
   "underlying_need": "rest|recognition|support|meaning|connection",
   "tone_hint": "reassuring|motivating|calm|gentle|energizing",
   "relational_strategy": "positive_engagement|acceptance|negative_engagement|rejection"
@@ -139,7 +91,7 @@ Message: """${text}"""`;
       model: OPENAI_CHAT,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.2,
-      response_format: { type: "json_object" }, // ✅ force OpenAI à renvoyer du JSON
+      response_format: { type: "json_object" }, // ✅ force OpenAI à renvoyer un vrai JSON
     }),
   });
 
@@ -156,7 +108,7 @@ Message: """${text}"""`;
     console.error("[ZENA] ❌ Failed to parse emotion JSON:", err);
     return {
       emotion_dominante: "inconnue",
-      intensité: 0.0,
+      intensité: 0,
       besoin: "non défini",
       ton_recommandé: "rassurant",
     };
@@ -166,6 +118,7 @@ Message: """${text}"""`;
 // ===========================================================
 // 💬 OPENAI CHAT
 // ===========================================================
+
 async function callOpenAI(messages: any[]) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -177,8 +130,9 @@ async function callOpenAI(messages: any[]) {
 }
 
 // ===========================================================
-// ✅ HANDLER PRINCIPAL — VERSION CORS ULTRA-STABLE
+// ✅ HANDLER PRINCIPAL — avec CORS stable
 // ===========================================================
+
 serve(async (req) => {
   // --- OPTIONS (CORS preflight)
   if (req.method === "OPTIONS") {
@@ -206,7 +160,8 @@ serve(async (req) => {
       });
     }
 
-    // --- IA principale
+    console.log(`[ZENA] 🧩 Message reçu : ${text}`);
+
     const mood = detectMood(text);
     const emotional = await analyzeEmotion(text, lang);
     const system = personaSystem(persona, lang);
@@ -237,15 +192,15 @@ Commence par une phrase comme : "${intro}"`,
       }
     );
   } catch (err) {
-    console.error("[qvt-ai] Fatal error:", err);
+    console.error("[ZENA] ❌ Erreur critique :", err);
 
     return new Response(
       JSON.stringify({
         error: err?.message || "Unknown error",
-        fix: "Check API keys or function logs.",
+        fix: "Vérifie les clés API ou les logs de la fonction.",
       }),
       {
-        status: 200, // ⚠️ pour éviter blocage CORS
+        status: 200, // ✅ pour éviter blocage CORS
         headers: {
           "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
           "Content-Type": "application/json",
