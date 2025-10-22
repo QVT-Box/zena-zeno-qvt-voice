@@ -24,7 +24,7 @@ const TENANT_ID = import.meta.env.VITE_TENANT_ID || null;
 export async function startSession(context: string = "voice") {
   const { data, error } = await supabase
     .from("conversation_sessions")
-    .insert([{ context }])
+    .insert([{ context, persona: "zena" }])
     .select("id")
     .single();
 
