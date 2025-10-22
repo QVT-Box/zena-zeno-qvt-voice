@@ -2,12 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { startSession, sendMessage } from "@/lib/zenaApi";
-import { useAuth } from "@/hooks/useAuth";
 
 type Msg = { from: "user" | "zena"; text: string };
 
 export default function ZenaChat() {
-  const { user, signInAnonymously } = useAuth();
   const { isListening, setIsListening, transcript, supported } = useVoiceRecognition();
   const { speak } = useSpeechSynthesis();
 
@@ -17,25 +15,23 @@ export default function ZenaChat() {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // --- Crée une session dès le chargement ---
+  // --- Crée (ou restaure) une session dès le chargement ---
   useEffect(() => {
     const initSession = async () => {
       try {
-        let currentSessionId = localStorage.getItem("zena_session_id");
-        if (!currentSessionId) {
-          // Si pas de session existante → anonyme ou utilisateur
-          const anonId = !user ? await signInAnonymously() : null;
-          const id = await startSession(user?.id || anonId || "anonymous");
-          currentSessionId = id;
+        let current = localStorage.getItem("zena_session_id");
+        if (!current) {
+          const id = await startSession("voice"); // ✅ contexte uniquement (signature zenaApi.ts)
           localStorage.setItem("zena_session_id", id);
+          current = id;
         }
-        setSessionId(currentSessionId);
+        setSessionId(current);
       } catch (err) {
         console.error("❌ Erreur création session :", err);
       }
     };
     initSession();
-  }, [user, signInAnonymously]);
+  }, []);
 
   // --- Scroll automatique ---
   useEffect(() => {
@@ -44,7 +40,7 @@ export default function ZenaChat() {
     }
   }, [messages]);
 
-  // --- Écoute vocale automatique ---
+  // --- Envoi auto quand la reco a un transcript ---
   useEffect(() => {
     if (transcript && sessionId) {
       onSend(transcript);
