@@ -1,5 +1,6 @@
 // ===========================================================
-// 🌿 ZÉNA - IA ÉMOTIONNELLE QVT BOX (version finale 2025)
+// 🌿 ZÉNA - IA ÉMOTIONNELLE QVT BOX
+// Triple fallback : OpenAI → Mistral → Mode local (autonome)
 // ===========================================================
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
@@ -9,7 +10,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // ===========================================================
 // ⚙️ CONFIGURATION
 // ===========================================================
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -22,190 +22,184 @@ const supa = createClient(
 );
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-const OPENAI_CHAT = "gpt-4o-mini";
+const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY");
+const OPENAI_MODEL = "gpt-4o-mini";
+const MISTRAL_MODEL = "mistral-tiny";
+
+// ===========================================================
+// ❤️ ANALYSE ÉMOTIONNELLE LOCALE (fallback offline)
+// ===========================================================
+function localEmotionAnalysis(text: string) {
+  const t = text.toLowerCase();
+  let emotion = "neutre", besoin = "sens", intensité = 0.4, ton = "calme";
+
+  if (/(fatigu|épuis|burnout|lassé)/.test(t)) {
+    emotion = "fatigue"; besoin = "repos"; intensité = 0.8; ton = "doux";
+  } else if (/(stress|angoiss|tendu|inquiet)/.test(t)) {
+    emotion = "stress"; besoin = "soutien"; intensité = 0.7; ton = "rassurant";
+  } else if (/(triste|seul|déprimé)/.test(t)) {
+    emotion = "tristesse"; besoin = "lien"; intensité = 0.9; ton = "chaleureux";
+  } else if (/(colèr|énerv|frustré)/.test(t)) {
+    emotion = "colère"; besoin = "reconnaissance"; intensité = 0.8; ton = "calme";
+  } else if (/(motivé|heureux|bien|content|serein)/.test(t)) {
+    emotion = "joie"; besoin = "partage"; intensité = 0.6; ton = "positif";
+  }
+
+  return { emotion_dominante: emotion, intensité, besoin, ton_recommandé: ton };
+}
 
 // ===========================================================
 // 🎭 PERSONA SYSTEM
 // ===========================================================
-
 function personaSystem(p: "zena" | "zeno" = "zena", lang: "fr" | "en" = "fr") {
   const zenaFR = `Tu es ZÉNA, intelligence émotionnelle de QVT Box.
-Tu incarnes la bienveillance active : une présence douce et lucide.
-Tu t’appuies sur les modèles de Karasek et Siegrist, et sur la psychologie positive.
-Ton but : aider la personne à retrouver équilibre, sens et énergie.`;
+Tu écoutes, reformules avec douceur et aides à retrouver sens et énergie.
+Ton style est humain, fluide, apaisant et sincère.`;
 
-  const zenoFR = `Tu es ZÉNO, coach analytique de QVT Box.
-Tu analyses calmement les causes du stress et aides à agir avec méthode.`;
+  const zenoFR = `Tu es ZÉNO, coach analytique QVT.
+Tu aides à comprendre calmement les causes des difficultés et à les résoudre.`;
 
-  return p === "zena" ? zenaFR : zenoFR;
+  const zenaEN = `You are ZÉNA, the emotional intelligence of QVT Box.
+You listen deeply, respond warmly, and guide with care.`;
+
+  return lang === "en" ? zenaEN : p === "zena" ? zenaFR : zenoFR;
 }
 
 // ===========================================================
-// ❤️ DÉTECTION D’HUMEUR
+// 🧠 ANALYSE ÉMOTIONNELLE VIA OPENAI / MISTRAL
 // ===========================================================
-
-function detectMood(t: string): "positive" | "neutral" | "negative" | "distress" {
-  const s = t.toLowerCase();
-  if (/(suicide|me faire du mal|plus envie|détresse|detresse|désespoir)/.test(s)) return "distress";
-  if (/(stress|épuis|burnout|angoisse|fatigué|fatigue|colère|triste)/.test(s)) return "negative";
-  if (/(bien|motivé|heureux|content|confiant|serein)/.test(s)) return "positive";
-  return "neutral";
-}
-
-// ===========================================================
-// 🧠 ANALYSE ÉMOTIONNELLE (robuste, forcée en JSON)
-// ===========================================================
-
 async function analyzeEmotion(text: string, lang: "fr" | "en") {
-  if (!OPENAI_API_KEY) return null;
+  const prompt = lang === "fr"
+    ? `Analyse ce message et renvoie un JSON :
+- emotion_dominante : [joie, calme, stress, tristesse, colère, fatigue, isolement]
+- intensité : 0–1
+- besoin : (repos, reconnaissance, soutien, sens, lien)
+- ton_recommandé : (rassurant, motivant, calme, doux, énergisant)
+Message : """${text}"""
+Réponds uniquement en JSON.`
+    : `Analyze this message emotionally. Return JSON with dominant_emotion, intensity, need, tone_hint.`;
 
+  // 1️⃣ Tentative OpenAI
+  if (OPENAI_API_KEY) {
+    try {
+      const r = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_API_KEY}` },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.3,
+        }),
+      });
+      const j = await r.json();
+      const raw = j.choices?.[0]?.message?.content || "";
+      return JSON.parse(raw);
+    } catch (err) {
+      console.warn("[ZENA] ⚠️ OpenAI failed:", err.message);
+    }
+  }
+
+  // 2️⃣ Tentative Mistral
+  if (MISTRAL_API_KEY) {
+    try {
+      const r = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${MISTRAL_API_KEY}` },
+        body: JSON.stringify({
+          model: MISTRAL_MODEL,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.4,
+        }),
+      });
+      const j = await r.json();
+      const raw = j.choices?.[0]?.message?.content || "";
+      return JSON.parse(raw);
+    } catch (err) {
+      console.warn("[ZENA] ⚠️ Mistral failed:", err.message);
+    }
+  }
+
+  // 3️⃣ Fallback local
+  console.warn("[ZENA] ⚙️ Using local emotion analysis fallback");
+  return localEmotionAnalysis(text);
+}
+
+// ===========================================================
+// 💬 RÉPONSE (OpenAI → Mistral → Locale)
+// ===========================================================
+async function generateResponse(text: string, analysis: any, persona: string, lang: string) {
   const prompt =
     lang === "fr"
-      ? `Tu es une IA émotionnelle. Analyse le message suivant et renvoie un JSON strict :
-{
-  "emotion_dominante": "joie|calme|stress|tristesse|colère|fatigue|isolement",
-  "intensité": nombre entre 0 et 1,
-  "besoin": "repos|reconnaissance|soutien|sens|lien",
-  "ton_recommandé": "rassurant|motivante|calme|doux|énergisant",
-  "stratégie_relationnelle": "positive_engagement|acceptance|negative_engagement|rejection"
-}
-Message : """${text}"""
-Réponds uniquement en JSON, sans texte explicatif.`
-      : `Analyze the message and respond ONLY with valid JSON:
-{
-  "dominant_emotion": "joy|calm|stress|sadness|anger|fatigue|isolation",
-  "intensity": number between 0 and 1,
-  "underlying_need": "rest|recognition|support|meaning|connection",
-  "tone_hint": "reassuring|motivating|calm|gentle|energizing",
-  "relational_strategy": "positive_engagement|acceptance|negative_engagement|rejection"
-}
-Message: """${text}"""`;
+      ? `${personaSystem(persona, lang)}
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: OPENAI_CHAT,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
-      response_format: { type: "json_object" }, // ✅ force OpenAI à renvoyer un vrai JSON
-    }),
-  });
+Message utilisateur : "${text}"
+Émotion détectée : ${analysis.emotion_dominante}
+Besoin : ${analysis.besoin}
+Adopte un ton ${analysis.ton_recommandé}.
+Réponds en 2 phrases maximum, avec chaleur et authenticité.`
+      : `User says: "${text}". Respond kindly in English, in two short sentences.`;
 
-  const j = await res.json();
-  console.log("[ZENA] Raw OpenAI response:", j);
-
-  try {
-    const parsed = j.choices?.[0]?.message?.content
-      ? JSON.parse(j.choices[0].message.content)
-      : j;
-    console.log("[ZENA] ✅ Emotion parsed:", parsed);
-    return parsed;
-  } catch (err) {
-    console.error("[ZENA] ❌ Failed to parse emotion JSON:", err);
-    return {
-      emotion_dominante: "inconnue",
-      intensité: 0,
-      besoin: "non défini",
-      ton_recommandé: "rassurant",
-    };
+  // 1️⃣ OpenAI
+  if (OPENAI_API_KEY) {
+    try {
+      const r = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_API_KEY}` },
+        body: JSON.stringify({ model: OPENAI_MODEL, messages: [{ role: "user", content: prompt }], temperature: 0.7 }),
+      });
+      const j = await r.json();
+      return j.choices?.[0]?.message?.content?.trim() ?? "Je t’écoute 🌿";
+    } catch (e) {
+      console.warn("[ZENA] OpenAI reply failed → fallback Mistral");
+    }
   }
+
+  // 2️⃣ Mistral
+  if (MISTRAL_API_KEY) {
+    try {
+      const r = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${MISTRAL_API_KEY}` },
+        body: JSON.stringify({ model: MISTRAL_MODEL, messages: [{ role: "user", content: prompt }], temperature: 0.7 }),
+      });
+      const j = await r.json();
+      return j.choices?.[0]?.message?.content?.trim() ?? "Je t’écoute 🌿";
+    } catch (e) {
+      console.warn("[ZENA] Mistral reply failed → fallback local");
+    }
+  }
+
+  // 3️⃣ Local
+  return `Je ressens ${analysis.emotion_dominante}. Peut-être qu’un instant pour toi aiderait à retrouver ${analysis.besoin} 💫`;
 }
 
 // ===========================================================
-// 💬 OPENAI CHAT
+// 🧩 HANDLER PRINCIPAL
 // ===========================================================
-
-async function callOpenAI(messages: any[]) {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_API_KEY}` },
-    body: JSON.stringify({ model: OPENAI_CHAT, messages, temperature: 0.7 }),
-  });
-  const j = await res.json();
-  return j.choices?.[0]?.message?.content?.trim() ?? "";
-}
-
-// ===========================================================
-// ✅ HANDLER PRINCIPAL — avec CORS stable
-// ===========================================================
-
 serve(async (req) => {
-  // --- OPTIONS (CORS preflight)
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-        "Access-Control-Max-Age": "86400",
-      },
-    });
+    return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
   try {
     const { text, persona = "zena", lang = "fr" } = await req.json();
 
     if (!text?.trim()) {
-      return new Response(JSON.stringify({ error: "missing text" }), {
-        status: 400,
-        headers: {
-          "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
-          "Content-Type": "application/json",
-        },
-      });
+      return new Response(JSON.stringify({ error: "missing text" }), { status: 400, headers: corsHeaders });
     }
 
-    console.log(`[ZENA] 🧩 Message reçu : ${text}`);
-
-    const mood = detectMood(text);
     const emotional = await analyzeEmotion(text, lang);
-    const system = personaSystem(persona, lang);
+    const reply = await generateResponse(text, emotional, persona, lang);
 
-    const intro = "Je t’écoute, raconte-moi ce que tu ressens.";
-    const messages = [
-      { role: "system", content: system },
-      {
-        role: "user",
-        content: `Message : ${text}
-Émotion : ${emotional?.emotion_dominante || mood}
-Besoin : ${emotional?.besoin || "inconnu"}
-Adopte un ton ${emotional?.ton_recommandé || "calme"}.
-Commence par une phrase comme : "${intro}"`,
-      },
-    ];
-
-    const reply = await callOpenAI(messages);
-
-    return new Response(
-      JSON.stringify({ reply, mood, emotional }),
-      {
-        status: 200,
-        headers: {
-          "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    return new Response(JSON.stringify({ reply, emotional }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err) {
-    console.error("[ZENA] ❌ Erreur critique :", err);
-
-    return new Response(
-      JSON.stringify({
-        error: err?.message || "Unknown error",
-        fix: "Vérifie les clés API ou les logs de la fonction.",
-      }),
-      {
-        status: 200, // ✅ pour éviter blocage CORS
-        headers: {
-          "Access-Control-Allow-Origin": "https://zena.qvtbox.com",
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    console.error("[ZENA] ❌ Fatal error:", err);
+    return new Response(JSON.stringify({ error: err?.message || "Unexpected error" }), {
+      status: 200,
+      headers: corsHeaders,
+    });
   }
 });
