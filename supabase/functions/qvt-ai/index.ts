@@ -148,7 +148,7 @@ Réponds en 2 phrases maximum, avec chaleur et authenticité.`
         body: JSON.stringify({ model: OPENAI_MODEL, messages: [{ role: "user", content: prompt }], temperature: 0.7 }),
       });
       const j = await r.json();
-      return j.choices?.[0]?.message?.content?.trim() ?? "Je t’écoute 🌿";
+      return j.choices?.[0]?.message?.content?.trim() ?? "Je t’écoute ";
     } catch (e) {
       console.warn("[ZENA] OpenAI reply failed → fallback Mistral");
     }
@@ -163,7 +163,7 @@ Réponds en 2 phrases maximum, avec chaleur et authenticité.`
         body: JSON.stringify({ model: MISTRAL_MODEL, messages: [{ role: "user", content: prompt }], temperature: 0.7 }),
       });
       const j = await r.json();
-      return j.choices?.[0]?.message?.content?.trim() ?? "Je t’écoute 🌿";
+      return j.choices?.[0]?.message?.content?.trim() ?? "Je t’écoute ";
     } catch (e) {
       console.warn("[ZENA] Mistral reply failed → fallback local");
     }
