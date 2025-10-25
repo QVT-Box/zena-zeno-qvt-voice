@@ -1,5 +1,5 @@
 // ===========================================================
-// 🌿 ZÉNA - IA ÉMOTIONNELLE QVT BOX (v2)
+// 🌿 ZÉNA - IA ÉMOTIONNELLE QVT BOX (v2.1 sans emoji)
 // Triple fallback + mémoire émotionnelle (Supabase)
 // ===========================================================
 
@@ -53,10 +53,14 @@ function localEmotionAnalysis(text: string) {
 // ===========================================================
 function personaSystem(p: "zena" | "zeno" = "zena", lang: "fr" | "en" = "fr") {
   const zenaFR = `Tu es ZÉNA, intelligence émotionnelle de QVT Box.
-Tu écoutes avec douceur, identifies les émotions et aides la personne à retrouver du sens et du calme.
-Ton ton est humain, fluide, sincère et lumineux.`;
-  const zenoFR = `Tu es ZÉNO, coach analytique QVT, calme et logique.`;
-  const zenaEN = `You are ZÉNA, the emotional intelligence of QVT Box. You listen deeply and respond with empathy.`;
+Tu écoutes avec douceur et authenticité.
+Tu aides la personne à comprendre ce qu’elle ressent et à retrouver du sens.`;
+
+  const zenoFR = `Tu es ZÉNO, coach analytique de QVT Box.
+Tu aides à comprendre calmement les causes des difficultés et à agir avec méthode.`;
+
+  const zenaEN = `You are ZÉNA, the emotional intelligence of QVT Box.
+You listen deeply and respond with empathy and calm.`;
 
   return lang === "en" ? zenaEN : p === "zena" ? zenaFR : zenoFR;
 }
@@ -120,7 +124,7 @@ Réponds uniquement en JSON.`
 }
 
 // ===========================================================
-// 💬 GÉNÉRATION DE RÉPONSE
+// 💬 GÉNÉRATION DE RÉPONSE (sans emoji)
 // ===========================================================
 async function generateResponse(text: string, analysis: any, persona: string, lang: string) {
   const prompt = lang === "fr"
@@ -130,7 +134,7 @@ Message : "${text}"
 Émotion détectée : ${analysis.emotion_dominante}
 Besoin : ${analysis.besoin}
 Adopte un ton ${analysis.ton_recommandé}.
-Réponds en 2 phrases maximum, avec chaleur et authenticité.`
+Réponds en deux phrases maximum, avec douceur et clarté.`
     : `User says: "${text}". Respond kindly in English, in two short sentences.`;
 
   // 1️⃣ OpenAI
@@ -143,7 +147,7 @@ Réponds en 2 phrases maximum, avec chaleur et authenticité.`
       });
       const j = await r.json();
       const reply = j.choices?.[0]?.message?.content?.trim();
-      if (reply) return reply;
+      if (reply) return cleanText(reply);
     } catch (e) {
       console.warn("[ZENA] OpenAI reply failed → fallback Mistral");
     }
@@ -159,23 +163,34 @@ Réponds en 2 phrases maximum, avec chaleur et authenticité.`
       });
       const j = await r.json();
       const reply = j.choices?.[0]?.message?.content?.trim();
-      if (reply) return reply;
+      if (reply) return cleanText(reply);
     } catch (e) {
       console.warn("[ZENA] Mistral reply failed → fallback local");
     }
   }
 
-  // 3️⃣ Réponse locale améliorée
+  // 3️⃣ Réponse locale simplifiée (orale fluide)
   const table = {
-    fatigue: "Je sens que tu as besoin de repos. Accorde-toi un moment de calme, même court 🌙",
-    stress: "Respire un peu. Tu fais déjà ton maximum, et c’est suffisant pour aujourd’hui 💫",
-    tristesse: "Parle-moi, tu n’es pas seul(e). Les émotions ne durent pas toujours 🌧️→🌤️",
-    colère: "Ta colère dit quelque chose d’important. On peut la comprendre sans se blesser 🔥",
-    joie: "Quel beau moment ! Profite et partage ce sentiment, il t’appartient ☀️",
-    neutre: "Je t’écoute, raconte-moi ce qui te traverse 🌿",
+    fatigue: "Tu sembles fatigué. Accorde-toi un vrai moment de pause.",
+    stress: "Tu sembles tendu. Respire et prends un instant pour toi.",
+    tristesse: "Tu traverses un moment difficile. Parle-m’en si tu veux.",
+    colère: "Ta colère est légitime. On peut la comprendre sans se blesser.",
+    joie: "C’est une belle énergie. Garde-la précieusement.",
+    neutre: "Je t’écoute, dis-moi ce que tu ressens.",
   };
 
   return table[analysis.emotion_dominante] || table.neutre;
+}
+
+// ===========================================================
+// 🧹 NETTOYAGE DU TEXTE POUR LA VOIX
+// ===========================================================
+function cleanText(text: string) {
+  return text
+    .replace(/[🌿💫✨🌙☀️🔥🌧️→🌤️]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,!?])/g, "$1")
+    .trim();
 }
 
 // ===========================================================
