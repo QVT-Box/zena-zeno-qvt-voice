@@ -198,6 +198,19 @@ Réponds en deux phrases maximum, avec douceur et clarté.`
     joie: "C’est une belle énergie. Garde-la précieusement.",
     neutre: "Je t’écoute, dis-moi ce que tu ressens.",
   };
+// 🎯 Adaptation du ton de la réponse locale
+if (analysis.emotion_dominante === "colère") {
+  return "Je sens de la tension dans ce que tu dis. Et si on prenait un instant pour souffler avant d’en reparler calmement ?";
+}
+if (analysis.emotion_dominante === "tristesse") {
+  return "Je ressens de la tristesse dans tes mots. Tu n’es pas seul(e), on peut en parler tranquillement si tu veux.";
+}
+if (analysis.emotion_dominante === "fatigue") {
+  return "Tu sembles vraiment épuisé. Et si tu faisais une pause, juste quelques minutes pour toi ?";
+}
+if (analysis.emotion_dominante === "stress") {
+  return "Le stress semble te peser. Respire un peu, je suis là pour t’aider à remettre les choses à plat.";
+}
 
   return table[analysis.emotion_dominante] || table.neutre;
 }
