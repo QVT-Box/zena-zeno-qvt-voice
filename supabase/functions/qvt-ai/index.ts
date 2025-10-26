@@ -7,6 +7,29 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Nettoie la réponse pour qu'elle sonne naturelle, brève et sans questions
+function sanitizeReply(s: string) {
+  if (!s) return "Je suis là, prends ton temps.";
+  // 1) Supprimer présentations et excuses
+  s = s.replace(/^\s*(bonjour|salut)[,!.\-\s]*/i, "");
+  s = s.replace(/je\s+suis\s+z[ée]na[^.!\n]*[.!\n]?\s*/i, "");
+  s = s.replace(/je\s+suis\s+d[ée]sol[ée](?:\s*(?:de|d')[^.!\n]*)?[.!\n]?/i, "");
+  // 2) Supprimer questions et tournures interrogatives
+  s = s.replace(/[?？！]+/g, "."); // remplace ? par .
+  s = s.replace(/\b(avez[-\s]?vous|voulez[-\s]?vous|peux[-\s]?tu|pouvez[-\s]?vous|veux[-\s]?tu|souhaites[-\s]?tu)\b[^.!\n]*[.!\n]?/gi, "");
+  // 3) Pas d’injonctions trop directive type “Parle à ton employeur”
+  s = s.replace(/\b(parle(?:r)?\s+à\s+ton?\s+employeur|discute(?:r)?\s+avec\s+ton?\s+manager)\b[^.!\n]*[.!\n]?/gi, "");
+  // 4) Nettoyage espaces
+  s = s.replace(/\s+/g, " ").trim();
+  // 5) Maximum 2 phrases
+  const sentences = s.split(/(?<=[.!])\s+/).filter(Boolean).slice(0, 2);
+  s = sentences.join(" ");
+  // 6) Limite de longueur douce
+  if (s.length > 160) s = s.slice(0, 160).replace(/[^a-zA-ZÀ-ÿ]+$/, "") + "…";
+  // 7) Fallback
+  return s || "Je t’écoute, pose-toi un instant.";
+}
+
 // ===========================================================
 // ⚙️ CONFIGURATION
 // ===========================================================
