@@ -144,75 +144,104 @@ Réponds uniquement en JSON.`
 }
 
 // ===========================================================
-// 💬 GÉNÉRATION DE RÉPONSE (sans emoji)
+// 💬 RÉPONSE IA - VERSION ÉCOUTE ACTIVE NATURELLE
 // ===========================================================
-async function generateResponse(text: string, analysis: any, persona: string, lang: string) {
-  const prompt = lang === "fr"
-    ? `${personaSystem(persona, lang)}
+async function generateResponse(text: string, emotional: any, persona: string, lang: string, userMemory: string | null) {
+  const tone = emotional?.ton_recommandé || "calme";
+  const emotion = emotional?.emotion_dominante || "inconnue";
+  const besoin = emotional?.besoin || "sens";
 
-Message : "${text}"
-Émotion détectée : ${analysis.emotion_dominante}
-Besoin : ${analysis.besoin}
-Adopte un ton ${analysis.ton_recommandé}.
-Réponds en deux phrases maximum, avec douceur et clarté.`
-    : `User says: "${text}". Respond kindly in English, in two short sentences.`;
-
-  // 1️⃣ OpenAI
-  if (OPENAI_API_KEY) {
-    try {
-      const r = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_API_KEY}` },
-        body: JSON.stringify({ model: OPENAI_MODEL, messages: [{ role: "user", content: prompt }], temperature: 0.7 }),
-      });
-      const j = await r.json();
-      const reply = j.choices?.[0]?.message?.content?.trim();
-      if (reply) return cleanText(reply);
-    } catch (e) {
-      console.warn("[ZENA] OpenAI reply failed → fallback Mistral");
-    }
-  }
-
-  // 2️⃣ Mistral
-  if (MISTRAL_API_KEY) {
-    try {
-      const r = await fetch("https://api.mistral.ai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${MISTRAL_API_KEY}` },
-        body: JSON.stringify({ model: MISTRAL_MODEL, messages: [{ role: "user", content: prompt }], temperature: 0.7 }),
-      });
-      const j = await r.json();
-      const reply = j.choices?.[0]?.message?.content?.trim();
-      if (reply) return cleanText(reply);
-    } catch (e) {
-      console.warn("[ZENA] Mistral reply failed → fallback local");
-    }
-  }
-
-  // 3️⃣ Réponse locale simplifiée (orale fluide)
-  const table = {
-    fatigue: "Tu sembles fatigué. Accorde-toi un vrai moment de pause.",
-    stress: "Tu sembles tendu. Respire et prends un instant pour toi.",
-    tristesse: "Tu traverses un moment difficile. Parle-m’en si tu veux.",
-    colère: "Ta colère est légitime. On peut la comprendre sans se blesser.",
-    joie: "C’est une belle énergie. Garde-la précieusement.",
-    neutre: "Je t’écoute, dis-moi ce que tu ressens.",
+  // 🩵 Base de réponses naturelles selon émotion
+  const baseResponses: Record<string, string[]> = {
+    fatigue: [
+      "Tu sembles vraiment fatigué. Prends juste un instant pour souffler.",
+      "Tu as le droit de ralentir un peu. C’est déjà bien d’être là.",
+      "Repose-toi, même quelques minutes pour toi comptent vraiment."
+    ],
+    stress: [
+      "Je sens que la pression est forte. Respire, tu fais de ton mieux.",
+      "Le stress peut être lourd, mais tu n’es pas seul(e) dedans.",
+      "Un instant de calme, c’est déjà un pas vers plus de légèreté."
+    ],
+    tristesse: [
+      "Je ressens de la tristesse dans tes mots. Tu peux simplement te poser un moment.",
+      "Ce que tu ressens compte, laisse-toi le droit d’être comme tu es.",
+      "Tu n’es pas seul(e). Ce que tu vis mérite douceur et respect."
+    ],
+    colère: [
+      "Ta colère dit quelque chose d’important. Respire, elle finira par s’apaiser.",
+      "Je comprends que ça te touche profondément. Reste doux avec toi-même.",
+      "Ta réaction est humaine, elle montre que tu tiens à ce qui compte."
+    ],
+    isolement: [
+      "Je sens un peu de solitude. Même si tu ne le vois pas, quelqu’un pense à toi.",
+      "Tu n’es pas seul(e), vraiment. Ce moment va passer.",
+      "Un lien, même petit, peut réchauffer beaucoup. Garde confiance."
+    ],
+    joie: [
+      "Quel bel élan ! Garde cette énergie vivante, elle te va bien.",
+      "J’aime sentir cette lumière dans tes mots. Continue sur ce chemin.",
+      "C’est beau de te sentir comme ça, savoure ce moment simplement."
+    ],
+    neutre: [
+      "Je t’écoute, prends ton temps.",
+      "Je suis là, sans jugement.",
+      "Tu peux juste poser ce que tu ressens, tranquillement."
+    ],
   };
-// 🎯 Adaptation du ton de la réponse locale
-if (analysis.emotion_dominante === "colère") {
-  return "Je sens de la tension dans ce que tu dis. Et si on prenait un instant pour souffler avant d’en reparler calmement ?";
-}
-if (analysis.emotion_dominante === "tristesse") {
-  return "Je ressens de la tristesse dans tes mots. Tu n’es pas seul(e), on peut en parler tranquillement si tu veux.";
-}
-if (analysis.emotion_dominante === "fatigue") {
-  return "Tu sembles vraiment épuisé. Et si tu faisais une pause, juste quelques minutes pour toi ?";
-}
-if (analysis.emotion_dominante === "stress") {
-  return "Le stress semble te peser. Respire un peu, je suis là pour t’aider à remettre les choses à plat.";
-}
 
-  return table[analysis.emotion_dominante] || table.neutre;
+  const localReply = (baseResponses[emotion] || baseResponses["neutre"])[
+    Math.floor(Math.random() * 3)
+  ];
+
+  // 🧠 Contexte mémoire : si présent, on ajoute une touche d’évolution douce
+  const memoryHint = userMemory
+    ? `Je me souviens que tu avais déjà évoqué ${userMemory.split(";")[0].split("(")[0].trim()}.`
+    : "";
+
+  // 🩷 Construction finale naturelle
+  const finalReply = `${memoryHint ? memoryHint + " " : ""}${localReply}`;
+
+  // 1️⃣ OpenAI ou 2️⃣ Mistral si disponibles
+  if (OPENAI_API_KEY || MISTRAL_API_KEY) {
+    const provider = OPENAI_API_KEY ? "openai" : "mistral";
+    const apiUrl =
+      provider === "openai"
+        ? "https://api.openai.com/v1/chat/completions"
+        : "https://api.mistral.ai/v1/chat/completions";
+
+    try {
+      const r = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${provider === "openai" ? OPENAI_API_KEY : MISTRAL_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: provider === "openai" ? OPENAI_MODEL : MISTRAL_MODEL,
+          messages: [
+            {
+              role: "system",
+              content: `Tu es ZÉNA, présence bienveillante de QVT Box. Parle comme une personne douce et vraie. Ne pose pas de question, apporte juste du soutien.`,
+            },
+            {
+              role: "user",
+              content: `${text}\nÉmotion : ${emotion}\nBesoin : ${besoin}\nTon : ${tone}`,
+            },
+          ],
+          temperature: 0.5,
+        }),
+      });
+
+      const j = await r.json();
+      const reply = j.choices?.[0]?.message?.content?.trim();
+      if (reply) return reply;
+    } catch (e) {
+      console.warn("[ZENA] ⚠️ IA indisponible → fallback local.");
+    }
+  }
+
+  return finalReply;
 }
 
 // ===========================================================
