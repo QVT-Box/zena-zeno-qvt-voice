@@ -31,21 +31,39 @@ const MISTRAL_MODEL = "mistral-tiny";
 // ===========================================================
 function localEmotionAnalysis(text: string) {
   const t = text.toLowerCase();
-  let emotion = "neutre", besoin = "sens", intensité = 0.4, ton = "calme";
+  const patterns = {
+    fatigue: /(fatigu|épuis|lassé|sommeil|épuisé|épuisant|épuisement)/,
+    stress: /(stress|angoiss|tendu|pression|urgenc|nerveux|accablé)/,
+    tristesse: /(triste|vide|déprim|abattu|seul|découragé|désespéré)/,
+    colère: /(colèr|énerv|frustr|injust|rage|irrit)/,
+    joie: /(heureux|motivé|content|satisfait|apaisé|reconnaissant)/,
+    anxiété: /(inqui|peur|angoiss|panique)/,
+    isolement: /(isolé|incompris|seul|déconnecté|abandonné)/,
+    reconnaissance: /(merci|remerci|gratitude|reconnaiss)/,
+  };
 
-  if (/(fatigu|épuis|burnout|lassé)/.test(t)) {
-    emotion = "fatigue"; besoin = "repos"; intensité = 0.8; ton = "doux";
-  } else if (/(stress|angoiss|tendu|inquiet)/.test(t)) {
-    emotion = "stress"; besoin = "soutien"; intensité = 0.7; ton = "rassurant";
-  } else if (/(triste|seul|déprimé)/.test(t)) {
-    emotion = "tristesse"; besoin = "lien"; intensité = 0.9; ton = "chaleureux";
-  } else if (/(colèr|énerv|frustré)/.test(t)) {
-    emotion = "colère"; besoin = "reconnaissance"; intensité = 0.8; ton = "calme";
-  } else if (/(motivé|heureux|bien|content|serein|inspiré)/.test(t)) {
-    emotion = "joie"; besoin = "partage"; intensité = 0.6; ton = "positif";
+  for (const [emo, regex] of Object.entries(patterns)) {
+    if (regex.test(t)) {
+      return {
+        emotion_dominante: emo,
+        intensité: 0.7,
+        besoin:
+          emo === "fatigue" ? "repos" :
+          emo === "stress" ? "soutien" :
+          emo === "tristesse" ? "lien" :
+          emo === "colère" ? "reconnaissance" :
+          emo === "isolement" ? "connexion" :
+          "sens",
+        ton_recommandé:
+          emo === "joie" ? "positif" :
+          emo === "colère" ? "calme" :
+          emo === "stress" ? "rassurant" :
+          "doux",
+      };
+    }
   }
 
-  return { emotion_dominante: emotion, intensité, besoin, ton_recommandé: ton };
+  return { emotion_dominante: "neutre", intensité: 0.3, besoin: "sens", ton_recommandé: "calme" };
 }
 
 // ===========================================================
