@@ -15,4 +15,16 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
+  // ✅ Important : optimise et autorise pdfjs-dist
+  optimizeDeps: {
+    include: ["pdfjs-dist"],
+  },
+
+  // ✅ Et permet au bundler de l'intégrer proprement
+  build: {
+    rollupOptions: {
+      external: [],
+    },
+  },
 }));
