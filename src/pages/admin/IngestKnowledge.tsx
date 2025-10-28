@@ -1,173 +1,128 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { pdfToText } from "@/utils/pdfToText";
+import { pdfToText } from "@/utils/pdfToText"; // ✅ Extraction texte PDF
+import { toast } from "sonner";
 
+/**
+ * Page d’administration – Ingestion de connaissances (PDF, TXT, etc.)
+ * Permet de téléverser un document vers Supabase Storage et d’appeler la fonction d’ingestion.
+ */
 export default function IngestKnowledge() {
-  const [tenantId, setTenantId] = useState("");
-  const [url, setUrl] = useState("");
-  const [tags, setTags] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  const [preview, setPreview] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [textPreview, setTextPreview] = useState<string>("");
+  const [progress, setProgress] = useState<number>(0);
 
-  async function handleChooseFile(f: File | null) {
-    setFile(f);
-    setPreview("");
-    if (!f) return;
+  // --- Fonction d’upload vers Supabase Storage ---
+  const uploadToSupabase = async (file: File) => {
+    const { data, error } = await supabase.storage.from("kb").upload(file.name, file, {
+      upsert: true,
+    });
 
-    // Show a short preview of extracted text (helps verify before ingest)
-    try {
-      setStatus("Extraction du texte du PDF…");
-      const text = await extractTextFromPDF(f);
-      setPreview(text.slice(0, 2000));
-      setStatus(null);
-    } catch (e: any) {
-      setStatus(`❌ Impossible de lire ce PDF: ${e.message || e}`);
+    if (error) throw error;
+    return data.path;
+  };
+
+  // --- Fonction principale ---
+  const handleIngest = async () => {
+    if (!file) {
+      toast.error("Veuillez sélectionner un fichier avant de lancer l’analyse.");
+      return;
     }
-  }
 
-  async function handleIngest() {
-    setLoading(true);
-    setStatus("Préparation de l’ingestion…");
+    setIsUploading(true);
+    setProgress(10);
+    toast.info("Téléversement en cours...");
 
     try {
-      if (!tenantId) throw new Error("Renseigne un tenant_id (UUID).");
+      // Étape 1 : Upload dans le bucket Supabase
+      const path = await uploadToSupabase(file);
+      setProgress(30);
+      toast.success("Fichier téléversé avec succès.");
 
-      // Build request body for the Edge Function
-      const body: any = {
-        tenant_id: tenantId,
-        tags: tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
-        lang: "fr",
-      };
-
-      if (url.trim()) {
-        body.url = url.trim();
-        body.source_type = "web";
-        setStatus("📡 Récupération et traitement de la page web…");
-      } else if (file) {
-        setStatus("📄 Envoi du contenu PDF…");
-        const text = preview || (await extractTextFromPDF(file));
-        if (!text || text.length < 30) {
-          throw new Error("Le PDF ne contient pas assez de texte exploitable.");
-        }
-        body.content = text;
-        body.title = file.name;
-        body.source_type = "pdf";
+      // Étape 2 : Extraction du texte si PDF
+      let extractedText = "";
+      if (file.type === "application/pdf") {
+        extractedText = await pdfToText(file);
+        setTextPreview(extractedText.slice(0, 800) + "...");
+        toast.info("Texte extrait depuis le PDF.");
       } else {
-        throw new Error("Fournis soit une URL, soit un fichier PDF.");
+        const text = await file.text();
+        extractedText = text;
+        setTextPreview(text.slice(0, 800) + "...");
       }
+      setProgress(60);
 
-      // ✅ Call Edge Function safely through Supabase client
-      const { data, error } = await supabase.functions.invoke("ingest-kb", {
-        body,
+      // Étape 3 : Appel de la fonction Edge Supabase /ingest
+      const { data, error } = await supabase.functions.invoke("ingest", {
+        body: {
+          tenant_id: "default-tenant",
+          objects: [{ path, name: file.name, mime: file.type }],
+          lang: "fr",
+          tags: ["qvt", "document"],
+        },
       });
 
       if (error) throw error;
-      if (!data) throw new Error("Réponse vide de la fonction.");
-
-      setStatus(
-        `✅ Ingestion réussie : ${data.inserted || 0}/${data.attempted || 0} chunks ajoutés.`
-      );
-    } catch (e: any) {
-      setStatus(`❌ ${e.message || String(e)}`);
+      setProgress(100);
+      toast.success("Analyse IA terminée ✅");
+      console.log("Ingest result:", data);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erreur pendant l’ingestion : " + err.message);
     } finally {
-      setLoading(false);
+      setIsUploading(false);
+      setTimeout(() => setProgress(0), 2000);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-[#F2F7F6] p-6 flex flex-col items-center">
-      <div className="max-w-2xl w-full bg-white shadow-xl rounded-2xl p-6 border border-[#A4D4AE]/30">
+    <div className="min-h-screen bg-gradient-to-b from-[#F2F7F6] to-[#E9F9F5] flex flex-col items-center justify-center p-8">
+      <div className="max-w-xl w-full bg-white rounded-2xl shadow-xl p-6">
         <h1 className="text-2xl font-semibold text-[#005B5F] mb-4">
-          Ingestion de connaissances — Zéna
+          📚 Ingestion de documents – QVT Box
         </h1>
-        <p className="text-gray-600 text-sm mb-6">
-          Colle une <b>URL</b> (ANACT, OMS, interne) ou ajoute un <b>PDF</b>. Le contenu sera
-          découpé et stocké dans <code>kb_chunks</code>.
-        </p>
 
-        <label className="block mb-4">
-          <span className="text-sm font-medium text-gray-700">Tenant ID (UUID)</span>
-          <input
-            type="text"
-            value={tenantId}
-            onChange={(e) => setTenantId(e.target.value)}
-            placeholder="00000000-0000-0000-0000-000000000000"
-            className="mt-1 w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#A4D4AE]"
-          />
-        </label>
-
-        <label className="block mb-4">
-          <span className="text-sm font-medium text-gray-700">URL (facultatif)</span>
-          <input
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://www.anact.fr/prevenir-le-stress-au-travail"
-            className="mt-1 w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#A4D4AE]"
-          />
-        </label>
-
-        <div className="my-3 text-center text-gray-500">— ou —</div>
-
-        <label className="block mb-2">
-          <span className="text-sm font-medium text-gray-700">Fichier PDF (facultatif)</span>
+        {/* Sélection du fichier */}
+        <div className="border-2 border-dashed border-[#78A085] rounded-lg p-6 text-center mb-4">
           <input
             type="file"
-            accept=".pdf"
-            onChange={(e) => handleChooseFile(e.target.files?.[0] || null)}
-            className="mt-1 w-full border rounded-lg p-2 bg-[#F2F7F6] cursor-pointer"
+            accept=".pdf,.txt,.md"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="w-full cursor-pointer"
           />
-        </label>
+          {file && (
+            <p className="text-sm mt-2 text-gray-600">
+              Fichier sélectionné : <strong>{file.name}</strong> ({file.type})
+            </p>
+          )}
+        </div>
 
-        {preview && (
-          <div className="mb-3">
-            <div className="text-xs text-gray-500 mb-1">Aperçu (2000 premiers caractères)</div>
-            <textarea
-              value={preview}
-              readOnly
-              rows={6}
-              className="w-full border rounded-lg p-2 text-sm bg-gray-50"
-            />
+        {/* Bouton d’action */}
+        <button
+          onClick={handleIngest}
+          disabled={!file || isUploading}
+          className={`w-full py-3 rounded-lg font-medium text-white transition ${
+            isUploading ? "bg-gray-400" : "bg-[#005B5F] hover:bg-[#017177]"
+          }`}
+        >
+          {isUploading ? "Analyse en cours..." : "📤 Envoyer et analyser"}
+        </button>
+
+        {/* Barre de progression */}
+        {progress > 0 && (
+          <div className="w-full bg-gray-200 rounded-full h-3 mt-4">
+            <div
+              className="bg-[#78A085] h-3 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
         )}
 
-        <label className="block mb-5">
-          <span className="text-sm font-medium text-gray-700">
-            Tags (séparés par des virgules)
-          </span>
-          <input
-            type="text"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="ANACT, QVT, prévention, stress"
-            className="mt-1 w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#A4D4AE]"
-          />
-        </label>
-
-        <button
-          onClick={handleIngest}
-          disabled={loading}
-          className={`w-full py-3 rounded-xl text-white font-semibold transition ${
-            loading ? "bg-gray-400" : "bg-[#005B5F] hover:bg-[#004347]"
-          }`}
-        >
-          {loading ? "Traitement en cours…" : "Lancer l’ingestion"}
-        </button>
-
-        {status && (
-          <div
-            className={`mt-4 text-sm rounded-lg p-3 ${
-              status.startsWith("✅")
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {status}
+        {/* Aperçu du texte extrait */}
+        {textPreview && (
+          <div className="mt-6 p-4 bg-[#F2F7F6] rounded-lg text-sm text-gray-700 max-h-60 overflow-y-auto">
+            <p>{textPreview}</p>
           </div>
         )}
       </div>
