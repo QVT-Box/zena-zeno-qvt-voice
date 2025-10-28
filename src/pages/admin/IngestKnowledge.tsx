@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { extractTextFromPDF } from "@/utils/pdfToText";
+import { pdfToText } from "@/utils/pdfToText";
 
 export default function IngestKnowledge() {
   const [tenantId, setTenantId] = useState("");
