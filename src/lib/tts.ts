@@ -19,7 +19,7 @@ export async function speakWithZena(
     const synth = window.speechSynthesis;
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "fr-FR";
-    utterance.rate = 1;
+    utterance.rate = 1.1;
     utterance.pitch = 1.05;
     utterance.volume = 1;
 
