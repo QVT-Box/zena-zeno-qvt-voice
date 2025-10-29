@@ -5,7 +5,7 @@ import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 import ZenaAvatar from "@/components/ZenaAvatar";
 
 /**
- * 💬 Page principale – Interaction vocale et émotionnelle avec ZÉNA
+ *  Page principale – Interaction vocale et émotionnelle avec ZÉNA
  * ---------------------------------------------------------------
  * - Création automatique d'une session IA
  * - Écoute vocale utilisateur
@@ -21,7 +21,7 @@ export default function ZenaChat() {
   const [emotion, setEmotion] = useState<"positive" | "neutral" | "negative">("neutral");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // ✅ Crée une session au montage
+  //  Crée une session au montage
   useEffect(() => {
     const init = async () => {
       try {
@@ -34,7 +34,7 @@ export default function ZenaChat() {
     init();
   }, []);
 
-  // 🎛️ Contrôle du micro et de la parole
+  //  Contrôle du micro et de la parole
   const handleToggle = async () => {
     if (isSpeaking) {
       stopSpeaking();
@@ -48,11 +48,11 @@ export default function ZenaChat() {
     startListening();
   };
 
-  // 💬 Envoi du message à ZÉNA et lecture de la réponse
+  // Envoi du message à ZÉNA et lecture de la réponse
   const handleSend = async () => {
     if (!sessionId || !transcript.trim()) return;
     setIsLoading(true);
-    setReply("⏳ ZÉNA réfléchit...");
+    setReply(" ZÉNA réfléchit...");
 
     try {
       const ai = await sendMessage(sessionId, transcript);
@@ -65,13 +65,13 @@ export default function ZenaChat() {
           : "neutral"
       );
 
-      // 🎵 petite pause avant de parler pour le réalisme
+      //  petite pause avant de parler pour le réalisme
       await new Promise((resolve) => setTimeout(resolve, 600));
       setIsSpeaking(true);
       await speakWithZena(ai.text);
     } catch (err) {
       console.error("Erreur interaction Zéna :", err);
-      setReply("Je crois que j’ai besoin d’une petite pause... 🌸");
+      setReply("Je crois que j’ai besoin d’une petite pause... ");
     } finally {
       setIsSpeaking(false);
       setIsLoading(false);
@@ -98,24 +98,24 @@ export default function ZenaChat() {
           } ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
         >
           {isSpeaking
-            ? "✋ Stopper ZÉNA"
+            ? " Stopper ZÉNA"
             : isListening
-            ? "🎧 Écoute en cours..."
-            : "🎙️ Parler à ZÉNA"}
+            ? " Écoute en cours..."
+            : " Parler à ZÉNA"}
         </button>
 
         {/* Si un texte a été reconnu par le micro */}
         {transcript && !isSpeaking && (
           <>
             <p className="text-sm text-gray-700 italic mt-4">
-              🗣️ Tu as dit : « {transcript} »
+               Tu as dit : « {transcript} »
             </p>
             <button
               onClick={handleSend}
               disabled={isLoading}
               className="px-6 py-2 mt-3 bg-[#4FD1C5] text-white rounded-full shadow hover:bg-teal-500 transition"
             >
-              {isLoading ? "💭 ZÉNA réfléchit..." : "Envoyer à ZÉNA 💬"}
+              {isLoading ? " ZÉNA réfléchit..." : "Envoyer à ZÉNA "}
             </button>
           </>
         )}
