@@ -8,28 +8,20 @@ export interface EmotionSnapshot {
 export function useZenaMemory(limit: number = 7) {
   const [history, setHistory] = useState<EmotionSnapshot[]>([]);
 
-  // ➕ Ajouter une émotion à l'historique
-  const addEmotion = (emotion: "positive" | "neutral" | "negative") => {
+  const addEmotion = (emotion: EmotionSnapshot["emotion"]) => {
     const entry = { emotion, timestamp: Date.now() };
     setHistory((prev) => {
       const updated = [...prev, entry];
-      if (updated.length > limit) updated.shift(); // garde les derniers
+      if (updated.length > limit) updated.shift();
       return updated;
     });
   };
 
-  // 📊 Analyse de tendance
   const getTrend = (): "improving" | "stable" | "declining" => {
     if (history.length < 2) return "stable";
-
-    const scores = history.map((h) =>
-      h.emotion === "positive" ? 1 : h.emotion === "negative" ? -1 : 0
-    );
-    const diff = scores[scores.length - 1] - scores[0];
-
-    if (diff > 0) return "improving";
-    if (diff < 0) return "declining";
-    return "stable";
+    const score = (e: EmotionSnapshot["emotion"]) => (e === "positive" ? 1 : e === "negative" ? -1 : 0);
+    const diff = score(history.at(-1)!.emotion) - score(history[0].emotion);
+    return diff > 0 ? "improving" : diff < 0 ? "declining" : "stable";
   };
 
   return { history, addEmotion, getTrend };
