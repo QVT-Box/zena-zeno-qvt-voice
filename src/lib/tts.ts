@@ -13,7 +13,7 @@ let currentUtterance: SpeechSynthesisUtterance | null = null;
 const ELEVEN_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || "";
 // Voix féminine FR/Multilingue (remplace par ta préférée si besoin)
 const ELEVEN_VOICE_ID =
-  import.meta.env.VITE_ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // "Rachel"
+  import.meta.env.VITE_ELEVENLABS_VOICE_ID || "jVX5RZMRPwoS6ZQp9BOi"; // "Rachel"
 
 const TTS_PROVIDER = (import.meta.env.VITE_TTS_PROVIDER || "").toLowerCase();
 // "elevenlabs" | "webspeech" | "" (auto -> elevenlabs si clé, sinon webspeech)
