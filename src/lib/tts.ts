@@ -12,7 +12,7 @@ let usingWebSpeech = false;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 
 const ELEVEN_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || ""; // Mets ta clé si tu veux ElevenLabs
-const ELEVEN_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // "Rachel" par défaut
+const ELEVEN_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID || "jVX5RZMRPwoS6ZQp9BOi"; // "Rachel" par défaut
 const TTS_PROVIDER = (import.meta.env.VITE_TTS_PROVIDER || "").toLowerCase(); 
 // options: "elevenlabs" | "webspeech" | "" (auto)
 
