@@ -34,7 +34,7 @@ export default function ZenaChat() {
 
   const trendLabel = useMemo(() => {
     const t = getTrend();
-    return t === "improving" ? "💚 Amélioration" : t === "declining" ? "💔 Baisse" : "🌿 Stable";
+    return t === "improving" ? "💚 Amélioration" : t === "declining" ? "💔 Baisse" : " Stable";
   }, [history]);
 
   const handleMainToggle = () => {
@@ -55,7 +55,7 @@ export default function ZenaChat() {
     if (!text) return;
 
     setIsLoading(true);
-    setReply("⏳ ZÉNA réfléchit...");
+    setReply(" ZÉNA réfléchit...");
 
     try {
       const ai = await sendMessage(sessionId, text);
@@ -101,7 +101,7 @@ export default function ZenaChat() {
             : "bg-[#5B4B8A] hover:bg-[#4A3C79]"
         }`}
       >
-        {isSpeaking ? "✋ Stopper ZÉNA" : isListening ? "🎧 Écoute en cours..." : "🎙️ Parler à ZÉNA"}
+        {isSpeaking ? " Stopper ZÉNA" : isListening ? " Écoute en cours..." : " Parler à ZÉNA"}
       </button>
 
       <div className="mt-6 w-full max-w-lg">
@@ -116,7 +116,7 @@ export default function ZenaChat() {
           disabled={isLoading || (!manualText.trim() && !transcript.trim())}
           className="mt-3 px-6 py-2 rounded-full bg-[#4FD1C5] text-white shadow hover:bg-teal-500 transition"
         >
-          {isLoading ? "💭 Réflexion..." : "Envoyer 💬"}
+          {isLoading ? " Réflexion..." : "Envoyer "}
         </button>
         {reply && !isSpeaking && (
           <div className="mt-6 p-4 bg-white/70 rounded-xl shadow-inner">
