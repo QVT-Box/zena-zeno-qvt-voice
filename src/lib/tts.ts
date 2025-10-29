@@ -1,82 +1,47 @@
-// src/lib/tts.ts
-// ======================================================
-// 🔊 Synthèse vocale pour ZÉNA (voix IA + contrôle Stop)
-// Compatible ElevenLabs et Vercel
-// ======================================================
-
-let currentAudio: HTMLAudioElement | null = null;
+let currentUtterance: SpeechSynthesisUtterance | null = null;
 
 /**
- * Fait parler ZÉNA avec une voix humaine (API ElevenLabs)
- * @param text - Le texte à prononcer
+ * 🔈 Fait parler Zéna + callback de mouvement labial
  */
-export async function speakWithZena(text: string) {
-  // 🧹 On arrête tout son en cours avant d’en jouer un nouveau
-  stopSpeaking();
-
-  const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-  const voiceId =
-    import.meta.env.VITE_ELEVENLABS_VOICE_ID || "EXAVITQu4vr4xnSDxMaL"; // voix par défaut
-
-  if (!apiKey) {
-    console.warn("⚠️ Aucune clé ElevenLabs trouvée dans .env");
-    return;
-  }
-
-  try {
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-      {
-        method: "POST",
-        headers: {
-          "xi-api-key": apiKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text,
-          model_id: "eleven_multilingual_v2",
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.8,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Erreur API ElevenLabs: ${response.status}`);
+export async function speakWithZena(
+  text: string,
+  onProgress?: (event: "start" | "tick" | "end") => void
+) {
+  return new Promise<void>((resolve) => {
+    if (!window.speechSynthesis) {
+      console.warn("Synthèse vocale non disponible.");
+      resolve();
+      return;
     }
 
-    const blob = await response.blob();
-    const audioUrl = URL.createObjectURL(blob);
+    stopSpeaking(); // stop toute voix active
 
-    // 🎧 Lecture du son
-    currentAudio = new Audio(audioUrl);
-    await currentAudio.play();
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "fr-FR";
+    utterance.rate = 1;
+    utterance.pitch = 1.05;
+    utterance.volume = 1;
 
-    currentAudio.onended = () => {
-      // 🧹 Nettoyage automatique une fois terminé
-      URL.revokeObjectURL(audioUrl);
-      currentAudio = null;
+    currentUtterance = utterance;
+
+    utterance.onstart = () => onProgress?.("start");
+    utterance.onend = () => {
+      onProgress?.("end");
+      resolve();
     };
-  } catch (err) {
-    console.error("❌ Erreur TTS ZÉNA :", err);
-    stopSpeaking();
-  }
+    utterance.onboundary = () => onProgress?.("tick");
+
+    synth.speak(utterance);
+  });
 }
 
 /**
- * ✋ Stoppe immédiatement toute lecture audio en cours
- * (utile si ZÉNA parle trop longtemps ou si l’utilisateur appuie sur Stop)
+ * ✋ Stoppe immédiatement la parole
  */
 export function stopSpeaking() {
-  if (currentAudio) {
-    try {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-      currentAudio = null;
-    } catch (err) {
-      console.warn("Erreur lors de l'arrêt du son :", err);
-    }
+  if (window.speechSynthesis?.speaking) {
+    window.speechSynthesis.cancel();
   }
+  currentUtterance = null;
 }
