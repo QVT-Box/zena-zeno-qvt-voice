@@ -4,66 +4,66 @@ import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 import { speakWithZena, stopSpeaking } from "@/lib/tts";
 import { startSession, sendMessage, getSessionMessages } from "@/lib/zenaApi";
 import { useZenaMemory } from "@/hooks/useZenaMemory";
+import { useZenaTrainer } from "@/hooks/useZenaTrainer";
 
 /**
- * ZÉNA Chat — Avatar vivant, voix, IA, mémoire émotionnelle, quick-replies
- * - Crée/charge une session Supabase
- * - Écoute micro → envoie au backend IA (qvt-ai) → réponse courte & bienveillante
- * - Voix ElevenLabs + halo animé
- * - Mémoire émotionnelle locale (mini-trend) + historisation Supabase
- * - Quick-replies : "Juste t'écouter" / "Aide-moi à avancer"
- * - Mode Coach (entraînement) pour des réponses plus guidantes
+ * 💬 ZÉNA Chat – IA émotionnelle entreprise
+ * --------------------------------------------------
+ * - Avatar vivant (voix + halo)
+ * - Écoute et répond avec bienveillance
+ * - Mode Coach pour salariés & RH
+ * - Mémoire émotionnelle sur 7 messages
+ * - Entraînement automatique (stocke émotions & dialogues)
  */
 export default function ZenaChat() {
   //  Reconnaissance vocale
   const { isListening, transcript, startListening, stopListening } = useVoiceRecognition();
 
-  //  Mémoire émotionnelle locale (sur les 7 derniers messages)
+  //  Mémoire émotionnelle
   const { history, addEmotion, getTrend } = useZenaMemory(7);
 
-  //  États conversation
+  //  Apprentissage automatique
+  const { addSample, syncToCloud } = useZenaTrainer();
+
+  //  États principaux
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [reply, setReply] = useState<string>("");
-  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [manualText, setManualText] = useState<string>(""); // saisie clavier
-  const [modeCoach, setModeCoach] = useState<boolean>(false); // mode "entraînement"
-  const [intent, setIntent] = useState<"listen" | "guide" | null>(null); // intention utilisateur
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [manualText, setManualText] = useState("");
+  const [modeCoach, setModeCoach] = useState(false);
+  const [intent, setIntent] = useState<"listen" | "guide" | null>(null);
+  const [messages, setMessages] = useState<{ role: "user" | "zena"; text: string }[]>([]);
+  const speakingGuard = useRef(false);
 
-  //  Historique local minimal (optionnel — lecture des derniers messages)
-  const [messages, setMessages] = useState<
-    { role: "user" | "zena"; text: string; created_at?: string }[]
-  >([]);
-
-  const speakingGuard = useRef<boolean>(false); // empêche double lecture
-
-  //  Crée la session et charge l'historique au montage
+  //  Initialisation session
   useEffect(() => {
     (async () => {
       try {
         const id = await startSession("voice");
         setSessionId(id);
         const past = await getSessionMessages(id);
-        const mapped =
-          past?.map((m: any) => ({
-            role: m.role,
-            text: m.text,
-            created_at: m.created_at,
-          })) || [];
-        setMessages(mapped);
+        if (past?.length) {
+          setMessages(past.map((m: any) => ({ role: m.role, text: m.text })));
+        }
       } catch (err) {
-        console.error("Init session Zéna :", err);
+        console.error("Erreur init session Zéna :", err);
       }
     })();
+
+    // Sauvegarde apprentissage à la fermeture
+    return () => {
+      if (sessionId) syncToCloud(sessionId);
+    };
   }, []);
 
-  //  Tendance émotionnelle lisible
+  //  Lecture de tendance émotionnelle
   const trendLabel = useMemo(() => {
     const t = getTrend();
-    return t === "improving" ? " En amélioration" : t === "declining" ? " En baisse" : " Stable";
+    return t === "improving" ? " Climat en amélioration" : t === "declining" ? " Climat en baisse" : " Climat stable";
   }, [history]);
 
-  //  Bouton central : Parler / Stop (écoute ou voix)
+  //  Contrôle du micro / voix
   const handleMainToggle = () => {
     if (isSpeaking) {
       stopSpeaking();
@@ -78,43 +78,36 @@ export default function ZenaChat() {
     startListening();
   };
 
-  //  Envoi “intelligent” (transcript ou saisie manuelle)
-  const getEffectiveUserText = () => {
+  //  Texte effectif envoyé à ZÉNA
+  const getUserText = () => {
     const base = manualText.trim() || transcript.trim();
     if (!base) return "";
-
-    //  Encode l’intention simplement dans le texte (API pourra reconnaître)
     const intentTag = intent === "guide" ? "[INTENT:GUIDE]" : intent === "listen" ? "[INTENT:LISTEN]" : "";
     const coachTag = modeCoach ? "[MODE:COACH]" : "[MODE:DEFAULT]";
-
     return `${intentTag}${coachTag} ${base}`;
   };
 
-  //  Pipeline : User text -> qvt-ai -> TTS
+  //  Interaction principale
   const handleSend = async () => {
     if (!sessionId) return;
-    const text = getEffectiveUserText();
+    const text = getUserText();
     if (!text) return;
 
     setIsLoading(true);
     setReply(" ZÉNA réfléchit...");
-    setMessages((prev) => [...prev, { role: "user", text }]);
+    setMessages((p) => [...p, { role: "user", text }]);
 
     try {
-      const ai = await sendMessage(sessionId, text); // { text, emotion }
-      // Mémorise l’émotion pour la tendance
-      const normalizedEmotion =
-        ai.emotion === "positive" ? "positive" : ai.emotion === "negative" ? "negative" : "neutral";
-      addEmotion(normalizedEmotion as "positive" | "neutral" | "negative");
+      const ai = await sendMessage(sessionId, text);
+      const emotion = ai.emotion === "positive" ? "positive" : ai.emotion === "negative" ? "negative" : "neutral";
+      addEmotion(emotion as "positive" | "neutral" | "negative");
+      addSample(text, ai.text, emotion);
 
-      // Affiche la réponse textuelle
       setReply(ai.text);
-      setMessages((prev) => [...prev, { role: "zena", text: ai.text }]);
+      setMessages((p) => [...p, { role: "zena", text: ai.text }]);
 
-      // 🫧 petite pause “respiration” avant la voix
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 600));
 
-      //  Parle (protégé contre double lecture)
       if (!speakingGuard.current) {
         speakingGuard.current = true;
         setIsSpeaking(true);
@@ -127,22 +120,18 @@ export default function ZenaChat() {
       setIsSpeaking(false);
       speakingGuard.current = false;
       setIsLoading(false);
-      // reset champ manuel mais pas le transcript (l’utilisateur le voit)
       setManualText("");
     }
   };
 
-  //  Quick replies (rendent l’interaction naturelle et guidée)
-  const setQuickIntent = (i: "listen" | "guide") => {
-    setIntent(i);
-  };
+  const setQuickIntent = (i: "listen" | "guide") => setIntent(i);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-start pt-10 pb-24 px-4 text-center bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] overflow-hidden">
-      {/* Avatar vivant */}
+      {/* 🪷 Avatar vivant */}
       <ZenaAvatar textToSpeak={isSpeaking ? reply : ""} />
 
-      {/* Barre d’action centrale */}
+      {/*  Bouton principal */}
       <div className="mt-8 flex flex-col items-center gap-3">
         <button
           onClick={handleMainToggle}
@@ -158,7 +147,7 @@ export default function ZenaChat() {
           {isSpeaking ? " Stopper ZÉNA" : isListening ? " Écoute en cours..." : " Parler à ZÉNA"}
         </button>
 
-        {/* Intentions rapides : écoute vs aide */}
+        {/* Intentions rapides */}
         <div className="flex items-center gap-2 mt-2">
           <button
             onClick={() => setQuickIntent("listen")}
@@ -177,19 +166,15 @@ export default function ZenaChat() {
              Aide-moi à avancer
           </button>
 
-          {/* Mode entraînement (coach) */}
+          {/* Mode coach */}
           <label className="ml-3 inline-flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={modeCoach}
-              onChange={(e) => setModeCoach(e.target.checked)}
-            />
+            <input type="checkbox" checked={modeCoach} onChange={(e) => setModeCoach(e.target.checked)} />
             <span className="px-3 py-1 rounded-full bg-white shadow"> Mode Coach</span>
           </label>
         </div>
       </div>
 
-      {/* Zone d'entrée + envoi */}
+      {/*  Saisie manuelle */}
       <div className="mt-6 w-full max-w-xl">
         <input
           value={manualText}
@@ -205,15 +190,11 @@ export default function ZenaChat() {
           >
             {isLoading ? " ZÉNA réfléchit..." : "Envoyer à ZÉNA "}
           </button>
-          {transcript && (
-            <span className="text-xs text-gray-600 italic">
-               Reconnu : « {transcript} »
-            </span>
-          )}
+          {transcript && <span className="text-xs text-gray-600 italic"> Reconnu : « {transcript} »</span>}
         </div>
       </div>
 
-      {/* Réponse affichée (quand elle ne parle plus) */}
+      {/*  Réponse et indicateur émotionnel */}
       {reply && !isSpeaking && (
         <div className="mt-6 w-full max-w-xl">
           <p className="text-base leading-relaxed text-[#212121]/85 bg-white/65 backdrop-blur-sm rounded-2xl p-4 shadow-inner whitespace-pre-line">
@@ -223,7 +204,7 @@ export default function ZenaChat() {
         </div>
       )}
 
-      {/* (Optionnel) Petit fil local minimal */}
+      {/*  Historique simple */}
       {messages.length > 0 && (
         <div className="mt-8 w-full max-w-xl text-left space-y-2">
           {messages.slice(-6).map((m, i) => (
@@ -240,7 +221,7 @@ export default function ZenaChat() {
         </div>
       )}
 
-      {/* Halos décoratifs */}
+      {/*  Halos décoratifs */}
       <div className="pointer-events-none absolute top-[-12%] left-[-10%] w-[300px] h-[300px] bg-[#4FD1C5]/30 rounded-full blur-[120px] -z-10" />
       <div className="pointer-events-none absolute bottom-[-15%] right-[-10%] w-[420px] h-[420px] bg-[#5B4B8A]/25 rounded-full blur-[140px] -z-10" />
     </div>
