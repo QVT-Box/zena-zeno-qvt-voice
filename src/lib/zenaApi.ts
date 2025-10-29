@@ -1,27 +1,20 @@
 // src/lib/zenaApi.ts
+// =============================================================
+// 🤖 ZÉNA IA ÉMOTIONNELLE – API client pour la fonction qvt-ai
+// Objectif : réponses brèves, bienveillantes et naturelles
+// =============================================================
+
 import { supabase } from "@/integrations/supabase/client";
 
-type AIResult = {
-  reply?: string;
-  response_text?: string;
-  mood?: string;
-  used_chunks?: number;
-  emotional?: {
-    emotion_dominante?: string;
-    intensité?: number;
-    besoin?: string;
-    ton_recommandé?: string;
-    dominant_emotion?: string;
-    intensity?: number;
-    underlying_need?: string;
-    tone_hint?: string;
-  };
-};
+export interface ZenaAIResponse {
+  text: string;
+  emotion: string;
+}
 
 const TENANT_ID = import.meta.env.VITE_TENANT_ID || null;
 
 /**
- * ✅ Création de session (bilingue + persona)
+ * ✅ Crée une nouvelle session conversationnelle
  */
 export async function startSession(context: string = "voice"): Promise<string> {
   try {
@@ -50,33 +43,29 @@ export async function startSession(context: string = "voice"): Promise<string> {
 }
 
 /**
- * ✅ Envoi du message à la fonction qvt-ai
+ * 🧠 Envoi du message utilisateur à la fonction IA (qvt-ai)
+ * et retour d’une réponse courte et bienveillante
  */
-export async function sendMessage(sessionId: string, text: string): Promise<AIResult> {
+export async function sendMessage(sessionId: string, text: string): Promise<ZenaAIResponse> {
   try {
-    // Enregistre le message utilisateur dans la base
-    const { error: insertErr } = await supabase.from("conversation_messages").insert({
+    // 🗣️ Enregistre le message utilisateur
+    await supabase.from("conversation_messages").insert({
       session_id: sessionId,
       role: "user",
       text,
     });
-    if (insertErr) throw insertErr;
 
-    // Récupère la session pour connaître la langue
-    const { data: sessionData, error: sessionErr } = await supabase
+    // 🔍 Récupère le contexte de session
+    const { data: sessionData } = await supabase
       .from("conversation_sessions")
       .select("language, persona")
       .eq("id", sessionId)
       .single();
 
-    if (sessionErr) {
-      console.warn("⚠️ Session introuvable, langue par défaut FR :", sessionErr);
-    }
-
     const language = sessionData?.language || "fr";
     const persona = sessionData?.persona || "zena";
 
-    // Appelle la fonction IA (Edge Function qvt-ai)
+    // 🚀 Appel à la fonction Edge "qvt-ai"
     const { data: aiData, error: fxError } = await supabase.functions.invoke("qvt-ai", {
       body: {
         tenant_id: TENANT_ID,
@@ -85,43 +74,62 @@ export async function sendMessage(sessionId: string, text: string): Promise<AIRe
         lang: language,
         provider: "openai",
         k: 5,
+        temperature: 0.8,
+        max_tokens: 120,
+
+        // 💫 Prompt conversationnel affiné pour ton style
+        system_prompt: `
+          Tu es ZÉNA, une IA émotionnelle bienveillante et apaisante.
+          Tu parles comme une voix douce et proche, jamais distante.
+          Tes réponses doivent être brèves (2 à 3 phrases maximum) 
+          et formulées dans un ton simple, humain et empathique.
+
+          Commence toujours par un signe d'écoute sincère :
+          - "Je t’entends..."
+          - "Merci de me confier ça."
+          - "C’est bien de pouvoir en parler."
+
+          Évite les conseils ou solutions directes au premier message.
+          Termine ta première réponse par une question ouverte et douce :
+          "Souhaites-tu que je t’aide à explorer un peu plus ce que tu ressens,
+          ou préfères-tu simplement que je t’écoute un moment ?"
+
+          Si la personne précise ensuite ce qu’elle veut, adapte-toi :
+          - Si elle veut parler → pose une question brève et bienveillante.
+          - Si elle veut juste être écoutée → reste dans une présence apaisante.
+        `,
       },
     });
 
     if (fxError) throw fxError;
 
-    const payload: AIResult = aiData || {};
-    const responseText = payload.reply || payload.response_text || "Je t’écoute.";
+    const payload = aiData || {};
+    const textOut = payload.reply || payload.response_text || "Je t’écoute...";
+    const emotion =
+      payload.emotional?.emotion_dominante ||
+      payload.mood ||
+      "neutral";
 
-    // Détection émotionnelle à partir du payload
-    const emotion = payload.emotional
-      ? payload.emotional
-      : payload.mood
-      ? { emotion_dominante: payload.mood }
-      : null;
-
-    // Enregistre la réponse IA et l’émotion dans la base
-    const { error: insertAIError } = await supabase.from("conversation_messages").insert({
+    // 💾 Enregistre la réponse IA dans la base
+    await supabase.from("conversation_messages").insert({
       session_id: sessionId,
       role: "zena",
-      text: responseText,
+      text: textOut,
       emotion,
     });
 
-    if (insertAIError) throw insertAIError;
+    console.log("💬 Réponse IA Zéna :", textOut);
+    console.log("💫 Émotion détectée :", emotion);
 
-    console.log("💬 Réponse IA Zéna :", responseText);
-    if (emotion) console.log("💫 Émotion détectée :", emotion);
-
-    return payload;
+    return { text: textOut, emotion };
   } catch (err) {
     console.error("❌ Erreur sendMessage :", err);
-    throw err;
+    return { text: "Je ressens un petit souci technique… essaie encore 💜", emotion: "neutral" };
   }
 }
 
 /**
- * 🔄 Récupère les messages récents d'une session
+ * 📜 Récupère les messages récents d'une session donnée
  */
 export async function getSessionMessages(sessionId: string) {
   try {
