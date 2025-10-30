@@ -4,7 +4,7 @@ import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 import { speakWithZena, stopSpeaking } from "@/lib/tts";
 import { startSession, sendMessage } from "@/lib/zenaApi";
 import { useZenaMemory } from "@/hooks/useZenaMemory";
-import { generateZenaVideo } from "@/lib/zenaHeygen"; // 🎬 Heygen version
+import { generateZenaVideo } from "@/lib/zenaHeygen"; //  Heygen version
 
 export default function ZenaChat() {
   const { isListening, transcript, startListening, stopListening } = useVoiceRecognition();
@@ -19,7 +19,7 @@ export default function ZenaChat() {
   const [manualText, setManualText] = useState("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isVideoGenerating, setIsVideoGenerating] = useState(false);
-  const [liveMode, setLiveMode] = useState<boolean>(false); // 🧠 switch entre Zéna vivante et avatar animé
+  const [liveMode, setLiveMode] = useState<boolean>(false); //  switch entre Zéna vivante et avatar animé
 
   const videoAbortRef = useRef<AbortController | null>(null);
   const speakingGuard = useRef(false);
@@ -33,7 +33,7 @@ export default function ZenaChat() {
 
   const trendLabel = useMemo(() => {
     const t = getTrend();
-    return t === "improving" ? "💚 Amélioration" : t === "declining" ? "💔 Baisse" : "🌿 Stable";
+    return t === "improving" ? " Amélioration" : t === "declining" ? " Baisse" : " Stable";
   }, [history]);
 
   const handleMainToggle = () => {
@@ -67,7 +67,7 @@ export default function ZenaChat() {
     }
 
     setIsLoading(true);
-    setReply("⏳ ZÉNA réfléchit...");
+    setReply(" ZÉNA réfléchit...");
 
     try {
       const ai = await sendMessage(sessionId, text);
@@ -80,7 +80,7 @@ export default function ZenaChat() {
       const message = ai.text || ai.reply || "Je t’écoute.";
       setReply(message);
 
-      // 🎬 Si mode Zéna vivante activé, on génère la vidéo
+      //  Si mode Zéna vivante activé, on génère la vidéo
       if (liveMode) {
         setIsVideoGenerating(true);
         const ac = new AbortController();
@@ -93,7 +93,7 @@ export default function ZenaChat() {
         videoAbortRef.current = null;
         if (video) setVideoUrl(video);
       } else {
-        // 🎧 sinon juste la voix locale
+        //  sinon juste la voix locale
         if (!speakingGuard.current) {
           speakingGuard.current = true;
           setIsSpeaking(true);
@@ -109,7 +109,7 @@ export default function ZenaChat() {
       }
     } catch (err) {
       console.error(err);
-      setReply("Je crois que j’ai besoin d’une petite pause… 🌸");
+      setReply("Je crois que j’ai besoin d’une petite pause… ");
       setIsVideoGenerating(false);
       if (videoAbortRef.current) {
         videoAbortRef.current = null;
@@ -122,12 +122,12 @@ export default function ZenaChat() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start pt-10 pb-20 px-4 bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-center relative">
-      {/* 🎬 Switch entre Avatar et Zéna vivante */}
+      {/*  Switch entre Avatar et Zéna vivante */}
       <button
         onClick={() => setLiveMode((v) => !v)}
         className="absolute top-4 right-4 px-4 py-2 rounded-full text-sm bg-white/70 shadow-md hover:bg-white transition"
       >
-        {liveMode ? "🌸 Mode Avatar animé" : "🎥 Mode Zéna vivante"}
+        {liveMode ? " Mode Avatar animé" : " Mode Zéna vivante"}
       </button>
 
       {/* Zone avatar / vidéo */}
@@ -148,7 +148,7 @@ export default function ZenaChat() {
         {isVideoGenerating && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="px-4 py-2 rounded-full bg-white/80 shadow text-sm">
-              🎥 Génération du visage en cours…
+               Génération du visage en cours…
             </div>
           </div>
         )}
@@ -167,10 +167,10 @@ export default function ZenaChat() {
         } ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
       >
         {isSpeaking || isVideoGenerating
-          ? "✋ Stopper ZÉNA"
+          ? " Stopper ZÉNA"
           : isListening
-          ? "🎧 Écoute en cours..."
-          : "🎙️ Parler à ZÉNA"}
+          ? "Écoute en cours..."
+          : " Parler à ZÉNA"}
       </button>
 
       {/* Entrée texte + envoyer */}
@@ -186,7 +186,7 @@ export default function ZenaChat() {
           disabled={isLoading || (!manualText.trim() && !transcript.trim())}
           className="mt-3 px-6 py-2 rounded-full bg-[#4FD1C5] text-white shadow hover:bg-teal-500 transition disabled:opacity-50"
         >
-          {isLoading ? "💭 ZÉNA réfléchit..." : "Envoyer 💬"}
+          {isLoading ? "ZÉNA réfléchit..." : "Envoyer "}
         </button>
 
         {/* Réponse */}
