@@ -4,7 +4,7 @@ import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 import { speakWithZena, stopSpeaking } from "@/lib/tts";
 import { startSession, sendMessage } from "@/lib/zenaApi";
 import { useZenaMemory } from "@/hooks/useZenaMemory";
-import { generateZenaVideo } from "@/lib/zenaVideo";
+import { generateZenaVideo } from "@/lib/zenaHeygen"; // 🎬 Heygen version
 
 export default function ZenaChat() {
   const { isListening, transcript, startListening, stopListening } = useVoiceRecognition();
@@ -19,8 +19,8 @@ export default function ZenaChat() {
   const [manualText, setManualText] = useState("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isVideoGenerating, setIsVideoGenerating] = useState(false);
+  const [liveMode, setLiveMode] = useState<boolean>(false); // 🧠 switch entre Zéna vivante et avatar animé
 
-  // AbortController pour annuler la génération D-ID
   const videoAbortRef = useRef<AbortController | null>(null);
   const speakingGuard = useRef(false);
 
@@ -38,7 +38,6 @@ export default function ZenaChat() {
 
   const handleMainToggle = () => {
     if (isSpeaking || isVideoGenerating) {
-      // Stop global : voix + vidéo
       stopSpeaking();
       speakingGuard.current = false;
       setIsSpeaking(false);
@@ -61,7 +60,6 @@ export default function ZenaChat() {
     const text = getUserText();
     if (!text) return;
 
-    // Reset visuels
     setVideoUrl(null);
     if (videoAbortRef.current) {
       videoAbortRef.current.abort();
@@ -74,7 +72,6 @@ export default function ZenaChat() {
     try {
       const ai = await sendMessage(sessionId, text);
 
-      // Normalise émotion
       const detectedEmotion =
         ai.emotion === "positive" ? "positive" : ai.emotion === "negative" ? "negative" : "neutral";
       setEmotion(detectedEmotion);
@@ -83,27 +80,32 @@ export default function ZenaChat() {
       const message = ai.text || ai.reply || "Je t’écoute.";
       setReply(message);
 
-      // Lance D-ID en parallèle (annulable)
-      setIsVideoGenerating(true);
-      const ac = new AbortController();
-      videoAbortRef.current = ac;
-      const video = await generateZenaVideo(message, { signal: ac.signal });
-      setIsVideoGenerating(false);
-      videoAbortRef.current = null;
-      if (video) setVideoUrl(video);
-
-      // Voix locale (optionnelle en plus de D-ID)
-      if (!speakingGuard.current) {
-        speakingGuard.current = true;
-        setIsSpeaking(true);
-        await speakWithZena(message, (event) => {
-          if (event === "tick") setMouthLevel(Math.random());
-          if (event === "end") {
-            setMouthLevel(0);
-            setIsSpeaking(false);
-            speakingGuard.current = false;
-          }
+      // 🎬 Si mode Zéna vivante activé, on génère la vidéo
+      if (liveMode) {
+        setIsVideoGenerating(true);
+        const ac = new AbortController();
+        videoAbortRef.current = ac;
+        const video = await generateZenaVideo(message, {
+          signal: ac.signal,
+          fallbackUrl: "/videos/zena_default.mp4",
         });
+        setIsVideoGenerating(false);
+        videoAbortRef.current = null;
+        if (video) setVideoUrl(video);
+      } else {
+        // 🎧 sinon juste la voix locale
+        if (!speakingGuard.current) {
+          speakingGuard.current = true;
+          setIsSpeaking(true);
+          await speakWithZena(message, (event) => {
+            if (event === "tick") setMouthLevel(Math.random());
+            if (event === "end") {
+              setMouthLevel(0);
+              setIsSpeaking(false);
+              speakingGuard.current = false;
+            }
+          });
+        }
       }
     } catch (err) {
       console.error(err);
@@ -120,9 +122,17 @@ export default function ZenaChat() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start pt-10 pb-20 px-4 bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-center relative">
-      {/* Zone avatar : vidéo D-ID si prête sinon avatar animé */}
+      {/* 🎬 Switch entre Avatar et Zéna vivante */}
+      <button
+        onClick={() => setLiveMode((v) => !v)}
+        className="absolute top-4 right-4 px-4 py-2 rounded-full text-sm bg-white/70 shadow-md hover:bg-white transition"
+      >
+        {liveMode ? "🌸 Mode Avatar animé" : "🎥 Mode Zéna vivante"}
+      </button>
+
+      {/* Zone avatar / vidéo */}
       <div className="relative">
-        {videoUrl ? (
+        {liveMode && videoUrl ? (
           <video
             src={videoUrl}
             autoPlay
@@ -135,7 +145,6 @@ export default function ZenaChat() {
           <ZenaAvatar textToSpeak={reply} mouthLevel={mouthLevel} emotion={emotion} />
         )}
 
-        {/* Loader vidéo pendant polling D-ID */}
         {isVideoGenerating && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="px-4 py-2 rounded-full bg-white/80 shadow text-sm">
@@ -145,7 +154,7 @@ export default function ZenaChat() {
         )}
       </div>
 
-      {/* Bouton principal : écouter / stop */}
+      {/* Bouton principal */}
       <button
         onClick={handleMainToggle}
         disabled={isLoading}
@@ -164,7 +173,7 @@ export default function ZenaChat() {
           : "🎙️ Parler à ZÉNA"}
       </button>
 
-      {/* Champ + envoyer */}
+      {/* Entrée texte + envoyer */}
       <div className="mt-6 w-full max-w-lg">
         <input
           value={manualText}
@@ -180,17 +189,11 @@ export default function ZenaChat() {
           {isLoading ? "💭 ZÉNA réfléchit..." : "Envoyer 💬"}
         </button>
 
-        {/* Réponse + tendance */}
+        {/* Réponse */}
         {reply && !isSpeaking && (
           <div className="mt-6 p-4 bg-white/70 rounded-xl shadow-inner">
             <p className="text-[#212121]/85 whitespace-pre-line">{reply}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {getTrend() === "improving"
-                ? "💚 Climat émotionnel en amélioration"
-                : getTrend() === "declining"
-                ? "💔 Climat émotionnel en baisse"
-                : "🌿 Climat émotionnel stable"}
-            </p>
+            <p className="text-xs text-gray-500 mt-1">{trendLabel}</p>
           </div>
         )}
       </div>
