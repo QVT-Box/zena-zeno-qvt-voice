@@ -3,61 +3,68 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-
     <title>ZÉNA – L’IA émotionnelle de QVT Box</title>
 
-    <!-- SEO -->
-    <meta
-      name="description"
-      content="ZÉNA, l’IA émotionnelle de QVT Box : une voix bienveillante qui écoute, le compagnon qui vous parle et veille sur votre bien-être."
-    />
+    <!-- ✅ SEO amélioré -->
+    <meta name="description" content="ZÉNA, l’IA émotionnelle de QVT Box : la voix bienveillante qui écoute les salariés et soutient leur bien-être au travail et à la maison." />
+    <meta name="keywords" content="QVT, bien-être au travail, IA émotionnelle, burnout, salariés, prévention, RH, santé mentale, ZENA, ZENO" />
     <meta name="author" content="QVT Box" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
 
-    <!-- Open Graph -->
+    <!-- ✅ Open Graph -->
     <meta property="og:title" content="ZÉNA – L’IA émotionnelle de QVT Box" />
-    <meta
-      property="og:description"
-      content="La voix qui veille sur vos émotions — une expérience QVT humaine et phygitale signée QVT Box."
-    />
-    <meta property="og:image" content="/images/zena-avatar.png" />
+    <meta property="og:description" content="La voix bienveillante qui détecte le stress, la fatigue et le désengagement pour agir avant le burn-out." />
+    <meta property="og:image" content="https://zena.qvtbox.com/images/zena-avatar.png" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://zena.qvtbox.com/" />
 
-    <!-- Twitter -->
+    <!-- ✅ Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ZÉNA – L’IA émotionnelle de QVT Box" />
-    <meta name="twitter:description" content="L’avatar IA qui veille sur vos émotions au travail et à la maison." />
-    <meta name="twitter:image" content="/images/zena-avatar.png" />
+    <meta name="twitter:description" content="Une IA bienveillante au service du bien-être des salariés." />
+    <meta name="twitter:image" content="https://zena.qvtbox.com/images/zena-avatar.png" />
 
-    <!-- PWA -->
+    <!-- ✅ PWA -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#5B4B8A" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="ZÉNA" />
 
-    <!-- iOS Splash Screens -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="apple-touch-startup-image" href="/images/splash/apple-splash-2048-2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" />
-    <link rel="apple-touch-startup-image" href="/images/splash/apple-splash-1668-2388.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)" />
-    <link rel="apple-touch-startup-image" href="/images/splash/apple-splash-1284-2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" />
-    <link rel="apple-touch-startup-image" href="/images/splash/apple-splash-1170-2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" />
-    <link rel="apple-touch-startup-image" href="/images/splash/apple-splash-1125-2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" />
-    <link rel="apple-touch-startup-image" href="/images/splash/apple-splash-1242-2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" />
-    <link rel="apple-touch-startup-image" href="/images/splash/apple-splash-828-1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" />
-
-    <!-- Favicon -->
+    <!-- ✅ Favicon -->
     <link rel="icon" href="/favicon.png" type="image/png" />
 
-    <!-- Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <!-- ✅ Canonical -->
+    <link rel="canonical" href="https://zena.qvtbox.com/" />
 
-    <!-- Fallback Style -->
+    <!-- ✅ Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- ✅ Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "ZÉNA",
+      "description": "IA émotionnelle de QVT Box pour le bien-être au travail",
+      "operatingSystem": "Web, iOS, Android",
+      "applicationCategory": "HealthApplication",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "QVT Box",
+        "url": "https://qvtbox.com"
+      }
+    }
+    </script>
+
+    <!-- ✅ Style minimal de chargement -->
     <style>
       body {
         margin: 0;
@@ -70,41 +77,15 @@
         height: 100vh;
         text-align: center;
       }
-
       .loader {
         animation: fadeIn 1.8s ease-in-out;
       }
-
       @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
       }
-
-      h1 {
-        color: #5b4b8a;
-        margin-bottom: 0.5rem;
-        font-size: 2rem;
-      }
-
-      p {
-        color: #4b5e8a;
-        font-size: 1rem;
-      }
-
-      footer {
-        position: fixed;
-        bottom: 1rem;
-        width: 100%;
-        text-align: center;
-        font-size: 0.85rem;
-        color: #6b7280;
-      }
+      h1 { color: #5b4b8a; margin-bottom: 0.5rem; font-size: 2rem; }
+      p { color: #4b5e8a; font-size: 1rem; }
     </style>
   </head>
 
@@ -112,13 +93,11 @@
     <div id="root">
       <div class="loader">
         <h1>ZÉNA</h1>
-        <p>La voix qui veille sur vos émotions...</p>
+        <p>Chargement de votre expérience bienveillante...</p>
       </div>
     </div>
 
-    <footer></footer>
-
-    <!-- ✅ Enregistrement automatique du Service Worker -->
+    <!-- ✅ PWA Service Worker -->
     <script type="module">
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
@@ -127,7 +106,7 @@
       }
     </script>
 
-    <!-- ✅ Script bundle principal -->
+    <!-- ✅ Entrée Vite -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
