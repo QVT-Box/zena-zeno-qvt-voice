@@ -3,17 +3,20 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+// 🧩 Ces deux composants doivent exister dans /src/components
 import ZenaAvatar from "@/components/ZenaAvatar";
 import MagicAmbiance from "@/components/MagicAmbiance";
+
 import { Heart, Shield, TrendingUp, Brain, Lock, BarChart3 } from "lucide-react";
 
 export default function Index() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-[#212121] font-sans overflow-y-auto relative">
-      {/* Ambiance magique */}
+      {/* 🌫️ Ambiance magique */}
       <MagicAmbiance intensity="medium" />
 
-      {/* Halos */}
+      {/* ✨ Halos décoratifs */}
       <div className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-[#4FD1C5]/30 rounded-full blur-[120px] -z-10 animate-breathe" />
       <div className="absolute bottom-[-15%] right-[-10%] w-[400px] h-[400px] bg-[#5B4B8A]/15 rounded-full blur-[140px] -z-10 animate-breathe-slow" />
 
@@ -34,8 +37,9 @@ export default function Index() {
           </h1>
 
           <p className="text-xl md:text-2xl text-[#212121]/80 mb-8 leading-relaxed">
-            60 % des signaux de burn-out passent inaperçus jusqu’à l’arrêt maladie.<br />
-            ZÉNA détecte les émotions faibles, agit en prévention et restaure la confiance.
+            60 % des signaux de burn-out passent inaperçus jusqu’à l’arrêt maladie.
+            <br />
+            ZÉNA détecte les émotions faibles et restaure la confiance.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
@@ -63,7 +67,7 @@ export default function Index() {
           </p>
         </motion.div>
 
-        {/* Avatar ZÉNA */}
+        {/* 👩‍💻 Avatar ZÉNA */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -115,7 +119,7 @@ export default function Index() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  ZÉNA écoute les émotions, détecte les signaux faibles et réagit avec empathie.
+                  ZÉNA écoute les émotions et détecte les signaux faibles avec empathie.
                 </p>
               </CardContent>
             </Card>
@@ -127,7 +131,7 @@ export default function Index() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Scoring des risques psycho-sociaux et alertes précoces sur le tableau RH.
+                  Scoring des risques psycho-sociaux et alertes précoces pour les RH.
                 </p>
               </CardContent>
             </Card>
