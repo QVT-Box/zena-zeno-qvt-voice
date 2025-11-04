@@ -175,8 +175,6 @@ export default function Index() {
             viewport={{ once: true }}
           >
             <p className="text-2xl md:text-3xl font-bold mb-8 text-[#005B5F]">
-              Déjà <span className="text-[#4FD1C5]">127 entreprises</span> nous font confiance
-            </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Badge variant="outline" className="text-lg px-4 py-2">PME Innovantes</Badge>
               <Badge variant="outline" className="text-lg px-4 py-2">Startups Tech</Badge>
