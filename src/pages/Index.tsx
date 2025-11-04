@@ -3,12 +3,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Heart, Shield, TrendingUp, Brain, Lock, BarChart3 } from "lucide-react";
 
-// 🧩 Ces deux composants doivent exister dans /src/components
+// ✅ Assure-toi que ces composants existent bien :
 import ZenaAvatar from "@/components/ZenaAvatar";
 import MagicAmbiance from "@/components/MagicAmbiance";
-
-import { Heart, Shield, TrendingUp, Brain, Lock, BarChart3 } from "lucide-react";
 
 export default function Index() {
   return (
