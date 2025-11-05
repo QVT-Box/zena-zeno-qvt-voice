@@ -4,12 +4,13 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 
-// --- Root principal ---
+// --- Point d’entrée principal ---
 const container = document.getElementById("root");
 if (!container) throw new Error("❌ Élément #root introuvable dans index.html");
+
 const root = createRoot(container);
 
-// --- Rendu de l’application ---
+// --- Rendu React ---
 root.render(
   <React.StrictMode>
     <HelmetProvider>
@@ -18,7 +19,7 @@ root.render(
   </React.StrictMode>
 );
 
-// --- Enregistrement du Service Worker (PWA installable) ---
+// --- Enregistrement du Service Worker (PWA) ---
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
@@ -27,7 +28,7 @@ if ("serviceWorker" in navigator) {
         console.log("✅ Service Worker enregistré :", registration.scope);
       })
       .catch((error) => {
-        console.error("❌ Erreur SW :", error);
+        console.error("❌ Erreur d’enregistrement du SW :", error);
       });
   });
 }
