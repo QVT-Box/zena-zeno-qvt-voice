@@ -4,12 +4,18 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "/", // ✅ Important pour Vercel & éviter les erreurs MIME
+  // ✅ Indispensable pour Vercel (corrige le MIME "text/html" sur les modules JS)
+  base: "/",
+
   server: {
     host: "::",
     port: 8080,
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+
+  plugins: [
+    react(),
+    mode === "development" && componentTagger()
+  ].filter(Boolean),
 
   resolve: {
     alias: {
@@ -17,7 +23,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
 
-  // ✅ Inclure pdfjs pour la compatibilité Vercel
+  // ✅ Compatibilité PDFJS & Supabase Edge
   optimizeDeps: {
     include: ["pdfjs-dist"],
   },
@@ -26,14 +32,15 @@ export default defineConfig(({ mode }) => ({
     outDir: "dist",
     sourcemap: false,
     rollupOptions: {
-      input: "./index.html",
-      external: [], // autoriser intégration de pdfjs-dist
+      input: path.resolve(__dirname, "index.html"), // ⚡ mieux que "./index.html"
+      external: [],
     },
   },
 
-  // ✅ Fix pour CORS & dev HTTPS si besoin futur (Zéna voix)
+  // ✅ Preview local fiable (même comportement que Vercel)
   preview: {
     port: 4173,
+    strictPort: true,
     https: false,
   },
 }));
