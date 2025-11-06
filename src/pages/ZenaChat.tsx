@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ZenaAvatar from "@/components/ZenaAvatar";
+import ZenaBackground from "@/components/ZenaBackground";
 import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 import { speakWithZena, stopSpeaking } from "@/lib/tts";
 import { startSession, sendMessage } from "@/lib/zenaApi";
@@ -24,7 +25,7 @@ export default function ZenaChat() {
   const videoAbortRef = useRef<AbortController | null>(null);
   const speakingGuard = useRef(false);
 
-  // Création de session
+  // 🔹 Création d'une nouvelle session Zéna
   useEffect(() => {
     (async () => {
       const id = await startSession("voice");
@@ -116,11 +117,11 @@ export default function ZenaChat() {
   };
 
   return (
-    <div
-      className="min-h-screen w-full flex flex-col md:flex-row items-center justify-center
-      px-6 md:px-16 py-10 bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-center md:text-left relative"
-    >
-      {/* Switch mode */}
+    <div className="relative min-h-screen flex flex-col md:flex-row items-center justify-center overflow-hidden">
+      {/* 🌈 Fond animé global */}
+      <ZenaBackground />
+
+      {/* 🔘 Switch entre les modes */}
       <button
         onClick={() => setLiveMode((v) => !v)}
         className="absolute top-4 right-4 px-4 py-2 rounded-full text-sm bg-white/70 shadow-md hover:bg-white transition"
@@ -128,8 +129,8 @@ export default function ZenaChat() {
         {liveMode ? "🎭 Mode Avatar animé" : "🎬 Mode Zéna vivante"}
       </button>
 
-      {/* Zone gauche : Avatar ou vidéo */}
-      <div className="flex flex-col items-center justify-center w-full md:w-1/2 mb-10 md:mb-0">
+      {/* 🩵 Colonne gauche : Avatar ou vidéo */}
+      <div className="flex flex-col items-center justify-center w-full md:w-1/2 px-6 mb-10 md:mb-0 z-10">
         <div className="relative">
           {liveMode && videoUrl ? (
             <video
@@ -142,15 +143,14 @@ export default function ZenaChat() {
             />
           ) : (
             <div className="relative">
-              {/* ✅ Image de fond Zéna */}
               <img
-                src="/images/zena_default.png"
+                src="/images/zena-face.png"
                 alt="ZÉNA"
-                className="rounded-full w-64 h-64 md:w-80 md:h-80 object-cover shadow-lg border-4 border-white/40 opacity-90"
+                className="rounded-full w-64 h-64 md:w-80 md:h-80 object-cover shadow-lg border-4 border-white/40 opacity-95"
               />
-              {/* ✅ Halo animé et bouche via Avatar */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <ZenaAvatar emotion={emotion} mouthLevel={mouthLevel} />
+              {/* 🪶 Halo + bouche animée */}
+              <div className="absolute inset-0">
+                <ZenaAvatar emotion={emotion} mouthLevel={mouthLevel} overlay />
               </div>
             </div>
           )}
@@ -163,12 +163,15 @@ export default function ZenaChat() {
             </div>
           )}
         </div>
-        <p className="mt-4 text-[#212121]/70 font-medium">ZÉNA — la voix qui veille sur vos émotions</p>
+
+        <p className="mt-4 text-[#212121]/70 font-medium">
+          ZÉNA — la voix qui veille sur vos émotions
+        </p>
       </div>
 
-      {/* Zone droite : interactions */}
-      <div className="flex flex-col items-center md:items-start w-full md:w-1/2 max-w-md">
-        {/* Bouton principal */}
+      {/* 💬 Colonne droite : interactions */}
+      <div className="flex flex-col items-center md:items-start w-full md:w-1/2 max-w-md px-6 z-10">
+        {/* 🎙️ Bouton principal */}
         <button
           onClick={handleMainToggle}
           disabled={isLoading}
@@ -187,13 +190,14 @@ export default function ZenaChat() {
             : "🎙️ Parler à ZÉNA"}
         </button>
 
-        {/* Entrée texte */}
+        {/* 📝 Entrée texte */}
         <input
           value={manualText}
           onChange={(e) => setManualText(e.target.value)}
           placeholder="Écris ton message à ZÉNA…"
           className="w-full px-4 py-3 rounded-2xl bg-white/80 shadow-inner outline-none border border-gray-200 focus:ring-2 focus:ring-[#4FD1C5]"
         />
+
         <button
           onClick={handleSend}
           disabled={isLoading || (!manualText.trim() && !transcript.trim())}
@@ -202,7 +206,7 @@ export default function ZenaChat() {
           {isLoading ? "ZÉNA réfléchit..." : "Envoyer 📤"}
         </button>
 
-        {/* Réponse */}
+        {/* 💬 Réponse IA */}
         {reply && !isSpeaking && (
           <div className="mt-6 p-4 bg-white/70 rounded-xl shadow-inner">
             <p className="text-[#212121]/85 whitespace-pre-line">{reply}</p>
