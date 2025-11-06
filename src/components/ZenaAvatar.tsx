@@ -5,23 +5,23 @@ interface ZenaAvatarProps {
   textToSpeak?: string;
   emotion?: "positive" | "neutral" | "negative";
   mouthLevel?: number; // intensité du mouvement de la bouche
+  imageUrl?: string; // ✅ nouvelle prop optionnelle
 }
 
 /**
- *  Avatar animé de ZÉNA (version CSS pure)
- * - Bouge légèrement la bouche pendant la parole
- * - Réagit selon l'émotion détectée
- * - Halo émotionnel doux et respirant
- * - Avatar CSS pur (pas de dépendance vidéo/image)
+ * Avatar animé de ZÉNA (hybride image + halo animé)
+ * - Halo et lucioles selon émotion
+ * - Affiche l’image réelle de Zéna en filigrane
+ * - Bouge la bouche si mouthLevel > 0
  */
 export default function ZenaAvatar({
   textToSpeak = "",
   emotion = "neutral",
   mouthLevel = 0,
+  imageUrl = "/images/zena_default.png", // ✅ fallback image
 }: ZenaAvatarProps) {
   const mouthRef = useRef<HTMLDivElement>(null);
 
-  //  Couleur du halo selon l'émotion dominante
   const auraColor =
     emotion === "positive"
       ? "from-emerald-300/60 to-teal-300/40"
@@ -29,7 +29,6 @@ export default function ZenaAvatar({
       ? "from-rose-400/60 to-red-400/40"
       : "from-[#5B4B8A]/40 to-[#4FD1C5]/30";
 
-  //  Animation labiale (réagit à mouthLevel venant du TTS)
   useEffect(() => {
     if (!mouthRef.current) return;
     const mouth = mouthRef.current;
@@ -42,7 +41,7 @@ export default function ZenaAvatar({
       className="relative flex flex-col items-center justify-center w-full mx-auto select-none text-center overflow-visible"
       style={{ maxHeight: "min(56vh, 520px)" }}
     >
-      {/*  Halo émotionnel respirant */}
+      {/* Halo émotionnel */}
       <motion.div
         className={`absolute w-72 h-72 md:w-96 md:h-96 rounded-full blur-3xl bg-gradient-to-br ${auraColor}`}
         animate={{
@@ -57,7 +56,7 @@ export default function ZenaAvatar({
         }}
       />
 
-      {/*  Lucioles (symbole de la veille bienveillante) */}
+      {/* Lucioles */}
       {Array.from({ length: 8 }).map((_, i) => (
         <motion.div
           key={i}
@@ -80,16 +79,11 @@ export default function ZenaAvatar({
         />
       ))}
 
-      {/*  Avatar CSS pur (cercle avec dégradé) */}
+      {/* ✅ Image réelle de ZÉNA en fond */}
       <motion.div
-        className="relative z-10 w-48 h-48 md:w-64 md:h-64 rounded-full shadow-lg border-4 border-white/10 bg-gradient-to-br from-[#5B4B8A] to-[#4FD1C5] overflow-hidden flex items-center justify-center"
+        className="relative z-10 w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden flex items-center justify-center shadow-xl border-4 border-white/20"
         animate={{
           scale: [1, 1.02, 1],
-          boxShadow: [
-            "0 10px 30px rgba(91, 75, 138, 0.3)",
-            "0 15px 40px rgba(79, 209, 197, 0.5)",
-            "0 10px 30px rgba(91, 75, 138, 0.3)",
-          ],
         }}
         transition={{
           duration: 3,
@@ -97,43 +91,20 @@ export default function ZenaAvatar({
           ease: "easeInOut",
         }}
       >
-        {/* Visage simplifié */}
-        <div className="relative w-full h-full flex items-center justify-center">
-          {/* Yeux */}
-          <div className="absolute top-[35%] left-1/2 -translate-x-1/2 flex gap-8">
-            <motion.div
-              className="w-3 h-3 bg-white rounded-full"
-              animate={{
-                scaleY: [1, 0.2, 1],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                repeatDelay: 2,
-              }}
-            />
-            <motion.div
-              className="w-3 h-3 bg-white rounded-full"
-              animate={{
-                scaleY: [1, 0.2, 1],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                repeatDelay: 2,
-              }}
-            />
-          </div>
+        <img
+          src={imageUrl}
+          alt="Zéna"
+          className="absolute inset-0 w-full h-full object-cover opacity-90"
+        />
 
-          {/* Bouche animée */}
-          <motion.div
-            ref={mouthRef}
-            className="absolute bottom-[30%] left-1/2 -translate-x-1/2 w-[30%] h-[6%] bg-white/80 rounded-full origin-center transition-transform duration-150"
-          />
-        </div>
+        {/* Bouche animée */}
+        <motion.div
+          ref={mouthRef}
+          className="absolute bottom-[25%] left-1/2 -translate-x-1/2 w-[30%] h-[6%] bg-white/70 rounded-full origin-center"
+        />
       </motion.div>
 
-      {/* 🩵 Nom et tagline */}
+      {/* Nom et tagline */}
       <motion.div
         className="mt-4"
         initial={{ opacity: 0, y: 10 }}
