@@ -31,7 +31,7 @@ export async function generateZenaVideo(
     return opts.fallbackUrl || "/videos/zena_default.mp4";
   }
 
-  const controller = opts.signal || new AbortController();
+  const signal = opts.signal || new AbortController().signal;
   const body = {
     video_inputs: [
       {
@@ -50,7 +50,7 @@ export async function generateZenaVideo(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      signal: controller,
+      signal: signal,
     });
 
     const data = await res.json();

@@ -18,21 +18,23 @@ export function useZenaTrainer() {
 
   const syncToCloud = async (tenant_id: string) => {
     if (!trainingData.length) return;
-    try {
-      const { error } = await supabase.from("zena_training_samples").insert(
-        trainingData.map((d) => ({
-          tenant_id,
-          input_text: d.input,
-          response_text: d.response,
-          emotion: d.emotion,
-          created_at: d.timestamp,
-        }))
-      );
-      if (error) throw error;
-      console.log("☁️ Échantillons ZÉNA sauvegardés :", trainingData.length);
-    } catch (err) {
-      console.error("❌ Erreur syncToCloud :", err);
-    }
+    console.log("📝 Échantillons ZÉNA locaux :", trainingData.length);
+    // TODO: Créer la table zena_training_samples si nécessaire
+    // try {
+    //   const { error } = await supabase.from("zena_training_samples").insert(
+    //     trainingData.map((d) => ({
+    //       tenant_id,
+    //       input_text: d.input,
+    //       response_text: d.response,
+    //       emotion: d.emotion,
+    //       created_at: d.timestamp,
+    //     }))
+    //   );
+    //   if (error) throw error;
+    //   console.log("☁️ Échantillons ZÉNA sauvegardés :", trainingData.length);
+    // } catch (err) {
+    //   console.error("❌ Erreur syncToCloud :", err);
+    // }
   };
 
   return { trainingData, addSample, syncToCloud };

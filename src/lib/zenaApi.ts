@@ -51,7 +51,7 @@ export async function sendMessage(sessionId: string, text: string): Promise<Zena
     // 🗣️ Enregistre le message utilisateur
     await supabase.from("conversation_messages").insert({
       session_id: sessionId,
-      role: "user",
+      from_role: "user",
       text,
     });
 
@@ -113,9 +113,8 @@ export async function sendMessage(sessionId: string, text: string): Promise<Zena
     // 💾 Enregistre la réponse IA dans la base
     await supabase.from("conversation_messages").insert({
       session_id: sessionId,
-      role: "zena",
+      from_role: "zena",
       text: textOut,
-      emotion,
     });
 
     console.log("💬 Réponse IA Zéna :", textOut);

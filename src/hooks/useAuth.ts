@@ -196,7 +196,7 @@ export const useAuth = () => {
 export async function signInAnonymously(): Promise<string> {
   const { data, error } = await supabase
     .from("conversation_sessions")
-    .insert([{ context: "anonymous" }])
+    .insert([{ persona: "zena", language: "fr" }])
     .select("id")
     .single();
   if (error) throw error;

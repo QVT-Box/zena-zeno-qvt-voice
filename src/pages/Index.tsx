@@ -73,7 +73,7 @@ export default function Index() {
           transition={{ delay: 0.3, duration: 0.8 }}
           className="mt-12"
         >
-          <ZenaAvatar isSpeaking={false} emotion="positive" />
+          <ZenaAvatar emotion="positive" mouthLevel={0} />
         </motion.div>
       </header>
 

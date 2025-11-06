@@ -5,7 +5,7 @@ import ZenaAvatar from '@/components/ZenaAvatar';
 describe('ZenaAvatar', () => {
   it('doit afficher l\'avatar', () => {
     const { container } = render(
-      <ZenaAvatar isSpeaking={false} emotion="neutral" />
+      <ZenaAvatar emotion="neutral" mouthLevel={0} />
     );
 
     expect(container).toBeDefined();
@@ -16,15 +16,15 @@ describe('ZenaAvatar', () => {
     
     emotions.forEach(emotion => {
       const { container } = render(
-        <ZenaAvatar isSpeaking={false} emotion={emotion} />
+        <ZenaAvatar emotion={emotion} mouthLevel={0} />
       );
       expect(container).toBeDefined();
     });
   });
 
-  it('doit gérer l\'état speaking', () => {
+  it('doit gérer le mouvement de bouche', () => {
     const { container } = render(
-      <ZenaAvatar isSpeaking={true} emotion="positive" />
+      <ZenaAvatar emotion="positive" mouthLevel={0.5} />
     );
 
     expect(container).toBeDefined();

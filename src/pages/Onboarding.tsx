@@ -89,12 +89,8 @@ export default function Onboarding() {
       // Sauvegarde locale
       localStorage.setItem("zena_profile", JSON.stringify(profile));
 
-      // Sauvegarde Supabase (optionnelle)
-      const { error } = await supabase.from("user_profiles").insert([profile]);
-      if (error) console.warn("⚠️ Erreur Supabase :", error);
-
       // Redirection
-      navigate("/zena");
+      navigate("/zena-chat");
     } catch (err) {
       console.error("❌ Erreur onboarding :", err);
     } finally {

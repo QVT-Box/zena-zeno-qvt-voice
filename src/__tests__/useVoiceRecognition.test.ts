@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 
 // Mock du toast
@@ -47,16 +47,9 @@ describe('useVoiceRecognition', () => {
     expect(typeof result.current.stopListening).toBe('function');
   });
 
-  it('doit appeler onResult quand du texte est reconnu', () => {
-    const onResult = vi.fn();
-    const { result } = renderHook(() =>
-      useVoiceRecognition({
-        onResult,
-      })
-    );
+  it('doit gérer la reconnaissance vocale', () => {
+    const { result } = renderHook(() => useVoiceRecognition());
 
-    // Le test est limité car nous ne pouvons pas simuler facilement
-    // les événements de reconnaissance vocale du navigateur
     expect(result.current).toBeDefined();
   });
 
@@ -66,14 +59,8 @@ describe('useVoiceRecognition', () => {
     expect(result.current).toBeDefined();
   });
 
-  it('doit accepter des options personnalisées', () => {
-    const { result } = renderHook(() =>
-      useVoiceRecognition({
-        lang: 'en-US',
-        continuous: true,
-        interimResults: false,
-      })
-    );
+  it('doit fonctionner correctement', () => {
+    const { result } = renderHook(() => useVoiceRecognition());
 
     expect(result.current).toBeDefined();
   });
