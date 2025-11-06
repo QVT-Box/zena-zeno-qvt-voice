@@ -24,6 +24,7 @@ export default function ZenaChat() {
   const videoAbortRef = useRef<AbortController | null>(null);
   const speakingGuard = useRef(false);
 
+  // Création de session
   useEffect(() => {
     (async () => {
       const id = await startSession("voice");
@@ -41,7 +42,6 @@ export default function ZenaChat() {
       stopSpeaking();
       speakingGuard.current = false;
       setIsSpeaking(false);
-
       if (videoAbortRef.current) {
         videoAbortRef.current.abort();
         videoAbortRef.current = null;
@@ -71,7 +71,6 @@ export default function ZenaChat() {
 
     try {
       const ai = await sendMessage(sessionId, text);
-
       const detectedEmotion =
         ai.emotion === "positive" ? "positive" : ai.emotion === "negative" ? "negative" : "neutral";
       setEmotion(detectedEmotion);
@@ -80,7 +79,6 @@ export default function ZenaChat() {
       const message = ai.text || "Je t'écoute.";
       setReply(message);
 
-      // Si mode Zéna vivante activé, on génère la vidéo
       if (liveMode) {
         setIsVideoGenerating(true);
         const ac = new AbortController();
@@ -93,7 +91,6 @@ export default function ZenaChat() {
         videoAbortRef.current = null;
         if (video) setVideoUrl(video);
       } else {
-        // sinon juste la voix locale
         if (!speakingGuard.current) {
           speakingGuard.current = true;
           setIsSpeaking(true);
@@ -111,9 +108,7 @@ export default function ZenaChat() {
       console.error(err);
       setReply("Je crois que j'ai besoin d'une petite pause… 💜");
       setIsVideoGenerating(false);
-      if (videoAbortRef.current) {
-        videoAbortRef.current = null;
-      }
+      if (videoAbortRef.current) videoAbortRef.current = null;
     } finally {
       setIsLoading(false);
       setManualText("");
@@ -121,8 +116,11 @@ export default function ZenaChat() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start pt-10 pb-20 px-4 bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-center relative">
-      {/* Switch entre Avatar et Zéna vivante */}
+    <div
+      className="min-h-screen w-full flex flex-col md:flex-row items-center justify-center
+      px-6 md:px-16 py-10 bg-gradient-to-b from-[#F2F7F6] to-[#EAF4F3] text-center md:text-left relative"
+    >
+      {/* Switch mode */}
       <button
         onClick={() => setLiveMode((v) => !v)}
         className="absolute top-4 right-4 px-4 py-2 rounded-full text-sm bg-white/70 shadow-md hover:bg-white transition"
@@ -130,56 +128,71 @@ export default function ZenaChat() {
         {liveMode ? "🎭 Mode Avatar animé" : "🎬 Mode Zéna vivante"}
       </button>
 
-      {/* Zone avatar / vidéo */}
-      <div className="relative">
-        {liveMode && videoUrl ? (
-          <video
-            src={videoUrl}
-            autoPlay
-            playsInline
-            muted
-            loop
-            className="rounded-full w-64 h-64 object-cover shadow-lg"
-          />
-        ) : (
-          <ZenaAvatar textToSpeak={reply} mouthLevel={mouthLevel} emotion={emotion} />
-        )}
-
-        {isVideoGenerating && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="px-4 py-2 rounded-full bg-white/80 shadow text-sm">
-              ⏳ Génération du visage en cours…
+      {/* Zone gauche : Avatar ou vidéo */}
+      <div className="flex flex-col items-center justify-center w-full md:w-1/2 mb-10 md:mb-0">
+        <div className="relative">
+          {liveMode && videoUrl ? (
+            <video
+              src={videoUrl}
+              autoPlay
+              playsInline
+              muted
+              loop
+              className="rounded-full w-64 h-64 md:w-80 md:h-80 object-cover shadow-lg border-4 border-white/40"
+            />
+          ) : (
+            <div className="relative">
+              {/* ✅ Image de fond Zéna */}
+              <img
+                src="/images/zena_default.png"
+                alt="ZÉNA"
+                className="rounded-full w-64 h-64 md:w-80 md:h-80 object-cover shadow-lg border-4 border-white/40 opacity-90"
+              />
+              {/* ✅ Halo animé et bouche via Avatar */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <ZenaAvatar emotion={emotion} mouthLevel={mouthLevel} />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {isVideoGenerating && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="px-4 py-2 rounded-full bg-white/80 shadow text-sm">
+                ⏳ Génération du visage en cours…
+              </div>
+            </div>
+          )}
+        </div>
+        <p className="mt-4 text-[#212121]/70 font-medium">ZÉNA — la voix qui veille sur vos émotions</p>
       </div>
 
-      {/* Bouton principal */}
-      <button
-        onClick={handleMainToggle}
-        disabled={isLoading}
-        className={`mt-8 px-8 py-4 rounded-full text-white font-semibold shadow-lg transition ${
-          isSpeaking || isVideoGenerating
-            ? "bg-rose-500 hover:bg-rose-600"
+      {/* Zone droite : interactions */}
+      <div className="flex flex-col items-center md:items-start w-full md:w-1/2 max-w-md">
+        {/* Bouton principal */}
+        <button
+          onClick={handleMainToggle}
+          disabled={isLoading}
+          className={`mb-6 px-8 py-4 rounded-full text-white font-semibold shadow-lg transition ${
+            isSpeaking || isVideoGenerating
+              ? "bg-rose-500 hover:bg-rose-600"
+              : isListening
+              ? "bg-yellow-500 hover:bg-yellow-600"
+              : "bg-[#5B4B8A] hover:bg-[#4A3C79]"
+          } ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
+        >
+          {isSpeaking || isVideoGenerating
+            ? "⏹️ Stopper ZÉNA"
             : isListening
-            ? "bg-yellow-500 hover:bg-yellow-600"
-            : "bg-[#5B4B8A] hover:bg-[#4A3C79]"
-        } ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
-      >
-        {isSpeaking || isVideoGenerating
-          ? "⏹️ Stopper ZÉNA"
-          : isListening
-          ? "🎤 Écoute en cours..."
-          : "🎙️ Parler à ZÉNA"}
-      </button>
+            ? "🎤 Écoute en cours..."
+            : "🎙️ Parler à ZÉNA"}
+        </button>
 
-      {/* Entrée texte + envoyer */}
-      <div className="mt-6 w-full max-w-lg">
+        {/* Entrée texte */}
         <input
           value={manualText}
           onChange={(e) => setManualText(e.target.value)}
           placeholder="Écris ton message à ZÉNA…"
-          className="w-full px-4 py-3 rounded-2xl bg-white/80 shadow-inner outline-none"
+          className="w-full px-4 py-3 rounded-2xl bg-white/80 shadow-inner outline-none border border-gray-200 focus:ring-2 focus:ring-[#4FD1C5]"
         />
         <button
           onClick={handleSend}
