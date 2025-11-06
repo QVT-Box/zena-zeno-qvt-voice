@@ -42,8 +42,7 @@ export default function Navigation() {
             Boutique
           </Link>
           <Link
-            to="https://zena.qvtbox.com"
-            target="_blank"
+            to="/zena-chat"
             className="text-[#5B4B8A] font-semibold hover:text-[#4FD1C5] transition"
           >
             🎙️ Parler à ZÉNA

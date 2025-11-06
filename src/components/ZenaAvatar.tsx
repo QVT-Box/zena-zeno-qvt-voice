@@ -1,8 +1,5 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
-import zenaPoster from "@/assets/zena-poster.webp";
-import zenaVideo from "@/assets/zena-avatar.mp4";
-import zenaImage from "@/assets/zena-avatar.png";
 
 interface ZenaAvatarProps {
   textToSpeak?: string;
@@ -11,11 +8,11 @@ interface ZenaAvatarProps {
 }
 
 /**
- *  Avatar animé de ZÉNA
+ *  Avatar animé de ZÉNA (version CSS pure)
  * - Bouge légèrement la bouche pendant la parole
  * - Réagit selon l'émotion détectée
  * - Halo émotionnel doux et respirant
- * - Fallback vidéo ou image selon disponibilité
+ * - Avatar CSS pur (pas de dépendance vidéo/image)
  */
 export default function ZenaAvatar({
   textToSpeak = "",
@@ -24,7 +21,7 @@ export default function ZenaAvatar({
 }: ZenaAvatarProps) {
   const mouthRef = useRef<HTMLDivElement>(null);
 
-  //  Couleur du halo selon l’émotion dominante
+  //  Couleur du halo selon l'émotion dominante
   const auraColor =
     emotion === "positive"
       ? "from-emerald-300/60 to-teal-300/40"
@@ -83,9 +80,9 @@ export default function ZenaAvatar({
         />
       ))}
 
-      {/*  Avatar (vidéo ou image) */}
+      {/*  Avatar CSS pur (cercle avec dégradé) */}
       <motion.div
-        className="relative z-10 w-48 h-48 md:w-64 md:h-64 rounded-full shadow-lg border-4 border-white/10 bg-[#F2F7F6] overflow-hidden"
+        className="relative z-10 w-48 h-48 md:w-64 md:h-64 rounded-full shadow-lg border-4 border-white/10 bg-gradient-to-br from-[#5B4B8A] to-[#4FD1C5] overflow-hidden flex items-center justify-center"
         animate={{
           scale: [1, 1.02, 1],
           boxShadow: [
@@ -100,35 +97,40 @@ export default function ZenaAvatar({
           ease: "easeInOut",
         }}
       >
-        {/*  Vidéo du visage Zéna */}
-        <video
-          className="w-full h-full object-cover rounded-full"
-          src={zenaVideo}
-          poster={zenaPoster}
-          playsInline
-          autoPlay
-          muted
-          loop
-          preload="auto"
-          onError={(e) => {
-            const target = e.currentTarget;
-            target.style.display = "none";
-            const img = target.parentElement?.querySelector("img");
-            if (img) img.style.display = "block";
-          }}
-        />
-        {/*  Fallback image */}
-        <img
-          src={zenaImage}
-          alt="ZÉNA – Avatar IA émotionnelle QVT Box"
-          className="hidden w-full h-full object-cover rounded-full"
-        />
+        {/* Visage simplifié */}
+        <div className="relative w-full h-full flex items-center justify-center">
+          {/* Yeux */}
+          <div className="absolute top-[35%] left-1/2 -translate-x-1/2 flex gap-8">
+            <motion.div
+              className="w-3 h-3 bg-white rounded-full"
+              animate={{
+                scaleY: [1, 0.2, 1],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                repeatDelay: 2,
+              }}
+            />
+            <motion.div
+              className="w-3 h-3 bg-white rounded-full"
+              animate={{
+                scaleY: [1, 0.2, 1],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                repeatDelay: 2,
+              }}
+            />
+          </div>
 
-        {/*  Bouche animée par-dessus la vidéo */}
-        <motion.div
-          ref={mouthRef}
-          className="absolute bottom-[22%] left-1/2 -translate-x-1/2 w-[30%] h-[8%] bg-[#212121]/60 rounded-full origin-center transition-transform duration-150"
-        />
+          {/* Bouche animée */}
+          <motion.div
+            ref={mouthRef}
+            className="absolute bottom-[30%] left-1/2 -translate-x-1/2 w-[30%] h-[6%] bg-white/80 rounded-full origin-center transition-transform duration-150"
+          />
+        </div>
       </motion.div>
 
       {/* 🩵 Nom et tagline */}
