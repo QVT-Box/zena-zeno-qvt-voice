@@ -5,15 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>ZÉNA – L’IA émotionnelle de QVT Box</title>
 
-    <!-- ✅ SEO amélioré -->
-    <meta name="description" content="ZÉNA, l’IA émotionnelle de QVT Box : la voix bienveillante qui écoute les salariés et soutient leur bien-être au travail et à la maison." />
-    <meta name="keywords" content="QVT, bien-être au travail, IA émotionnelle, burnout, salariés, prévention, RH, santé mentale, ZENA, ZENO" />
+    <!-- ✅ SEO & Métadonnées -->
+    <meta
+      name="description"
+      content="ZÉNA, l’IA émotionnelle de QVT Box : la voix bienveillante qui écoute les salariés et soutient leur bien-être au travail et à la maison."
+    />
+    <meta
+      name="keywords"
+      content="QVT, bien-être au travail, IA émotionnelle, burnout, salariés, prévention, RH, santé mentale, ZENA, ZENO"
+    />
     <meta name="author" content="QVT Box" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
 
     <!-- ✅ Open Graph -->
     <meta property="og:title" content="ZÉNA – L’IA émotionnelle de QVT Box" />
-    <meta property="og:description" content="La voix bienveillante qui détecte le stress, la fatigue et le désengagement pour agir avant le burn-out." />
+    <meta
+      property="og:description"
+      content="La voix bienveillante qui détecte le stress, la fatigue et le désengagement pour agir avant le burn-out."
+    />
     <meta property="og:image" content="https://zena.qvtbox.com/images/zena-avatar.png" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://zena.qvtbox.com/" />
@@ -27,7 +36,7 @@
     <!-- ✅ PWA -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#5B4B8A" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href="/images/zena-icon-192.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -40,28 +49,23 @@
     <link rel="canonical" href="https://zena.qvtbox.com/" />
 
     <!-- ✅ Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- ✅ Schema.org JSON-LD -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "ZÉNA",
-      "description": "IA émotionnelle de QVT Box pour le bien-être au travail",
-      "operatingSystem": "Web, iOS, Android",
-      "applicationCategory": "HealthApplication",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "EUR"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "QVT Box",
-        "url": "https://qvtbox.com"
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "ZÉNA",
+        "description": "IA émotionnelle de QVT Box pour le bien-être au travail et à la maison",
+        "operatingSystem": "Web, iOS, Android",
+        "applicationCategory": "HealthApplication",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+        "publisher": { "@type": "Organization", "name": "QVT Box", "url": "https://qvtbox.com" }
       }
-    }
     </script>
 
     <!-- ✅ Style minimal de chargement -->
@@ -81,11 +85,45 @@
         animation: fadeIn 1.8s ease-in-out;
       }
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
-      h1 { color: #5b4b8a; margin-bottom: 0.5rem; font-size: 2rem; }
-      p { color: #4b5e8a; font-size: 1rem; }
+      h1 {
+        color: #5b4b8a;
+        margin-bottom: 0.5rem;
+        font-size: 2rem;
+      }
+      p {
+        color: #4b5e8a;
+        font-size: 1rem;
+      }
+      /* ✅ Bouton d’installation */
+      #installBtn {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 25px;
+        background: linear-gradient(90deg, #5b4b8a, #4fd1c5);
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        z-index: 999;
+        transition: transform 0.2s ease, opacity 0.3s ease;
+      }
+      #installBtn:hover {
+        transform: scale(1.05);
+        opacity: 0.9;
+      }
     </style>
   </head>
 
@@ -97,13 +135,39 @@
       </div>
     </div>
 
-    <!-- ✅ PWA Service Worker -->
+    <!-- ✅ Bouton d’installation manuel -->
+    <button id="installBtn">📲 Installer ZÉNA</button>
+
+    <!-- ✅ PWA Service Worker + bouton d'installation -->
     <script type="module">
+      // Service worker
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/service-worker.js").catch(console.error);
+          navigator.serviceWorker.register("/service-worker.js").then(() => {
+            console.log("✅ Service Worker enregistré :", location.origin);
+          });
         });
       }
+
+      // Gestion du prompt d'installation
+      let deferredPrompt;
+      const installBtn = document.getElementById("installBtn");
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log("✅ Événement beforeinstallprompt capturé");
+        installBtn.style.display = "block";
+      });
+
+      installBtn.addEventListener("click", async () => {
+        if (!deferredPrompt) return;
+        installBtn.style.display = "none";
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        console.log("Résultat de l’installation :", choice);
+        deferredPrompt = null;
+      });
     </script>
 
     <!-- ✅ Entrée Vite -->
