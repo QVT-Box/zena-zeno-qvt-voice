@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Shield, Users, TrendingDown, TrendingUp, Activity } from "lucide-react";
 import { EmotionalHeatmap } from "@/components/dashboard/EmotionalHeatmap";
 import { TrendChart } from "@/components/dashboard/TrendChart";
+import { DepartmentBenchmark } from "@/components/dashboard/DepartmentBenchmark";
 import MagicAmbiance from "@/components/MagicAmbiance";
 
 /**
@@ -415,6 +416,11 @@ export default function QSHDashboard() {
         {/* Carte de chaleur émotionnelle - COMPOSANT PRINCIPAL */}
         <div className="mb-8">
           <EmotionalHeatmap departments={departments} />
+        </div>
+
+        {/* Vue comparative inter-départements avec benchmarking */}
+        <div className="mb-8">
+          <DepartmentBenchmark departments={departments} />
         </div>
 
         {/* Insights et recommandations */}
