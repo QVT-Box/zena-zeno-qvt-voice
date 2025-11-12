@@ -42,8 +42,9 @@ export default function QSHDashboard() {
   const { user } = useAuth();
   const [departments, setDepartments] = useState(DEMO_DEPARTMENTS);
   const [trendData, setTrendData] = useState(DEMO_TREND);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Chargement initial
   const [isDemo, setIsDemo] = useState(!user);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   useEffect(() => {
     setIsDemo(!user);
@@ -51,27 +52,182 @@ export default function QSHDashboard() {
     if (user) {
       // En mode connecté, charger les vraies données si disponibles
       loadRealData();
+      
+      // Rafraîchir toutes les 5 minutes
+      const interval = setInterval(() => {
+        loadRealData();
+      }, 5 * 60 * 1000);
+
+      return () => clearInterval(interval);
+    } else {
+      // En mode démo, pas de chargement
+      setLoading(false);
     }
   }, [user]);
 
   const loadRealData = async () => {
     setLoading(true);
     try {
-      // Charger les données réelles depuis Supabase
-      const { data: analyticsData } = await supabase
+      // 1. Récupérer la company_id de l'utilisateur connecté
+      const { data: employee } = await supabase
+        .from('employees')
+        .select('company_id')
+        .eq('id', user?.id)
+        .maybeSingle();
+
+      if (!employee?.company_id) {
+        console.log('[QSH] User not linked to a company, using demo data');
+        setLoading(false);
+        return;
+      }
+
+      const companyId = employee.company_id;
+
+      // 2. Charger les départements de l'entreprise
+      const { data: depts } = await supabase
+        .from('departments')
+        .select('id, name')
+        .eq('company_id', companyId);
+
+      if (!depts || depts.length === 0) {
+        console.log('[QSH] No departments found, using demo data');
+        setLoading(false);
+        return;
+      }
+
+      // 3. Récupérer les analytics agrégées récentes pour chaque département
+      const { data: latestAnalytics } = await supabase
         .from('analytics_aggregated')
         .select('*')
+        .eq('company_id', companyId)
+        .eq('aggregation_period', 'daily')
         .order('period_start', { ascending: false })
-        .limit(7);
+        .limit(14); // 2 semaines pour calculer les tendances
 
-      if (analyticsData && analyticsData.length > 0) {
-        // Transformer les données en format trend
-        const trend = analyticsData.reverse().map((d, i) => ({
-          date: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'][i] || `J${i}`,
-          score: d.avg_motivation_index || 50
-        }));
-        setTrendData(trend);
+      // 4. Récupérer les données RPS récentes (7 derniers jours) pour le trend global
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const { data: recentRPS } = await supabase
+        .from('rps_tracking')
+        .select('timestamp, motivation_index, user_id')
+        .gte('timestamp', sevenDaysAgo.toISOString())
+        .order('timestamp', { ascending: true });
+
+      // 5. Calculer le trend global des 7 derniers jours
+      if (recentRPS && recentRPS.length > 0) {
+        const trendByDay = new Map<string, { sum: number; count: number }>();
+        
+        recentRPS.forEach(rps => {
+          const date = new Date(rps.timestamp);
+          const dayKey = date.toISOString().split('T')[0];
+          
+          if (!trendByDay.has(dayKey)) {
+            trendByDay.set(dayKey, { sum: 0, count: 0 });
+          }
+          
+          const day = trendByDay.get(dayKey)!;
+          day.sum += rps.motivation_index || 50;
+          day.count += 1;
+        });
+
+        const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+        const trend = Array.from(trendByDay.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .slice(-7)
+          .map(([dateStr, data], i) => {
+            const date = new Date(dateStr);
+            return {
+              date: days[date.getDay()],
+              score: Math.round(data.sum / data.count)
+            };
+          });
+
+        if (trend.length > 0) {
+          setTrendData(trend);
+        }
       }
+
+      // 6. Construire les données par département
+      const departmentMap = new Map(depts.map(d => [d.id, d.name]));
+      const deptStats = new Map<string, {
+        name: string;
+        scores: number[];
+        userCount: number;
+        recentScores: number[];
+      }>();
+
+      // Initialiser les départements
+      depts.forEach(dept => {
+        deptStats.set(dept.id, {
+          name: dept.name,
+          scores: [],
+          userCount: 0,
+          recentScores: []
+        });
+      });
+
+      // Agréger les données des analytics
+      if (latestAnalytics && latestAnalytics.length > 0) {
+        latestAnalytics.forEach((analytics, index) => {
+          if (analytics.department_id && deptStats.has(analytics.department_id)) {
+            const stats = deptStats.get(analytics.department_id)!;
+            
+            // Score moyen : moyenne pondérée de motivation et burnout inversé
+            const motivationScore = analytics.avg_motivation_index || 50;
+            const burnoutScore = 100 - (analytics.avg_burnout_risk || 50);
+            const avgScore = (motivationScore + burnoutScore) / 2;
+            
+            stats.scores.push(avgScore);
+            
+            // Garder les 7 derniers scores pour la tendance
+            if (index < 7) {
+              stats.recentScores.push(avgScore);
+            }
+            
+            if (analytics.total_users) {
+              stats.userCount = Math.max(stats.userCount, analytics.total_users);
+            }
+          }
+        });
+      }
+
+      // 7. Calculer les tendances et formater les données
+      const departmentData = Array.from(deptStats.entries())
+        .filter(([_, stats]) => stats.scores.length > 0 && stats.userCount >= 5) // Min 5 personnes pour anonymat
+        .map(([deptId, stats]) => {
+          const avgScore = Math.round(
+            stats.scores.reduce((sum, s) => sum + s, 0) / stats.scores.length
+          );
+
+          // Calculer la tendance
+          let trend: "up" | "down" | "stable" = "stable";
+          if (stats.recentScores.length >= 2) {
+            const oldScore = stats.recentScores[stats.recentScores.length - 1];
+            const newScore = stats.recentScores[0];
+            const diff = newScore - oldScore;
+            
+            if (diff > 5) trend = "up";
+            else if (diff < -5) trend = "down";
+          }
+
+          return {
+            name: stats.name,
+            avgScore,
+            userCount: stats.userCount,
+            trend
+          };
+        })
+        .sort((a, b) => a.avgScore - b.avgScore); // Trier du plus critique au meilleur
+
+      if (departmentData.length > 0) {
+        setDepartments(departmentData);
+        setLastUpdate(new Date());
+        console.log('[QSH] Loaded real data:', departmentData.length, 'departments');
+      } else {
+        console.log('[QSH] No valid department data, using demo');
+      }
+
     } catch (error) {
       console.error('[QSH] Error loading data:', error);
       // Garder les données de démo en cas d'erreur
@@ -86,6 +242,19 @@ export default function QSHDashboard() {
 
   const atRiskCount = departments.filter(d => d.avgScore < 50).length;
   const criticalCount = departments.filter(d => d.avgScore < 40).length;
+
+  // Afficher un loader pendant le chargement initial
+  if (loading && user && !lastUpdate) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background flex items-center justify-center">
+        <div className="text-center">
+          <Activity className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Chargement de la météo émotionnelle...</p>
+          <p className="text-sm text-muted-foreground mt-2">Analyse des données de votre organisation</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background relative overflow-hidden pb-20 md:pb-6">
@@ -110,9 +279,24 @@ export default function QSHDashboard() {
               <p className="text-muted-foreground">
                 {isDemo ? '📊 Mode démonstration - Données illustratives' : '🔒 Données anonymisées de votre organisation'}
               </p>
+              {lastUpdate && !isDemo && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Dernière mise à jour : {lastUpdate.toLocaleTimeString('fr-FR')}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {!isDemo && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadRealData()}
+                disabled={loading}
+              >
+                {loading ? <Activity className="w-4 h-4 animate-spin" /> : "Actualiser"}
+              </Button>
+            )}
             {isDemo && (
               <Badge variant="outline" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20">
                 Mode Démo
