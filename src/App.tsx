@@ -5,6 +5,7 @@ import Auth from "@/pages/Auth";
 import WellnessHub from "@/pages/WellnessHub";
 import Dashboard from "@/pages/Dashboard";
 import DashboardRH from "@/pages/DashboardRH";
+import QSHDashboard from "@/pages/QSHDashboard";
 import OnboardingCompany from "@/pages/OnboardingCompany";
 import IngestKnowledge from "@/pages/admin/IngestKnowledge";
 import { Toaster } from "@/components/ui/sonner";
@@ -56,6 +57,9 @@ function App() {
 
           {/* Dashboard RH */}
           <Route path="/dashboard-rh" element={<DashboardRH />} />
+
+          {/* QSH - Météo émotionnelle (accessible en démo) */}
+          <Route path="/qsh" element={<QSHDashboard />} />
 
           {/* Onboarding entreprise */}
           <Route path="/onboarding-company" element={<OnboardingCompany />} />

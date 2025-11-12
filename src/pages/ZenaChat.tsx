@@ -7,7 +7,7 @@ import { useZenaZenoBrain } from "@/hooks/useZenaZenoBrain";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Mic, MicOff, Send, LayoutDashboard, Heart, LifeBuoy } from "lucide-react";
+import { Mic, MicOff, Send, LayoutDashboard, Heart, LifeBuoy, Shield } from "lucide-react";
 import { useState } from "react";
 
 export default function ZenaChat() {
@@ -74,6 +74,15 @@ export default function ZenaChat() {
 
       {/* 🧭 Actions rapides contextuelles */}
       <div className="absolute top-4 right-4 flex gap-2 z-20">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/qsh")}
+          className="bg-white/80 backdrop-blur-sm shadow-md hover:bg-white"
+        >
+          <Shield className="w-4 h-4 mr-2" />
+          QSH
+        </Button>
         <Button
           variant="outline"
           size="sm"

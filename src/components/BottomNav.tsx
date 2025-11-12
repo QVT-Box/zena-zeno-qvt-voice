@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, MessageCircle, User, MoreHorizontal } from "lucide-react";
+import { Home, MessageCircle, User, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -24,16 +24,16 @@ export const BottomNav = () => {
       labelEn: "ZÉNA"
     },
     {
+      path: "/qsh",
+      icon: Shield,
+      label: "QSH",
+      labelEn: "QSH"
+    },
+    {
       path: "/dashboard",
       icon: User,
       label: "Moi",
       labelEn: "Me"
-    },
-    {
-      path: "/wellness-hub",
-      icon: MoreHorizontal,
-      label: "Plus",
-      labelEn: "More"
     }
   ];
 
