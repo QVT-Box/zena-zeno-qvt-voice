@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Index from "@/pages/Index";
 import ZenaChat from "@/pages/ZenaChat";
 import Auth from "@/pages/Auth";
 import WellnessHub from "@/pages/WellnessHub";
@@ -39,8 +38,8 @@ function App() {
 
         {/* === Routes principales === */}
         <Routes>
-          {/* Accueil */}
-          <Route path="/" element={<Index />} />
+          {/* ZÉNA est le cœur de l'application */}
+          <Route path="/" element={<ZenaChat />} />
 
           {/* Authentification */}
           <Route path="/auth" element={<Auth />} />
