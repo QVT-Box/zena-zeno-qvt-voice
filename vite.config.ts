@@ -3,9 +3,9 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // ✅ Indispensable pour Vercel (corrige le MIME "text/html" sur les modules JS)
-  base: "/",
+  base: "./",              // ✅ CORRECTION CRITIQUE — chemins relatifs pour SPA et Lovable
 
   server: {
     host: "::",
@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
 
   plugins: [
     react(),
-    mode === "development" && componentTagger()
+    mode === "development" && componentTagger(),
   ].filter(Boolean),
 
   resolve: {
@@ -23,29 +23,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
 
-  // ✅ Compatibilité PDFJS & Supabase Edge
-  optimizeDeps: {
-    include: ["pdfjs-dist"],
-  },
-
   build: {
     outDir: "dist",
-    sourcemap: false,
-    assetsDir: "assets", // ✅ Explicite le dossier des assets
-    rollupOptions: {
-      input: path.resolve(__dirname, "index.html"),
-      output: {
-        manualChunks: undefined, // ✅ Évite la fragmentation excessive
-        assetFileNames: "assets/[name]-[hash][extname]",
-        chunkFileNames: "assets/[name]-[hash].js",
-        entryFileNames: "assets/[name]-[hash].js"
-      }
-    },
-  },
-
-  // ✅ Preview local fiable (même comportement que Vercel)
-  preview: {
-    port: 4173,
-    strictPort: true,
+    assetsDir: "assets",  // facultatif mais propre
   },
 }));
