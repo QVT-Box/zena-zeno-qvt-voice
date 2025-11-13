@@ -2,10 +2,13 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>ZÉNA – L’IA émotionnelle de QVT Box</title>
 
-    <!-- ✅ SEO & Métadonnées -->
+    <!-- ✅ SEO & métadonnées -->
     <meta
       name="description"
       content="ZÉNA, l’IA émotionnelle de QVT Box : la voix bienveillante qui écoute les salariés et soutient leur bien-être au travail et à la maison."
@@ -23,15 +26,24 @@
       property="og:description"
       content="La voix bienveillante qui détecte le stress, la fatigue et le désengagement pour agir avant le burn-out."
     />
-    <meta property="og:image" content="https://zena.qvtbox.com/images/zena-avatar.png" />
+    <meta
+      property="og:image"
+      content="https://zena.qvtbox.com/images/zena-avatar.png"
+    />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://zena.qvtbox.com/" />
 
     <!-- ✅ Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ZÉNA – L’IA émotionnelle de QVT Box" />
-    <meta name="twitter:description" content="Une IA bienveillante au service du bien-être des salariés." />
-    <meta name="twitter:image" content="https://zena.qvtbox.com/images/zena-avatar.png" />
+    <meta
+      name="twitter:description"
+      content="Une IA bienveillante au service du bien-être des salariés."
+    />
+    <meta
+      name="twitter:image"
+      content="https://zena.qvtbox.com/images/zena-avatar.png"
+    />
 
     <!-- ✅ PWA -->
     <link rel="manifest" href="/manifest.json" />
@@ -68,42 +80,250 @@
       }
     </script>
 
-    <!-- ✅ Style minimal de chargement -->
+    <!-- ✅ Styles -->
     <style>
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
         font-family: "Montserrat", sans-serif;
-        background: linear-gradient(180deg, #f2f7f6 0%, #eaf4f3 100%);
+        background: radial-gradient(circle at 0% 0%, #a4d4ae 0, transparent 45%),
+          radial-gradient(circle at 100% 0%, #5b4b8a 0, transparent 40%),
+          linear-gradient(180deg, #f2f7f6 0%, #eaf4f3 100%);
         color: #212121;
+        min-height: 100vh;
         display: flex;
-        justify-content: center;
         align-items: center;
-        height: 100vh;
-        text-align: center;
+        justify-content: center;
+        padding: 16px;
       }
-      .loader {
-        animation: fadeIn 1.8s ease-in-out;
+
+      main {
+        max-width: 960px;
+        width: 100%;
       }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
+
+      .card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 24px;
+        box-shadow: 0 18px 40px rgba(35, 53, 67, 0.18);
+        padding: 24px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+        gap: 24px;
+        align-items: center;
+      }
+
+      @media (max-width: 768px) {
+        .card {
+          grid-template-columns: 1fr;
+          padding: 20px;
         }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
       }
+
       h1 {
+        margin: 0 0 0.5rem;
+        font-size: 2.3rem;
+        line-height: 1.1;
         color: #5b4b8a;
-        margin-bottom: 0.5rem;
-        font-size: 2rem;
       }
+
+      h1 span {
+        display: block;
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #78a085;
+        margin-bottom: 0.35rem;
+      }
+
+      .subtitle {
+        margin: 0 0 1rem;
+        font-weight: 500;
+        color: #3b4a6b;
+      }
+
       p {
+        margin: 0 0 0.75rem;
+        font-size: 0.98rem;
         color: #4b5e8a;
+      }
+
+      ul {
+        margin: 0.5rem 0 1.25rem;
+        padding-left: 1.1rem;
+        font-size: 0.95rem;
+        color: #4b5e8a;
+      }
+
+      li {
+        margin-bottom: 0.35rem;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(79, 209, 197, 0.12);
+        color: #21645f;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+      }
+
+      .badge span {
         font-size: 1rem;
       }
-      /* ✅ Bouton d’installation */
+
+      .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 0.75rem;
+      }
+
+      .btn-primary,
+      .btn-secondary {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+        white-space: nowrap;
+      }
+
+      .btn-primary {
+        background: linear-gradient(120deg, #5b4b8a, #4fd1c5);
+        color: #ffffff;
+        box-shadow: 0 10px 22px rgba(59, 67, 113, 0.35);
+      }
+
+      .btn-secondary {
+        background: #f2f7f6;
+        color: #3b4a6b;
+        border: 1px solid rgba(91, 75, 138, 0.18);
+      }
+
+      .btn-primary:hover,
+      .btn-secondary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 26px rgba(35, 53, 67, 0.28);
+        opacity: 0.95;
+      }
+
+      .meta {
+        font-size: 0.8rem;
+        color: #7b879c;
+        margin-top: 0.6rem;
+      }
+
+      .visual {
+        position: relative;
+        min-height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .bubble {
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 20% 0%, #ffffff 0, transparent 40%),
+          radial-gradient(circle at 80% 100%, #4fd1c5 0, transparent 55%),
+          radial-gradient(circle at 0% 100%, #5b4b8a 0, transparent 50%);
+        box-shadow: 0 0 40px rgba(79, 209, 197, 0.4);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .bubble::after {
+        content: "";
+        position: absolute;
+        inset: 12%;
+        border-radius: inherit;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+      }
+
+      .bubble img {
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 50%;
+        object-fit: cover;
+        opacity: 0.9;
+      }
+
+      .bubble-glow {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        box-shadow: 0 0 32px rgba(79, 209, 197, 0.7);
+        mix-blend-mode: screen;
+        opacity: 0.7;
+        pointer-events: none;
+      }
+
+      .small-bubble {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 0%, #ffffff 0, transparent 60%),
+          radial-gradient(circle at 100% 100%, #a4d4ae 0, transparent 55%);
+        opacity: 0.85;
+      }
+
+      .small-bubble:nth-child(1) {
+        top: 5%;
+        right: 8%;
+      }
+
+      .small-bubble:nth-child(2) {
+        bottom: 4%;
+        left: 10%;
+        width: 45px;
+        height: 45px;
+      }
+
+      .small-bubble:nth-child(3) {
+        top: 12%;
+        left: 0;
+        width: 35px;
+        height: 35px;
+      }
+
+      .tagline {
+        position: absolute;
+        bottom: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #ffffff;
+        background: rgba(33, 37, 41, 0.55);
+        padding: 6px 14px;
+        border-radius: 999px;
+        backdrop-filter: blur(10px);
+        white-space: nowrap;
+      }
+
+      /* Bouton d’installation PWA */
       #installBtn {
         display: none;
         position: fixed;
@@ -120,32 +340,87 @@
         z-index: 999;
         transition: transform 0.2s ease, opacity 0.3s ease;
       }
+
       #installBtn:hover {
         transform: scale(1.05);
-        opacity: 0.9;
+        opacity: 0.92;
       }
     </style>
   </head>
 
   <body>
-    <div id="root">
-      <div class="loader">
-        <h1>ZÉNA</h1>
-        <p>Chargement de votre expérience bienveillante...</p>
-      </div>
-    </div>
+    <main>
+      <section class="card" aria-labelledby="zena-title">
+        <div>
+          <div class="badge">
+            <span>✨</span>
+            IA émotionnelle au service des salariés
+          </div>
+          <h1 id="zena-title">
+            <span>QVT Box présente</span>
+            ZÉNA, la voix qui veille sur vos équipes
+          </h1>
+          <p class="subtitle">
+            Une IA émotionnelle qui écoute, rassure et alerte avant le burn-out.
+          </p>
+          <p>
+            ZÉNA propose un accompagnement discret et bienveillant à chaque
+            salarié&nbsp;: elle prend des nouvelles, détecte les signaux de fatigue
+            ou de désengagement, et restitue une météo émotionnelle anonyme aux RH
+            pour agir à temps.
+          </p>
+          <ul>
+            <li>💬 Dialogue naturel, ton humain & bienveillant</li>
+            <li>📊 Météo émotionnelle pour les équipes & les directions</li>
+            <li>📦 Connexion avec les box QVT physiques de QVT Box</li>
+          </ul>
+          <div class="buttons">
+            <a href="https://qvtbox.com" class="btn-primary">
+              Découvrir QVT Box
+            </a>
+            <a href="mailto:contact@qvtbox.com" class="btn-secondary">
+              Demander une démo entreprise
+            </a>
+          </div>
+          <p class="meta">
+            ZÉNA n’est pas un médecin ni un psychologue, mais un compagnon
+            émotionnel du quotidien pour mieux prendre soin des salariés.
+          </p>
+        </div>
 
-    <!-- ✅ Bouton d’installation manuel -->
+        <div class="visual" aria-hidden="true">
+          <div class="bubble">
+            <!-- Image de Zéna en filigrane dans la bulle -->
+            <img
+              src="/images/zena-avatar.png"
+              alt="Avatar de ZÉNA, l’IA émotionnelle"
+            />
+            <div class="bubble-glow"></div>
+            <div class="tagline">« Sortez de votre bulle, on veille sur vous »</div>
+          </div>
+          <div class="small-bubble"></div>
+          <div class="small-bubble"></div>
+          <div class="small-bubble"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ✅ Bouton d’installation PWA -->
     <button id="installBtn">📲 Installer ZÉNA</button>
 
-    <!-- ✅ PWA Service Worker + bouton d'installation -->
-    <script type="module">
+    <!-- ✅ Service worker + gestion installation PWA -->
+    <script>
       // Service worker
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/service-worker.js").then(() => {
-            console.log("✅ Service Worker enregistré :", location.origin);
-          });
+          navigator.serviceWorker
+            .register("/service-worker.js")
+            .then(() => {
+              console.log("✅ Service Worker enregistré :", location.origin);
+            })
+            .catch((err) => {
+              console.error("❌ Erreur Service Worker :", err);
+            });
         });
       }
 
@@ -169,8 +444,5 @@
         deferredPrompt = null;
       });
     </script>
-
-    <!-- ✅ Entrée Vite -->
-    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
