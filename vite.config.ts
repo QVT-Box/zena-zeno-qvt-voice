@@ -31,9 +31,15 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "dist",
     sourcemap: false,
+    assetsDir: "assets", // ✅ Explicite le dossier des assets
     rollupOptions: {
-      input: path.resolve(__dirname, "index.html"), // ⚡ mieux que "./index.html"
-      external: [],
+      input: path.resolve(__dirname, "index.html"),
+      output: {
+        manualChunks: undefined, // ✅ Évite la fragmentation excessive
+        assetFileNames: "assets/[name]-[hash][extname]",
+        chunkFileNames: "assets/[name]-[hash].js",
+        entryFileNames: "assets/[name]-[hash].js"
+      }
     },
   },
 

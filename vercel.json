@@ -3,7 +3,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/:path((?!assets|favicon|manifest|service-worker|robots|images|videos|icons|apple-touch-icon).*)",
+      "source": "/((?!assets/|images/|videos/|icons/|favicon|manifest\\.json|service-worker\\.js|robots\\.txt|apple-touch-icon).*)",
       "destination": "/index.html"
     }
   ],
@@ -18,11 +18,33 @@
       ]
     },
     {
-      "source": "/(.*).js",
+      "source": "/(.*\\.js)",
       "headers": [
         {
           "key": "Content-Type",
           "value": "application/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/(.*\\.css)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/css; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
         }
       ]
     },
