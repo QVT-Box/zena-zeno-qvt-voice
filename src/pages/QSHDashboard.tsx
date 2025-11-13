@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Shield, Users, TrendingDown, TrendingUp, Activity } from "lucide-react";
-import { EmotionalHeatmap } from "@/components/dashboard/EmotionalHeatmap";
+import { EmotionalAtlasMap } from "@/components/dashboard/EmotionalAtlasMap";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { DepartmentBenchmark } from "@/components/dashboard/DepartmentBenchmark";
 import MagicAmbiance from "@/components/MagicAmbiance";
@@ -413,9 +413,9 @@ export default function QSHDashboard() {
           />
         </div>
 
-        {/* Carte de chaleur émotionnelle - COMPOSANT PRINCIPAL */}
+        {/* Atlas de la météo émotionnelle - COMPOSANT PRINCIPAL */}
         <div className="mb-8">
-          <EmotionalHeatmap departments={departments} />
+          <EmotionalAtlasMap departments={departments} />
         </div>
 
         {/* Vue comparative inter-départements avec benchmarking */}
