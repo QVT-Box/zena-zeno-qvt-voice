@@ -1,11 +1,17 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [
-    {
-      "source": "/((?!assets/|images/|videos/|icons/|favicon|manifest\\.json|service-worker\\.js|robots\\.txt|apple-touch-icon).*)",
-      "destination": "/index.html"
-    }
+  "routes": [
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/images/(.*)", "dest": "/images/$1" },
+    { "src": "/videos/(.*)", "dest": "/videos/$1" },
+    { "src": "/icons/(.*)", "dest": "/icons/$1" },
+    { "src": "/manifest\\.json", "dest": "/manifest.json" },
+    { "src": "/service-worker\\.js", "dest": "/service-worker.js" },
+    { "src": "/robots\\.txt", "dest": "/robots.txt" },
+    { "src": "/favicon\\.(.*)", "dest": "/favicon.$1" },
+    { "src": "/apple-touch-icon\\.png", "dest": "/apple-touch-icon.png" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "headers": [
     {
