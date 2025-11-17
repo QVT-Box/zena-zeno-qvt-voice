@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-import Index from "@/pages/Index";              // 🆕 ta page d'accueil marketing
+import Index from "@/pages/Index";              // Page d'accueil entreprise
 import ZenaChat from "@/pages/ZenaChat";
 import Auth from "@/pages/Auth";
 import WellnessHub from "@/pages/WellnessHub";
@@ -16,16 +16,19 @@ import { BottomNav } from "@/components/BottomNav";
 import InstallZenaButton from "@/components/InstallZenaButton";
 
 /**
- * 🌿 Application principale – ZÉNA Voice / QVT Box
+ * 🌿 ZÉNA Travail – Application principale
+ * Domaine : https://zena.qvtbox.com
+ * Fonctions : IA émotionnelle salariés, RUDP, Dashboards RH, Onboarding entreprise
  */
 function App() {
   return (
     <Router>
       <div className="relative min-h-screen text-[#212121] font-sans overflow-hidden">
-        {/* Fond global doux */}
+
+        {/* === FOND GLOBAL === */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#F2F7F6] via-[#EAF4F3] to-[#E9F9F5] -z-10" />
 
-        {/* Halos d’ambiance */}
+        {/* === HALOS D’AMBIANCE === */}
         <div
           className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-[#4FD1C5]/30 rounded-full blur-[120px] -z-10 animate-breathe"
           aria-hidden="true"
@@ -35,43 +38,55 @@ function App() {
           aria-hidden="true"
         />
 
+        {/* === ROUTES INTERNES === */}
         <Routes>
-          {/* 🏠 Nouvelle page d'accueil entreprise */}
+
+          {/* 🏠 Accueil marketing entreprise */}
           <Route path="/" element={<Index />} />
 
-          {/* Authentification */}
+          {/* 🔐 Authentification */}
           <Route path="/auth" element={<Auth />} />
 
-          {/* Chat ZÉNA */}
+          {/* 🎙️ Chat IA – cœur de Zéna Travail */}
           <Route path="/zena-chat" element={<ZenaChat />} />
 
-          {/* Hub Bien-être */}
+          {/* 💙 Hub Bien-être personnel */}
           <Route path="/wellness-hub" element={<WellnessHub />} />
 
-          {/* Dashboards */}
+          {/* 📊 Dashboards */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard-rh" element={<DashboardRH />} />
 
-          {/* QSH - Météo émotionnelle */}
+          {/* 🌦️ QSH – météo émotionnelle */}
           <Route path="/qsh" element={<QSHDashboard />} />
 
-          {/* Onboarding entreprise (avec supports entreprise) */}
+          {/* 🏢 Onboarding / supports entreprise */}
           <Route path="/onboarding-company" element={<OnboardingCompany />} />
 
-          {/* Admin – Ingestion de documents (supports entreprise) */}
+          {/* 🧠 Admin : ingestion de documents internes */}
           <Route path="/admin/ingest-knowledge" element={<IngestKnowledge />} />
 
-          {/* Redirection par défaut */}
+          {/* 🔗 Passerelles inter-domaines */}
+          <Route
+            path="/family"
+            element={<Navigate to="https://zena-family.qvtbox.com" replace />}
+          />
+          <Route
+            path="/qvtbox"
+            element={<Navigate to="https://www.qvtbox.com" replace />}
+          />
+
+          {/* Route fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
-        {/* Bouton d’installation PWA */}
+        {/* === INSTALL PWA === */}
         <InstallZenaButton />
 
-        {/* Notifications globales */}
+        {/* === NOTIFICATIONS === */}
         <Toaster position="bottom-center" />
 
-        {/* Barre de navigation mobile */}
+        {/* === NAVIGATION MOBILE === */}
         <BottomNav />
       </div>
     </Router>
