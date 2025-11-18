@@ -7,8 +7,9 @@ export default defineConfig(({ mode }) => {
   const isDev = mode === "development";
 
   return {
-    // 🔥 Évite toutes les erreurs MIME et 404 sur Vercel
-    base: "./",
+    // ✅ Site servi à la racine du domaine zena.qvtbox.com
+    // Évite les URLs du type /zena/https:/assets/...
+    base: "/",
 
     server: {
       host: "::",
@@ -22,7 +23,7 @@ export default defineConfig(({ mode }) => {
 
     plugins: [
       react(),
-      // 🔥 Important : tagger uniquement en DEV (sinon build cassé sur Vercel)
+      // 🔥 Tagger uniquement en DEV (sinon build cassé sur Vercel)
       isDev && componentTagger(),
     ].filter(Boolean),
 
