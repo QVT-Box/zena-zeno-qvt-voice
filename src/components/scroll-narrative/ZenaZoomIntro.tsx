@@ -35,7 +35,7 @@ function ParticleField() {
   const particles = useRef<Array<[number, number, number]>>([]);
 
   if (particles.current.length === 0) {
-    for (let i = 0; i < 2000; i++) {
+    for (let i = 0; i < 500; i++) {
       particles.current.push([
         (Math.random() - 0.5) * 20,
         (Math.random() - 0.5) * 20,
@@ -115,6 +115,23 @@ function AnimatedCamera({ onZoomComplete }: { onZoomComplete: () => void }) {
 
 export default function ZenaZoomIntro({ onComplete, skipable = true }: ZenaZoomIntroProps) {
   const [fadeOut, setFadeOut] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Timeout de sécurité : forcer la transition après 5 secondes
+    const safetyTimer = setTimeout(() => {
+      console.warn("Intro timeout - forçage de la transition");
+      handleZoomComplete();
+    }, 5000);
+
+    // Marquer comme chargé après 100ms
+    const loadTimer = setTimeout(() => setIsLoading(false), 100);
+
+    return () => {
+      clearTimeout(safetyTimer);
+      clearTimeout(loadTimer);
+    };
+  }, []);
 
   const handleZoomComplete = () => {
     setFadeOut(true);
@@ -128,6 +145,15 @@ export default function ZenaZoomIntro({ onComplete, skipable = true }: ZenaZoomI
       animate={{ opacity: fadeOut ? 0 : 1 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Indicateur de chargement */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-sandbar-warm-gold text-lg font-medium animate-pulse">
+            Chargement de l'expérience...
+          </div>
+        </div>
+      )}
+
       <Canvas camera={{ position: [0, 0, 50], fov: 60 }}>
         <color attach="background" args={["#000000"]} />
         <ambientLight intensity={0.5} />
@@ -141,9 +167,9 @@ export default function ZenaZoomIntro({ onComplete, skipable = true }: ZenaZoomI
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.2 }}
           onClick={onComplete}
-          className="absolute top-8 right-8 px-6 py-3 rounded-full bg-white/10 backdrop-blur-sm text-white border border-white/20 hover:bg-white/20 transition-all text-sm font-medium"
+          className="absolute top-8 right-8 px-6 py-3 rounded-full bg-sandbar-warm-gold/20 backdrop-blur-sm text-sandbar-text-light border-2 border-sandbar-warm-gold/40 hover:bg-sandbar-warm-gold/30 hover:border-sandbar-warm-gold/60 transition-all text-sm font-semibold shadow-lg"
         >
           Passer l'intro
         </motion.button>
