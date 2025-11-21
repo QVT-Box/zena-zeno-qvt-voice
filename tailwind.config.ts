@@ -2,6 +2,7 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
+  darkMode: ["class"],
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
@@ -14,6 +15,18 @@ export default {
     },
     extend: {
       colors: {
+        sandbar: {
+          cream: "#FFF9F0",
+          beige: "#E7D4B9",
+          gold: "#C89A53",
+          lightGold: "#F7C97A",
+          darkGold: "#C49A4D",
+          warmGold: "#F5D091",
+          dark: "#1F1307",
+          darkLight: "#1F1309",
+          text: "#5A4C3A",
+          textLight: "#FDF3E0",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -22,12 +35,10 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-          soft: "hsl(var(--secondary-soft))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
