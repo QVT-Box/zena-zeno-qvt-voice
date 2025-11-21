@@ -12,9 +12,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "three": "^0.165.0",
-    "@react-three/fiber": "^9.0.0",
-    "@react-three/drei": "^9.0.0",
+    "three": "0.160.0",
+    "@react-three/fiber": "8.15.11",
+    "@react-three/drei": "9.108.6",
     "@capacitor/android": "^7.4.3",
     "@capacitor/cli": "^7.4.3",
     "@capacitor/core": "^7.4.3",
