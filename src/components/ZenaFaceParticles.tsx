@@ -13,7 +13,7 @@ function FacePoints({ intensity = 1 }: FacePointsProps) {
 
   useEffect(() => {
     const img = new Image();
-    img.src = "/zena-face-base.png"; // 👉 mets bien l’image dans /public avec ce nom
+    img.src = "/zena-face-base.png";
     img.crossOrigin = "anonymous";
 
     img.onload = () => {
@@ -30,7 +30,7 @@ function FacePoints({ intensity = 1 }: FacePointsProps) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
 
-      const step = 4; // plus petit = plus de particules
+      const step = 4;
       const pts: number[] = [];
 
       for (let y = 0; y < canvas.height; y += step) {
@@ -41,16 +41,13 @@ function FacePoints({ intensity = 1 }: FacePointsProps) {
           const b = data[i + 2];
           const a = data[i + 3];
 
-          if (a < 40) continue; // pixels transparents → on ignore
+          if (a < 40) continue;
 
           const brightness = (r + g + b) / 3;
-          if (brightness < 40) continue; // on garde que les zones lumineuses
+          if (brightness < 40) continue;
 
-          // Normalisation [-1 ; 1]
           const nx = (x / canvas.width) * 2 - 1;
           const ny = -(y / canvas.height) * 2 + 1;
-
-          // Profondeur douce selon luminosité
           const nz = ((255 - brightness) / 255) * 0.4 * intensity;
 
           pts.push(nx, ny, nz);
@@ -126,17 +123,12 @@ function ParticlesScene() {
   );
 }
 
-/**
- * Composant exporté : bulle 3D prête à être placée dans ton hero.
- */
 const ZenaFaceParticles: React.FC = () => {
   return (
     <div className="relative w-full max-w-[320px] aspect-square rounded-full shadow-[0_40px_120px_rgba(124,88,36,0.55)]">
-      {/* Halo et bordures en CSS */}
       <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_0%,#FFF7EB_0%,#F5D4A6_40%,#BFA4FF_90%)] opacity-80" />
       <div className="pointer-events-none absolute inset-[10%] rounded-full border border-white/80 shadow-[0_0_60px_rgba(255,255,255,0.8)]" />
 
-      {/* Canvas 3D */}
       <Canvas
         camera={{ position: [0, 0, 2.4], fov: 40 }}
         dpr={[1, 2]}
