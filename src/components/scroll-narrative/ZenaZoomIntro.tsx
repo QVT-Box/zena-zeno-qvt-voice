@@ -15,14 +15,21 @@ function FaceParticles() {
   const [opacity, setOpacity] = useState(0);
 
   useEffect(() => {
+    console.log("🎬 [FaceParticles] Début du chargement de l'image");
+    
     const img = new Image();
     img.src = "/images/zena-face.png";
     img.crossOrigin = "anonymous";
 
     img.onload = () => {
+      console.log("✅ [FaceParticles] Image chargée:", img.width, "x", img.height);
+      
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      if (!ctx) {
+        console.error("❌ [FaceParticles] Impossible de créer le contexte 2D");
+        return;
+      }
 
       const targetWidth = 180;
       const ratio = img.height / img.width;
@@ -57,11 +64,13 @@ function FaceParticles() {
         }
       }
 
+      console.log("✅ [FaceParticles] Particules générées:", pts.length / 3);
       setPositions(new Float32Array(pts));
     };
 
-    img.onerror = () => {
-      // Fallback: essayer un autre chemin
+    img.onerror = (error) => {
+      console.error("❌ [FaceParticles] Erreur de chargement:", error);
+      console.log("🔄 [FaceParticles] Tentative avec /zena-face-base.png");
       img.src = "/zena-face-base.png";
     };
   }, []);
@@ -190,17 +199,27 @@ export default function ZenaZoomIntro({ onComplete, skipable = true }: ZenaZoomI
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
+    console.log("🎬 [ZenaZoomIntro] Composant monté");
+    
     // Timeout de sécurité : forcer la transition après 5 secondes
     const safetyTimer = setTimeout(() => {
+      console.log("⏱️ [ZenaZoomIntro] Timeout de sécurité atteint (5s)");
       handleComplete();
     }, 5000);
 
-    return () => clearTimeout(safetyTimer);
+    return () => {
+      console.log("🧹 [ZenaZoomIntro] Nettoyage du timer");
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   const handleComplete = () => {
+    console.log("✅ [ZenaZoomIntro] Début du fade-out");
     setFadeOut(true);
-    setTimeout(onComplete, 800);
+    setTimeout(() => {
+      console.log("🎬 [ZenaZoomIntro] Appel de onComplete()");
+      onComplete();
+    }, 800);
   };
 
   return (
@@ -249,7 +268,10 @@ export default function ZenaZoomIntro({ onComplete, skipable = true }: ZenaZoomI
           initial={{ opacity: 0 }}
           animate={{ opacity: fadeOut ? 0 : 1 }}
           transition={{ delay: 0.5 }}
-          onClick={onComplete}
+          onClick={() => {
+            console.log("⏭️ [ZenaZoomIntro] Bouton 'Passer l'intro' cliqué");
+            handleComplete();
+          }}
           className="absolute top-8 right-8 px-6 py-3 rounded-full bg-white/10 backdrop-blur-sm text-white border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all text-sm font-medium"
         >
           Passer l'intro
