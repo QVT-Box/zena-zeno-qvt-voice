@@ -1,153 +1,167 @@
 // src/components/ZenaFaceParticle.tsx
-import React, { Suspense, useRef } from "react";
-import * as THREE from "three";
-import { Canvas, extend, useFrame } from "@react-three/fiber";
-import { useTexture, shaderMaterial } from "@react-three/drei";
+import React, { useEffect, useRef } from "react";
 
-// --- Shader material : particules du visage de Zéna ---
+interface Particle {
+  x: number;
+  y: number;
+  baseX: number;
+  baseY: number;
+  radius: number;
+  alpha: number;
+  alphaOffset: number;
+}
 
-const FaceParticleMaterial = shaderMaterial(
-  {
-    uTime: 0,
-    uTexture: null,
-    uColor: new THREE.Color("#F9D48A"), // doré / sable lumineux
-  },
-  // vertex shader
-  /* glsl */ `
-  uniform float uTime;
-  varying vec2 vUv;
+const ZenaFaceParticle: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animationRef = useRef<number | null>(null);
 
-  void main() {
-    vUv = uv;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    // on fait légèrement "respirer" les particules
-    vec3 pos = position;
-    float wave = sin((position.x + position.y) * 12.0 + uTime * 2.5) * 0.015;
-    pos.z += wave;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-    // taille des particules (plus grande au centre quand ça scintille)
-    gl_PointSize = (1.5 + wave * 20.0) * (300.0 / -mvPosition.z);
-    gl_Position = projectionMatrix * mvPosition;
-  }
-  `,
-  // fragment shader
-  /* glsl */ `
-  uniform sampler2D uTexture;
-  uniform vec3 uColor;
-  varying vec2 vUv;
+    let particles: Particle[] = [];
+    let width = canvas.clientWidth;
+    let height = canvas.clientHeight;
 
-  void main() {
-    // on utilise la luminosité de l'image pour savoir où garder la particule
-    vec4 tex = texture2D(uTexture, vUv);
-    float brightness = tex.r * 0.6 + tex.g * 0.3 + tex.b * 0.1;
+    // Ajuste la taille du canvas
+    const resizeCanvas = () => {
+      const rect = canvas.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      canvas.width = width * window.devicePixelRatio;
+      canvas.height = height * window.devicePixelRatio;
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    };
 
-    // on enlève les points qui ne font pas partie du visage
-    if (brightness < 0.25) discard;
+    resizeCanvas();
 
-    // forme ronde (disque) pour chaque particule
-    vec2 p = gl_PointCoord - vec2(0.5);
-    float dist = length(p);
-    float circleMask = smoothstep(0.5, 0.0, dist);
-    if (circleMask <= 0.0) discard;
+    // Image visage ZÉNA utilisée comme "masque"
+    const img = new Image();
+    img.src = "/zena-face.png"; // ⚠️ adapte le chemin à ton image
+    img.crossOrigin = "anonymous";
 
-    // couleur dorée modulée par la luminosité de l'image
-    vec3 color = uColor * (0.4 + brightness * 0.9);
+    const SAMPLE_GAP = 6; // plus petit = plus de particules
 
-    gl_FragColor = vec4(color, circleMask * brightness);
-  }
-  `
-);
+    img.onload = () => {
+      // On dessine l’image dans un canvas temporaire pour lire les pixels
+      const tempCanvas = document.createElement("canvas");
+      const tempCtx = tempCanvas.getContext("2d");
+      if (!tempCtx) return;
 
-extend({ FaceParticleMaterial });
+      const targetSize = Math.min(width * 0.45, height * 0.7);
+      tempCanvas.width = targetSize;
+      tempCanvas.height = targetSize;
 
-type FaceParticlesProps = {
-  textureUrl?: string;
+      tempCtx.drawImage(img, 0, 0, targetSize, targetSize);
+      const imageData = tempCtx.getImageData(0, 0, targetSize, targetSize);
+      const { data } = imageData;
+
+      const centerX = width * 0.68;
+      const centerY = height * 0.48;
+
+      particles = [];
+
+      for (let y = 0; y < targetSize; y += SAMPLE_GAP) {
+        for (let x = 0; x < targetSize; x += SAMPLE_GAP) {
+          const index = (y * targetSize + x) * 4;
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const a = data[index + 3];
+
+          // On ne garde que les pixels "assez présents"
+          if (a > 80) {
+            const brightness = (r + g + b) / 3;
+            // plus c'est clair, plus on a de chance de créer une particule
+            if (brightness > 60 && Math.random() > 0.35) {
+              const offsetX = x - targetSize / 2;
+              const offsetY = y - targetSize / 2;
+
+              const px = centerX + offsetX;
+              const py = centerY + offsetY;
+
+              particles.push({
+                x: px + (Math.random() - 0.5) * 30,
+                y: py + (Math.random() - 0.5) * 30,
+                baseX: px,
+                baseY: py,
+                radius: 1.4 + Math.random() * 1.2,
+                alpha: 0.25 + Math.random() * 0.45,
+                alphaOffset: Math.random() * Math.PI * 2,
+              });
+            }
+          }
+        }
+      }
+
+      animate();
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.globalCompositeOperation = "lighter";
+
+      const time = performance.now() / 1000;
+
+      for (const p of particles) {
+        // légère respiration + micro tremblement
+        const breathing = Math.sin(time * 1.3 + p.alphaOffset) * 0.8;
+        const jitterX = (Math.random() - 0.5) * 0.6;
+        const jitterY = (Math.random() - 0.5) * 0.6;
+
+        const x = p.baseX + jitterX;
+        const y = p.baseY + jitterY;
+
+        const alpha = p.alpha + breathing * 0.08;
+
+        const gradient = ctx.createRadialGradient(
+          x,
+          y,
+          0,
+          x,
+          y,
+          p.radius * 3
+        );
+        gradient.addColorStop(0, `rgba(243, 229, 171, ${alpha})`); // doré clair
+        gradient.addColorStop(0.5, `rgba(237, 211, 158, ${alpha * 0.6})`);
+        gradient.addColorStop(1, "rgba(250, 246, 238, 0)");
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, p.radius * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalCompositeOperation = "source-over";
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    const handleResize = () => {
+      resizeCanvas();
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="w-full h-full block"
+      aria-hidden="true"
+    />
+  );
 };
 
-function FaceParticles({ textureUrl = "/zena-face.png" }: FaceParticlesProps) {
-  const materialRef = useRef<THREE.ShaderMaterial | null>(null);
-
-  const texture = useTexture(textureUrl);
-  // réglages de la texture pour un rendu propre
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.flipY = false;
-
-  useFrame((state) => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-    }
-  });
-
-  return (
-    <points scale={[1.6, 2.4, 1]}>
-      {/* plan de points très dense pour dessiner le visage */}
-      <planeGeometry args={[1.6, 2.4, 320, 320]} />
-      {/* @ts-ignore – élément JSX custom généré par shaderMaterial */}
-      <faceParticleMaterial ref={materialRef} uTexture={texture} />
-    </points>
-  );
-}
-
-// halo doux autour du visage (lumière sable)
-function SoftHalo() {
-  const meshRef = useRef<THREE.Mesh | null>(null);
-
-  useFrame((state) => {
-    if (!meshRef.current) return;
-    const t = state.clock.elapsedTime;
-    const scale = 2.4 + Math.sin(t * 0.6) * 0.04;
-    meshRef.current.scale.set(scale, scale, 1);
-  });
-
-  return (
-    <mesh ref={meshRef} position={[0, 0.1, -0.4]}>
-      <circleGeometry args={[1.2, 64]} />
-      <meshBasicMaterial
-        color="#FFDE9E"
-        transparent
-        opacity={0.3}
-        side={THREE.BackSide}
-      />
-    </mesh>
-  );
-}
-
-export default function ZenaFaceParticle() {
-  return (
-    <div
-      className="relative w-full h-screen"
-      style={{
-        background:
-          "radial-gradient(circle at 20% 0%, #FFEFCC 0%, #F2C98F 28%, #1B1208 80%, #050308 100%)",
-      }}
-    >
-      <Canvas
-        camera={{ position: [0, 0, 3], fov: 35 }}
-        gl={{ antialias: true, alpha: true }}
-      >
-        <color attach="background" args={["transparent"]} />
-        <Suspense fallback={null}>
-          <ambientLight intensity={0.8} />
-          <directionalLight position={[1, 2, 3]} intensity={0.8} />
-          <FaceParticles />
-          <SoftHalo />
-        </Suspense>
-      </Canvas>
-
-      {/* Optionnel : tu peux overlay ton texte / boutons ici */}
-      {/* 
-      <div className="pointer-events-none absolute inset-0 flex items-end md:items-center">
-        <div className="pointer-events-auto p-6 md:p-12 text-left text-[#1B1A18] max-w-xl">
-          <p className="uppercase tracking-[0.25em] text-xs mb-3 text-[#9C7C4A]">
-            Zéna, IA attentionnée
-          </p>
-          <h1 className="text-3xl md:text-5xl font-semibold leading-tight mb-4">
-            Faire jaillir la lumière<br />des cicatrices du quotidien.
-          </h1>
-        </div>
-      </div>
-      */}
-    </div>
-  );
-}
+export default ZenaFaceParticle;
