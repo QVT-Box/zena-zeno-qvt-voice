@@ -10,10 +10,11 @@ interface ScrollNarrativeState {
 export function useScrollNarrative(): ScrollNarrativeState {
   const [currentSection, setCurrentSection] = useState("hero");
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [isIntroComplete, setIsIntroComplete] = useState(() => {
-    // Check if user has already seen the intro
-    return localStorage.getItem("zena-intro-seen") === "true";
-  });
+  // DEBUG: Force intro to always show for testing
+  const [isIntroComplete, setIsIntroComplete] = useState(false);
+  // const [isIntroComplete, setIsIntroComplete] = useState(() => {
+  //   return localStorage.getItem("zena-intro-seen") === "true";
+  // });
 
   const skipIntro = () => {
     setIsIntroComplete(true);
