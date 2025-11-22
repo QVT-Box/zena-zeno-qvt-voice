@@ -12,9 +12,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "three": "0.160.0",
-    "@react-three/fiber": "8.15.11",
-    "@react-three/drei": "^9.0.0",
     "@capacitor/android": "^7.4.3",
     "@capacitor/cli": "^7.4.3",
     "@capacitor/core": "^7.4.3",
@@ -47,6 +44,8 @@
     "@radix-ui/react-toggle": "^1.1.9",
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@react-three/drei": "^9.121.0",
+    "@react-three/fiber": "^9.0.0",
     "@supabase/supabase-js": "^2.74.0",
     "@tanstack/react-query": "^5.83.0",
     "@testing-library/jest-dom": "^6.9.1",
@@ -74,6 +73,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.165.0",
     "vaul": "^0.9.9",
     "vitest": "^3.2.4",
     "zod": "^3.25.76"
