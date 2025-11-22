@@ -1,87 +1,113 @@
 // src/components/ZenaFaceParticles.tsx
-import React, { useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Points, PointMaterial } from "@react-three/drei";
-
-function ParticleHalo() {
-  const ref = useRef<THREE.Points>(null!);
-
-  // Nuage de points autour du visage
-  const positions = useMemo(() => {
-    const count = 1500;
-    const positions = new Float32Array(count * 3);
-
-    for (let i = 0; i < count; i++) {
-      // Point dans une sphère (un peu aplatie pour le visage)
-      const r = 1.2 + Math.random() * 0.5;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-
-      const x = r * Math.sin(phi) * Math.cos(theta);
-      const y = (r * Math.cos(phi)) * 0.9; // léger aplatissement
-      const z = r * Math.sin(phi) * Math.sin(theta) * 0.7;
-
-      positions[i * 3] = x;
-      positions[i * 3 + 1] = y;
-      positions[i * 3 + 2] = z;
-    }
-
-    return positions;
-  }, []);
-
-  useFrame((_, delta) => {
-    if (ref.current) {
-      ref.current.rotation.y += delta * 0.18;
-      ref.current.rotation.x += delta * 0.04;
-    }
-  });
-
-  return (
-    <Points
-      ref={ref}
-      positions={positions}
-      stride={3}
-      frustumCulled={false}
-    >
-      <PointMaterial
-        transparent
-        size={0.04}
-        sizeAttenuation
-        depthWrite={false}
-        color="#FFE7B5"
-      />
-    </Points>
-  );
-}
+import { Canvas } from "@react-three/fiber";
+import { Points, PointMaterial, useTexture } from "@react-three/drei";
+import { useEffect, useMemo, useRef, useState } from "react";
+import * as THREE from "three";
 
 export default function ZenaFaceParticles() {
+  const ref = useRef();
+  const bubbleRef = useRef();
+  const [progress, setProgress] = useState(0);
+
+  // ⬇️ Mets ici ton image de ZENA (image en clair)
+  const zenaTexture = useTexture("/zena-face.png");
+
+  // Convert the image to particle positions
+  const particles = useMemo(() => {
+    const size = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+
+    ctx.drawImage(zenaTexture.image, 0, 0, size, size);
+    const imgData = ctx.getImageData(0, 0, size, size).data;
+
+    const points = [];
+    for (let i = 0; i < imgData.length; i += 4) {
+      const alpha = imgData[i + 3];
+      if (alpha > 100) {
+        const x = (i / 4) % size;
+        const y = Math.floor(i / 4 / size);
+
+        points.push(
+          new THREE.Vector3(
+            (x - size / 2) / 40,
+            -(y - size / 2) / 40,
+            0
+          )
+        );
+      }
+    }
+    return points;
+  }, [zenaTexture]);
+
+  // Animate the dust → face formation
+  useEffect(() => {
+    let t = 0;
+    const interval = setInterval(() => {
+      t += 0.01;
+      setProgress(Math.min(t, 1));
+    }, 20);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Create random cloud positions
+  const randomPositions = useMemo(() => {
+    return particles.map(() =>
+      new THREE.Vector3(
+        (Math.random() - 0.5) * 6,
+        (Math.random() - 0.5) * 6,
+        (Math.random() - 0.5) * 6
+      )
+    );
+  }, [particles]);
+
   return (
-    <div className="relative w-[260px] h-[260px] md:w-[300px] md:h-[300px]">
-      {/* Glow et halo de base */}
-      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FCE8B2] via-[#F4D3FF] to-[#F5EFE5] shadow-[0_0_80px_rgba(227,191,140,0.85)]" />
+    <Canvas camera={{ position: [0, 0, 4], fov: 45 }}>
+      <ambientLight intensity={0.8} />
 
-      {/* Canvas 3D des particules */}
-      <Canvas
-        camera={{ position: [0, 0, 3], fov: 45 }}
-        className="absolute inset-0 !bg-transparent"
-      >
-        <ambientLight intensity={0.9} />
-        <ParticleHalo />
-      </Canvas>
-
-      {/* Visage de ZÉNA au centre */}
-      <div className="pointer-events-none absolute inset-[18%] rounded-full overflow-hidden border border-white/40 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
-        {/* ⚠️ adapte le chemin si ton image a un autre nom */}
-        <img
-          src="/zena-face.png"
-          alt="ZÉNA"
-          className="w-full h-full object-cover"
+      {/* Bubble */}
+      <mesh ref={bubbleRef} scale={1 + progress * 0.2}>
+        <sphereGeometry args={[1.8, 64, 64]} />
+        <meshPhysicalMaterial
+          color="#F6EFD8"
+          transmission={1}
+          thickness={0.8}
+          roughness={0.1}
+          reflectivity={0.9}
+          clearcoat={1}
+          clearcoatRoughness={0.05}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-      </div>
+      </mesh>
 
-      {/* Lueurs de surface */}
-      <div className="pointer-events-none absolute inset-0 rounded-full mix-blend-screen opacity-80 bg-[radial-gradient(circle_at_20%_0%,rgba(255,255,255,0.95),transparent_55%),radial-gradient(circle_at_80%_100%,rgba(194,168,234,0.9),transparent_60%)]" />
-    </div>
+      {/* Particles */}
+      <Points ref={ref} positions={particles}>
+        <PointMaterial
+          transparent
+          color="#F0DCA5"
+          size={0.015}
+          sizeAttenuation
+          depthWrite={false}
+        />
+      </Points>
+
+      {/* Animate positions */}
+      <group>
+        {particles.map((p, i) => {
+          const start = randomPositions[i];
+          const end = p;
+
+          const x = start.x + (end.x - start.x) * progress;
+          const y = start.y + (end.y - start.y) * progress;
+          const z = start.z + (end.z - start.z) * progress;
+
+          return (
+            <mesh key={i} position={[x, y, z]} />
+          );
+        })}
+      </group>
+    </Canvas>
   );
 }
