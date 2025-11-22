@@ -3,158 +3,210 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import InstallZenaButton from "./InstallZenaButton";
 
-const NAV_LINKS = [
-  { label: "Accueil", to: "/" },
-  { label: "ZÉNA Entreprise", to: "/onboarding-company" },
-  { label: "ZÉNA Chat", to: "/zena-chat" },
+const navLinks = [
+  { label: "Accueil", href: "/" },
+  { label: "ZÉNA parle", href: "/zena-chat" },
+  { label: "Espace RH", href: "/onboarding-company" },
+  { label: "Wellness Hub", href: "/wellness-hub" },
 ];
 
 export default function Navigation() {
-  const [open, setOpen] = useState(false);
   const location = useLocation();
-
-  const isActive = (path: string) =>
-    location.pathname === path ||
-    (path !== "/" && location.pathname.startsWith(path));
+  const [open, setOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 flex justify-center pointer-events-none">
-      {/* Conteneur centré façon Pi.ai */}
-      <div className="mt-4 w-full max-w-5xl px-4 pointer-events-auto">
-        <header
+    <header className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
+      <div className="mx-auto max-w-6xl px-4 pt-4 md:px-6">
+        {/* Conteneur principal de la barre */}
+        <nav
           className="
+            pointer-events-auto
             flex items-center justify-between
-            rounded-3xl border border-white/70
-            bg-[#FAF6EE]/80
-            shadow-[0_18px_45px_rgba(164,135,90,0.22)]
-            backdrop-blur-2xl
-            px-4 md:px-6
-            py-2.5 md:py-3
+            rounded-full
+            border border-[#C3A878]/50
+            bg-[radial-gradient(circle_at_0%_0%,#FFF8EA_0%,#2B2118_55%,#130F0C_100%)]
+            px-4 py-2.5 md:px-6 md:py-3
+            shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+            backdrop-blur-xl
           "
         >
-          {/* LOGO + TAGLINE */}
-          <Link
-            to="/"
-            className="flex items-center gap-2 md:gap-3"
-            onClick={() => setOpen(false)}
-          >
-            {/* Petit “médaillon” lumineux type Pi.ai */}
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FBEFD9] via-[#E9D0A0] to-[#C29A65] shadow-inner overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(255,255,255,0.8),transparent_55%)]" />
-              <span className="relative text-[13px] font-semibold tracking-[0.12em] text-[#4A3822]">
+          {/* LOGO / MARQUE */}
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <div
+              className="
+                flex h-9 w-9 items-center justify-center
+                rounded-full
+                bg-gradient-to-br from-[#F6D38D] via-[#FBE6B5] to-[#D6B06F]
+                shadow-[0_0_24px_rgba(246,211,141,0.9)]
+              "
+            >
+              <span className="text-xs font-semibold tracking-[0.18em] text-[#3B2814]">
                 Z
               </span>
             </div>
-
             <div className="flex flex-col leading-tight">
-              <span className="text-sm md:text-base font-medium tracking-[0.18em] uppercase text-[#7C6A4C]">
-                ZÉNA
+              <span className="text-xs uppercase tracking-[0.22em] text-[#FBE6B5]/80">
+                QVT BOX
               </span>
-              <span className="text-[10px] md:text-[11px] text-[#A18F73]">
-                La voix qui veille sur vos émotions
+              <span className="text-sm md:text-base font-medium text-[#FDF7EB]">
+                ZÉNA IA émotionnelle
               </span>
             </div>
           </Link>
 
-          {/* LIENS DESKTOP */}
-          <div className="hidden md:flex items-center gap-6">
-            <div className="flex items-center gap-2 text-xs md:text-sm text-[#6B5B46]">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`
-                    relative px-3 py-1.5 rounded-full transition
-                    ${
-                      isActive(link.to)
-                        ? "bg-[#F2E3C7] text-[#3D3021] shadow-sm"
-                        : "hover:bg-[#F7EADB] hover:text-[#3D3021]"
-                    }
-                  `}
-                >
-                  {link.label}
-                </Link>
-              ))}
+          {/* NAVIGATION DESKTOP */}
+          <div className="hidden items-center gap-6 md:flex">
+            <div className="flex items-center gap-4 text-xs md:text-sm">
+              {navLinks.map((item) => {
+                const active = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={`
+                      relative px-3 py-1.5 rounded-full transition
+                      ${
+                        active
+                          ? "bg-[#F6D38D]/15 text-[#FBE6B5] border border-[#F6D38D]/60"
+                          : "text-[#FBE6B5]/80 hover:text-[#FFFFFF] hover:bg-[#F6D38D]/8"
+                      }
+                    `}
+                  >
+                    {item.label}
+                    {active && (
+                      <span className="pointer-events-none absolute inset-0 rounded-full border border-[#FBE6B5]/50" />
+                    )}
+                  </Link>
+                );
+              })}
             </div>
 
-            {/* CTA “Essayer ZÉNA” */}
-            <Link
-              to="/zena-chat"
-              className="
-                inline-flex items-center gap-2
-                rounded-full px-4 py-2
-                text-xs md:text-sm font-medium
-                bg-gradient-to-r from-[#D8B889] to-[#C29A65]
-                text-[#1B1A18]
-                shadow-[0_10px_25px_rgba(163,119,63,0.4)]
-                hover:brightness-110
-                transition
-              "
-            >
-              Essayer ZÉNA
-            </Link>
+            {/* BOUTON INSTALL PWA + CTA */}
+            <div className="flex items-center gap-3">
+              <InstallZenaButton />
+
+              <Link
+                to="/zena-chat"
+                className="
+                  inline-flex items-center gap-2
+                  rounded-full
+                  bg-[#F6D38D]
+                  px-4 py-2
+                  text-xs md:text-sm font-semibold
+                  text-[#2B2118]
+                  shadow-[0_12px_30px_rgba(246,211,141,0.7)]
+                  hover:bg-[#FBE6B5]
+                  transition
+                "
+              >
+                Parler à ZÉNA
+              </Link>
+            </div>
           </div>
 
-          {/* BOUTON MOBILE */}
+          {/* BOUTON MOBILE (BURGER) */}
           <button
-            className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-2xl border border-[#E3D3B8] bg-[#FAF6EE]/90 shadow-sm"
+            type="button"
             onClick={() => setOpen((v) => !v)}
-            aria-label="Ouvrir le menu"
-          >
-            {open ? (
-              <X className="w-5 h-5 text-[#4A3822]" />
-            ) : (
-              <Menu className="w-5 h-5 text-[#4A3822]" />
-            )}
-          </button>
-        </header>
-
-        {/* MENU MOBILE DÉROULANT */}
-        {open && (
-          <div
             className="
-              mt-2 rounded-3xl border border-white/70
-              bg-[#FAF6EE]/95 backdrop-blur-2xl
-              shadow-[0_16px_40px_rgba(153,122,76,0.28)]
-              px-4 py-3 flex flex-col gap-2 md:hidden
+              inline-flex items-center justify-center
+              rounded-full border border-[#F6D38D]/50
+              bg-black/40 text-[#FBE6B5]
+              p-2.5 md:hidden
             "
           >
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setOpen(false)}
-                className={`
-                  w-full text-sm px-3 py-2 rounded-2xl text-left transition
-                  ${
-                    isActive(link.to)
-                      ? "bg-[#F2E3C7] text-[#3D3021]"
-                      : "text-[#6B5B46] hover:bg-[#F7EADB] hover:text-[#3D3021]"
-                  }
-                `}
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            <Link
-              to="/zena-chat"
-              onClick={() => setOpen(false)}
-              className="
-                mt-1 inline-flex items-center justify-center
-                rounded-2xl px-4 py-2.5
-                text-sm font-medium
-                bg-gradient-to-r from-[#D8B889] to-[#C29A65]
-                text-[#1B1A18]
-                shadow-[0_10px_25px_rgba(163,119,63,0.4)]
-              "
-            >
-              Essayer ZÉNA
-            </Link>
-          </div>
-        )}
+            {open ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </button>
+        </nav>
       </div>
-    </nav>
+
+      {/* OVERLAY MOBILE */}
+      {open && (
+        <div className="pointer-events-auto md:hidden">
+          <div className="fixed inset-0 z-30 bg-black/55 backdrop-blur-sm" />
+          <div
+            className="
+              fixed inset-x-4 top-20 z-40
+              rounded-3xl
+              border border-[#C3A878]/40
+              bg-[radial-gradient(circle_at_0%_0%,#FFF8EA_0%,#2B2118_60%,#0B0907_100%)]
+              px-5 py-5
+              shadow-[0_18px_55px_rgba(0,0,0,0.65)]
+            "
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-[0.22em] text-[#FBE6B5]/70">
+                  ZÉNA • QVT BOX
+                </span>
+                <span className="text-sm font-medium text-[#FDF7EB]">
+                  Votre bulle d’écoute émotionnelle
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-full border border-[#F6D38D]/50 bg-black/40 p-1.5 text-[#FBE6B5]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <nav className="flex flex-col gap-2">
+              {navLinks.map((item) => {
+                const active = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setOpen(false)}
+                    className={`
+                      flex items-center justify-between
+                      rounded-2xl px-3 py-2.5 text-sm
+                      ${
+                        active
+                          ? "bg-[#F6D38D]/18 text-[#FBE6B5] border border-[#F6D38D]/60"
+                          : "text-[#FBE6B5]/85 hover:bg-[#F6D38D]/10"
+                      }
+                    `}
+                  >
+                    <span>{item.label}</span>
+                    {active && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#F6D38D]" />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="mt-5 border-t border-white/10 pt-4 flex flex-col gap-3">
+              <InstallZenaButton />
+
+              <Link
+                to="/zena-chat"
+                onClick={() => setOpen(false)}
+                className="
+                  inline-flex items-center justify-center gap-2
+                  rounded-full
+                  bg-[#F6D38D]
+                  px-4 py-2.5
+                  text-sm font-semibold
+                  text-[#2B2118]
+                  shadow-[0_12px_30px_rgba(246,211,141,0.8)]
+                "
+              >
+                Parler à ZÉNA
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
   );
 }
