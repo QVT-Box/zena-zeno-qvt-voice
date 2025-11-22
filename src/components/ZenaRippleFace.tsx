@@ -1,160 +1,105 @@
 // src/components/ZenaRippleFace.tsx
-import React, { useState, MouseEvent } from "react";
+import { useRef, useState } from "react";
+import { motion, useMotionValue, useTransform } from "framer-motion";
 
-type ZenaRippleFaceProps = {
-  /** Image de Zéna (version points lumineux dorés) */
-  imageUrl?: string;
-  /** Taille du visage en pixels */
+interface Props {
+  imageUrl: string;
   size?: number;
-  /** URL à ouvrir au clic */
   targetUrl?: string;
-};
+}
 
 export default function ZenaRippleFace({
-  imageUrl = "/zena-face-points-golden.png", // mets ici le bon chemin de ton image
-  size = 420,
-  targetUrl = "https://zena.qvtbox.com",
-}: ZenaRippleFaceProps) {
-  const [isHover, setIsHover] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  imageUrl,
+  size = 380,
+  targetUrl,
+}: Props) {
+  const ref = useRef<HTMLDivElement>(null);
 
-  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePos({ x, y });
-  };
+  const [hover, setHover] = useState(false);
 
-  const handleClick = () => {
-    if (targetUrl) {
-      window.open(targetUrl, "_blank", "noopener,noreferrer");
-    }
-  };
+  // Mouse ripple
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const rotateX = useTransform(y, [-100, 100], [8, -8]);
+  const rotateY = useTransform(x, [-100, 100], [-8, 8]);
+  const scale = useTransform(hover ? 1 : 0, [0, 1], [1, 1.05]);
+
+  function onMouseMove(e: React.MouseEvent) {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const posX = e.clientX - (rect.left + rect.width / 2);
+    const posY = e.clientY - (rect.top + rect.height / 2);
+
+    x.set(posX);
+    y.set(posY);
+  }
+
+  function onClick() {
+    if (targetUrl) window.open(targetUrl, "_blank");
+  }
 
   return (
-    <div
-      className="relative flex items-center justify-center"
+    <motion.div
+      ref={ref}
+      onMouseMove={onMouseMove}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={onClick}
       style={{
         width: size,
         height: size,
+        perspective: 1000,
       }}
+      className="cursor-pointer select-none"
     >
-      {/* Halo extérieur très doux */}
-      <div
-        className="absolute rounded-full blur-3xl pointer-events-none"
+      <motion.div
         style={{
-          width: size * 1.4,
-          height: size * 1.4,
-          background:
-            "radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(227,205,157,0.35) 40%, rgba(210,185,140,0.1) 65%, transparent 80%)",
-          opacity: isHover ? 1 : 0.7,
-          transition: "opacity 260ms ease-out",
+          rotateX,
+          rotateY,
+          scale,
         }}
-      />
-
-      {/* Conteneur cliquable */}
-      <div
-        className="relative rounded-full overflow-hidden cursor-pointer shadow-xl"
-        style={{
-          width: size,
-          height: size,
-          transform: isHover ? "scale(1.04)" : "scale(1)",
-          boxShadow: isHover
-            ? "0 30px 80px rgba(0,0,0,0.35)"
-            : "0 22px 60px rgba(0,0,0,0.25)",
-          transition: "transform 220ms ease-out, box-shadow 220ms ease-out",
-          background:
-            "radial-gradient(circle at 15% 0%, #FFF8EA 0%, #F4E0B8 40%, #E0C08F 80%)",
-        }}
-        onMouseEnter={() => setIsHover(true)}
-        onMouseLeave={() => setIsHover(false)}
-        onMouseMove={handleMouseMove}
-        onClick={handleClick}
+        className="relative w-full h-full rounded-full shadow-2xl transition-all"
       >
-        {/* Image de Zéna */}
-        <img
-          src={imageUrl}
-          alt="ZÉNA – visage lumineux"
-          className="w-full h-full object-cover select-none pointer-events-none"
-          style={{
-            mixBlendMode: "soft-light",
-            filter: "saturate(1.05) contrast(1.02)",
-          }}
-        />
-
-        {/* Film de “verre d’eau” / reflets subtils */}
+        {/* Halo or lumineux */}
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 rounded-full blur-2xl opacity-80"
           style={{
             background:
-              "radial-gradient(circle at 0% 0%, rgba(255,255,255,0.35) 0%, transparent 40%), radial-gradient(circle at 100% 100%, rgba(255,255,255,0.2) 0%, transparent 55%)",
-            mixBlendMode: "screen",
-            opacity: 0.9,
+              "radial-gradient(circle at 60% 30%, #ffe9c7 0%, #d2b48c 60%, #c3a878 100%)",
+            filter: "blur(55px)",
           }}
         />
 
-        {/* Effet ripple qui suit la souris */}
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            left: `${mousePos.x}%`,
-            top: `${mousePos.y}%`,
-            transform: "translate(-50%, -50%)",
-            width: isHover ? size * 0.7 : size * 0.4,
-            height: isHover ? size * 0.7 : size * 0.4,
-            borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 40%, transparent 70%)",
-            opacity: isHover ? 0.7 : 0,
-            filter: "blur(6px)",
-            transition:
-              "width 220ms ease-out, height 220ms ease-out, opacity 220ms ease-out",
-            mixBlendMode: "screen",
-          }}
-        />
-
-        {/* Cercles d’ondes très fins (légère sensation eau) */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div
-            className="absolute rounded-full border border-white/40"
-            style={{
-              left: `${mousePos.x}%`,
-              top: `${mousePos.y}%`,
-              transform: "translate(-50%, -50%)",
-              width: isHover ? size * 0.9 : size * 0.6,
-              height: isHover ? size * 0.9 : size * 0.6,
-              opacity: isHover ? 0.35 : 0,
-              transition: "all 260ms ease-out",
-              mixBlendMode: "soft-light",
-            }}
-          />
-          <div
-            className="absolute rounded-full border border-white/25"
-            style={{
-              left: `${mousePos.x}%`,
-              top: `${mousePos.y}%`,
-              transform: "translate(-50%, -50%)",
-              width: isHover ? size * 1.1 : size * 0.8,
-              height: isHover ? size * 1.1 : size * 0.8,
-              opacity: isHover ? 0.25 : 0,
-              transition: "all 260ms ease-out",
-              mixBlendMode: "soft-light",
-            }}
+        {/* Cercle principal */}
+        <div className="absolute inset-0 rounded-full overflow-hidden border border-[#f8e9c5] shadow-xl">
+          <img
+            src={imageUrl}
+            alt="Zena"
+            className="w-full h-full object-cover"
+            draggable={false}
           />
         </div>
 
-        {/* Légère texture bruit pour un rendu “cinéma” */}
-        <div
-          className="absolute inset-0 pointer-events-none"
+        {/* Effet d’eau (ripple) */}
+        <motion.div
+          className="absolute inset-0 rounded-full"
           style={{
-            backgroundImage:
-              "radial-gradient(circle, rgba(0,0,0,0.18) 1px, transparent 0)",
-            backgroundSize: "3px 3px",
-            opacity: 0.11,
-            mixBlendMode: "soft-light",
+            background:
+              "radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%)",
+            opacity: hover ? 0.5 : 0,
+          }}
+          animate={{
+            scale: hover ? [1, 1.15, 1] : 1,
+          }}
+          transition={{
+            duration: 1.2,
+            repeat: hover ? Infinity : 0,
+            ease: "easeInOut",
           }}
         />
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
