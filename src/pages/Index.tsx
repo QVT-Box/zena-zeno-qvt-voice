@@ -1,143 +1,165 @@
 // src/pages/Index.tsx
-
 import { Link } from "react-router-dom";
-import { ArrowRight, MessageCircle, Sparkles, BriefcaseBusiness } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import ZenaFaceParticles from "@/components/ZenaFaceParticles";
-import ZenaAvatar from "@/components/ZenaAvatar";
+import ZenaRippleFace from "@/components/ZenaRippleFace";
 
-/**
- * Page d’accueil ZÉNA – version minimaliste sans grosse carte blanche,
- * avec visage-particules à droite et CTA pour tester comment elle parle.
- */
 export default function Index() {
   return (
-    <div className="min-h-screen bg-[#F3E5CE] text-[#1B1A18] flex flex-col">
-      {/* NAVBAR TRANSLUCIDE AU-DESSUS */}
-      <div className="fixed inset-x-0 top-0 z-40 bg-gradient-to-b from-[#F3E5CE]/90 via-[#F3E5CE]/70 to-transparent backdrop-blur-sm">
-        <Navigation />
-      </div>
+    <div className="bg-[#FAF6EE] text-[#1B1A18] overflow-hidden">
+      <Navigation />
 
-      {/* HERO PLEIN ÉCRAN */}
-      <main className="flex-1 pt-24 md:pt-28">
-        <section
-          className="
-            relative max-w-6xl mx-auto px-6 md:px-10 lg:px-12
-            flex flex-col lg:flex-row items-start lg:items-center gap-12 lg:gap-20
-            pb-20 md:pb-24
-          "
-        >
-          {/* Halo de fond très doux derrière ZÉNA */}
-          <div className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute right-[-10%] top-[10%] w-[420px] h-[420px] rounded-full
-                            bg-[radial-gradient(circle_at_30%_0%,#FFFFFF_0%,transparent_55%),radial-gradient(circle_at_80%_80%,#D8B47A_0%,transparent_55%),radial-gradient(circle_at_0%_80%,#B494FF_0%,transparent_45%)]
-                            opacity-70 blur-[4px]" />
-            <div className="absolute left-[-15%] bottom-[-10%] w-[420px] h-[420px] rounded-full
-                            bg-[radial-gradient(circle_at_10%_0%,#FFFFFF_0%,transparent_50%),radial-gradient(circle_at_80%_90%,#D8B47A_0%,transparent_55%)]
-                            opacity-30 blur-[6px]" />
-          </div>
+      {/* ================= HERO ================= */}
+      <section className="relative min-h-screen w-full flex items-center bg-[#F7F2E6]">
+        {/* Fond sable lumineux */}
+        <img
+          src="/engagements-hero.jpg"
+          alt="Texture sable lumineuse"
+          className="absolute inset-0 w-full h-full object-cover opacity-90"
+        />
 
-          {/* COLONNE TEXTE */}
-          <div className="flex-1 max-w-xl space-y-7">
-            <p className="text-[11px] tracking-[0.22em] uppercase text-[#9A8160]">
-              QVT BOX PRÉSENTE
+        {/* Voile de lumière */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF6EE]/60 via-[#FAF6EE]/20 to-transparent" />
+
+        {/* Contenu */}
+        <div className="relative z-10 container mx-auto px-8 md:px-16 py-32 flex flex-col md:flex-row items-center justify-between gap-16">
+
+          {/* --- Bloc gauche (texte) --- */}
+          <div className="max-w-xl md:pr-8">
+            <p className="uppercase tracking-[0.18em] text-[11px] text-[#A8977E]/90 mb-4">
+              ZÉNA • IA émotionnelle souveraine
             </p>
 
-            <header className="space-y-3">
-              <h1 className="text-[2.5rem] md:text-[3rem] leading-tight font-light">
-                <span className="font-semibold">ZÉNA</span>
-                <span className="text-[#C8913C] italic font-semibold">
-                  , la voix qui veille sur vos équipes
-                </span>
-              </h1>
+            <h1 className="text-4xl md:text-6xl font-light leading-tight text-[#1B1A18] drop-shadow-sm">
+              La voix qui éclaire  
+              <br />
+              <span className="text-[#C3A878]">
+                les fissures du quotidien.
+              </span>
+            </h1>
 
-              <p className="text-sm md:text-[15px] font-medium text-[#3A3229]">
-                Une IA émotionnelle qui écoute, rassure et alerte avant le burn-out.
-              </p>
-            </header>
-
-            <p className="text-sm md:text-[15px] leading-relaxed text-[#5A4B3A]">
-              ZÉNA prend des nouvelles en douceur, détecte la fatigue invisible et transforme
-              des milliers de « ça va » automatiques en une météo émotionnelle claire
-              pour vos RH. Sans stigmatiser, sans fliquer – juste pour intervenir à temps
-              et prendre soin de celles et ceux qui tiennent la maison.
+            <p className="text-[#4A4134] text-base mt-6 leading-relaxed">
+              Une présence douce, attentive, toujours là en arrière-plan.  
+              ZÉNA capte les émotions faibles, détecte la fatigue,  
+              et restitue une météo émotionnelle anonyme aux RH pour prévenir le burn-out.
             </p>
 
-            {/* CTA PRINCIPAUX */}
-            <div className="flex flex-wrap gap-3 pt-2">
+            {/* Boutons */}
+            <div className="flex gap-3 mt-10">
               <Link
-                to="/onboarding"
-                className="inline-flex items-center gap-2 rounded-full bg-[#C8913C] text-[#1B1A18] px-5 py-2.5 text-sm font-medium shadow-[0_12px_35px_rgba(140,90,20,0.35)] hover:bg-[#D7A14C] transition-colors"
+                to="/zena-chat"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#C3A878] text-[#1B1A18] text-sm font-medium hover:bg-[#d9c7a4] transition shadow-md"
               >
-                <Sparkles className="w-4 h-4" />
-                Découvrir QVT Box
+                Essayer ZÉNA
+                <ArrowRight className="w-4 h-4" />
               </Link>
 
               <Link
                 to="/onboarding-company"
-                className="inline-flex items-center gap-2 rounded-full border border-[#C8913C66] bg-[#F3E5CE]/60 px-5 py-2.5 text-sm text-[#2B231A] hover:bg-[#F8EEE0] transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[#C3A878]/60 text-[#1B1A18] text-sm hover:bg-white/40 backdrop-blur-sm transition"
               >
-                <BriefcaseBusiness className="w-4 h-4" />
-                Demander une démo entreprise
-              </Link>
-            </div>
-
-            {/* CTA TESTER COMMENT ZÉNA PARLE */}
-            <div className="pt-1">
-              <Link
-                to="/zena-chat"
-                className="inline-flex items-center gap-2 rounded-full border border-[#C8913C33] bg-white/70 px-4 py-2 text-xs md:text-sm text-[#3A3229] hover:bg-white shadow-sm transition-colors"
-              >
-                <MessageCircle className="w-4 h-4 text-[#C8913C]" />
-                Tester comment ZÉNA parle
-              </Link>
-            </div>
-
-            {/* LIEN FAMILLE / ADOS */}
-            <div className="pt-2 text-xs md:text-[13px] text-[#6D5A44] flex items-center gap-2">
-              <span className="text-lg">👨‍👩‍👧</span>
-              <Link to="https://zena-family.qvtbox.com" className="underline underline-offset-2 decoration-[#C8913C66] hover:text-[#C8913C]">
-                Découvrir aussi ZÉNA Famille &amp; Ados
+                Créer mon espace RH
               </Link>
             </div>
           </div>
 
-          {/* COLONNE VISUEL ZÉNA */}
-          <div className="w-full lg:w-auto flex justify-center lg:justify-end">
-            <div
-              className="
-                relative w-[260px] h-[260px] md:w-[300px] md:h-[300px]
-                rounded-full overflow-hidden
-                shadow-[0_22px_55px_rgba(0,0,0,0.35)]
-                border border-white/35
-                bg-[#0E0E10]
-              "
+          {/* --- ZENA Face Ripple (à droite) --- */}
+          <div className="flex justify-center md:justify-end w-full md:w-auto">
+            <ZenaRippleFace
+              imageUrl="/zena-face-points-golden.png"
+              size={420}
+              targetUrl="https://zena.qvtbox.com"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ================= COMMENT ÇA MARCHE ================= */}
+      <section className="py-24 px-8 md:px-16 bg-[#FAF6EE] relative">
+        <div className="max-w-4xl mx-auto text-left">
+          <p className="uppercase tracking-[0.18em] text-xs text-[#9C8D77] mb-3">
+            Écouter • Comprendre • Protéger
+          </p>
+
+          <h2 className="text-2xl md:text-3xl font-light text-[#1B1A18] mb-4">
+            Comment ZÉNA agit dans l’entreprise ?
+          </h2>
+
+          <p className="max-w-xl text-sm md:text-base text-[#6F6454] leading-relaxed">
+            Une technologie émotionnelle qui capte les nuances :  
+            hésitations, tensions, sous-texte.  
+            Pas pour surveiller.  
+            Pour comprendre — et prévenir.
+          </p>
+        </div>
+
+        {/* Étapes */}
+        <div className="grid md:grid-cols-3 gap-12 mt-16 max-w-5xl mx-auto text-left">
+          <div>
+            <h3 className="text-xl font-light mb-2">1. Elle écoute</h3>
+            <p className="text-[#6F6454] text-sm">
+              Le salarié s’exprime librement.  
+              ZÉNA reformule et mesure l’intensité émotionnelle.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-xl font-light mb-2">2. Elle analyse</h3>
+            <p className="text-[#6F6454] text-sm">
+              Charge mentale, fatigue, tensions, signaux faibles —  
+              tout est collecté, puis anonymisé.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-xl font-light mb-2">3. Elle éclaire</h3>
+            <p className="text-[#6F6454] text-sm">
+              Les RH reçoivent une météo émotionnelle claire,  
+              pour agir avant la rupture.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= CTA FINAL ================= */}
+      <section className="py-24 bg-[#151515] text-[#FDF9F0] text-center relative overflow-hidden">
+        
+        <div className="max-w-3xl mx-auto px-8 md:px-16">
+          <p className="uppercase tracking-[0.2em] text-[11px] text-[#E5D7BF]/80 mb-5">
+            Le coup de pouce ZÉNA
+          </p>
+
+          <h2 className="text-2xl md:text-3xl font-light mb-6">
+            Prêts à écouter vos équipes autrement ?
+          </h2>
+
+          <p className="text-sm md:text-base text-[#E5D7BF]/85 mb-10 leading-relaxed">
+            Une approche souveraine, chaleureuse,  
+            inspirée du réel et de la psychologie humaine.  
+            Simple. Discrète. Utile.
+          </p>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
+            <Link
+              to="/contact"
+              className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#C3A878] text-[#151515] hover:bg-[#d9c7a4] transition shadow-lg"
             >
-              {/* Visage particules (Three.js) */}
-              <div className="absolute inset-0">
-                <ZenaFaceParticles />
-              </div>
+              Prendre contact
+              <ArrowRight className="w-4 h-4" />
+            </Link>
 
-              {/* Fallback image de ZÉNA au cas où WebGL ne charge pas */}
-              <div className="absolute inset-0 pointer-events-none">
-                <ZenaAvatar />
-              </div>
-
-              {/* léger halo au bord */}
-              <div className="absolute inset-[-2px] rounded-full pointer-events-none border border-[#F5D9A8]/40 shadow-[0_0_60px_rgba(250,225,180,0.55)]" />
-            </div>
+            <Link
+              to="/zena-chat"
+              className="inline-flex items-center gap-2 px-7 py-3 rounded-full border border-[#EADCC7] text-[#FDF9F0] hover:bg-white/10 transition"
+            >
+              Essayer ZÉNA
+            </Link>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      {/* FOOTER SIMPLE */}
-      <footer className="py-6 text-center text-[11px] text-[#7C6950]">
-        « Sortez de votre bulle, on veille sur vous. »
-      </footer>
-
-      {/* Footer global (si tu veux garder le composant existant) */}
       <Footer />
     </div>
   );
