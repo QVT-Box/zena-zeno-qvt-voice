@@ -1,29 +1,26 @@
 // src/App.tsx
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import ZenaChatPage from "./pages/ZenaChatPage";
+import Index from "@/pages/Index";
+import ZenaChatpage from "@/pages/ZenaChatpage";
+import OnboardingCompany from "@/pages/OnboardingCompany";
+import NotFound from "@/pages/NotFound";
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Page d’accueil avec le visage Zéna en bulle dorée */}
         <Route path="/" element={<Index />} />
-        <Route path="/zena-chat" element={<ZenaChatPage />} />
-        {/* placeholder pour la future page démo entreprise */}
-        <Route
-          path="/demo-entreprise"
-          element={
-            <div className="min-h-screen flex items-center justify-center bg-[#F5E8D4]">
-              <p className="text-sm text-[#4D3F30]">
-                La page de demande de démo entreprise arrive bientôt.
-              </p>
-            </div>
-          }
-        />
+
+        {/* Espace de conversation Zéna */}
+        <Route path="/zena-chat" element={<ZenaChatpage />} />
+
+        {/* Onboarding entreprise (bouton "Créer mon espace RH") */}
+        <Route path="/onboarding-company" element={<OnboardingCompany />} />
+
+        {/* 404 / routes inconnues */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
 }
-
-export default App;
