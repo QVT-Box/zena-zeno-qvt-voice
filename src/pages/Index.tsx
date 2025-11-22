@@ -1,90 +1,107 @@
 // src/pages/Index.tsx
 
 import { Link } from "react-router-dom";
-import { ArrowRight, MessageCircleMore, Sparkles } from "lucide-react";
+import { ArrowRight, MessageCircle } from "lucide-react";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import ZenaParticleFace from "@/components/ZenaParticleFace";
+import ZenaChatDock from "@/components/ZenaChatDock";
 
 export default function Index() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F5E8D4] via-[#F6EBDD] to-[#E7D3B3] text-[#1B1A18] flex items-center justify-center px-4 py-10">
-      <main className="w-full max-w-6xl">
-        {/* CARD PRINCIPALE */}
-        <section className="relative w-full overflow-hidden rounded-[32px] bg-gradient-to-br from-[#FFF7EA] via-[#FEF6EE] to-[#F4E2C9] shadow-[0_30px_80px_rgba(154,112,64,0.35)] px-8 py-10 md:px-14 md:py-12 flex flex-col md:flex-row items-center justify-between gap-10">
-          {/* contenu gauche */}
-          <div className="max-w-xl space-y-6">
-            <p className="text-[11px] tracking-[0.28em] uppercase text-[#B49B7B]">
-              QVT BOX PRÉSENTE
-            </p>
+    <div className="min-h-screen bg-gradient-to-b from-[#F7F0E4] via-[#F1E2C7] to-[#E0CCAE] text-[#1B1A18]">
+      {/* NAV */}
+      <Navigation />
 
-            <h1 className="text-[2.6rem] md:text-[3rem] leading-tight font-light">
-              <span className="font-semibold">ZÉNA</span>
-              <span className="text-[#C79A4B] font-semibold">,&nbsp;</span>
-              <span className="italic text-[#C79A4B]">
-                la voix qui veille sur vos équipes
-              </span>
-            </h1>
+      {/* HERO */}
+      <main className="mx-auto flex max-w-6xl flex-col items-center gap-12 px-6 pt-28 pb-16 lg:flex-row lg:gap-20">
+        {/* Colonne texte */}
+        <section className="w-full flex-1 space-y-6">
+          <p className="text-[10px] uppercase tracking-[0.28em] text-[#9D8563]">
+            QVT BOX PRÉSENTE
+          </p>
 
-            <p className="text-sm md:text-base text-[#4D3F30] font-medium">
-              Une IA émotionnelle qui écoute, rassure et alerte avant le burn-out.
-            </p>
+          <h1 className="text-3xl leading-snug text-[#1E1309] sm:text-4xl md:text-[42px] md:leading-snug">
+            <span className="font-semibold tracking-tight">ZÉNA</span>
+            <span className="text-[#C7913D]">, la voix qui veille sur vos équipes</span>
+          </h1>
 
-            <p className="text-sm md:text-base text-[#6C5C4B] leading-relaxed">
-              ZÉNA prend des nouvelles en douceur, détecte la fatigue invisible et transforme
-              des milliers de «&nbsp;ça va&nbsp;» automatiques en une météo émotionnelle
-              claire pour vos RH. Sans stigmatiser, sans fliquer. Juste pour intervenir à temps
-              et prendre soin de celles et ceux qui tiennent la maison.
-            </p>
+          <p className="max-w-xl text-sm font-medium text-[#4A3623]">
+            Une IA émotionnelle qui écoute, rassure et alerte avant le burn-out.
+          </p>
 
-            {/* boutons */}
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link
-                to="https://qvtbox.com"
-                className="inline-flex items-center gap-2 rounded-full bg-[#E6A44B] px-5 py-3 text-[0.9rem] font-semibold text-[#1F1307] shadow-[0_12px_30px_rgba(205,140,60,0.55)] hover:translate-y-[1px] hover:shadow-[0_8px_20px_rgba(205,140,60,0.45)] transition"
-              >
-                <Sparkles className="w-4 h-4" />
-                Découvrir QVT Box
-              </Link>
+          <p className="max-w-xl text-sm leading-relaxed text-[#5B4733]">
+            ZÉNA prend des nouvelles en douceur, détecte la fatigue invisible et
+            transforme des milliers de « ça va » automatiques en une météo
+            émotionnelle claire pour vos RH. Sans stigmatiser, sans fliquer.
+          </p>
 
-              <Link
-                to="/demo-entreprise"
-                className="inline-flex items-center gap-2 rounded-full border border-[#D1B48A] bg-white/60 px-5 py-3 text-[0.9rem] text-[#403125] hover:bg-white/90 transition shadow-sm"
-              >
-                <ArrowRight className="w-4 h-4" />
-                Demander une démo entreprise
-              </Link>
-            </div>
+          <p className="max-w-xl text-sm leading-relaxed text-[#5B4733]">
+            Juste ce qu’il faut pour intervenir à temps et prendre soin de celles
+            et ceux qui tiennent la maison.
+          </p>
 
-            {/* bouton de test de Zéna */}
-            <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-[#E4D2B8] mt-4">
-              <Link
-                to="/zena-chat"
-                className="inline-flex items-center gap-2 rounded-full bg-[#F6EEE1] px-4 py-2 text-[0.9rem] text-[#4F3E30] hover:bg-[#f2e0c5] transition shadow-inner"
-              >
-                <MessageCircleMore className="w-4 h-4 text-[#C4884B]" />
-                Tester comment ZÉNA parle
-              </Link>
+          {/* CTA principaux */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              to="https://qvtbox.com"
+              className="inline-flex items-center gap-2 rounded-full bg-[#C58B3B] px-5 py-2.5 text-xs font-medium text-white shadow-[0_10px_30px_rgba(159,107,40,0.35)] hover:bg-[#D99A46] transition-colors"
+            >
+              ⚡ Découvrir QVT Box
+              <ArrowRight className="h-4 w-4" />
+            </Link>
 
-              <Link
-                to="https://zena-family.qvtbox.com"
-                className="text-[0.85rem] text-[#8B7252] hover:text-[#5b4227] inline-flex items-center gap-2"
-              >
-                <span className="text-lg">👨‍👩‍👧</span>
-                Découvrir aussi ZÉNA Famille &amp; Ados
-              </Link>
-            </div>
+            <Link
+              to="mailto:contact@qvtbox.com?subject=Demande%20de%20d%C3%A9mo%20Z%C3%89NA%20Entreprise"
+              className="inline-flex items-center gap-2 rounded-full border border-[#E6C49E] bg-white/70 px-5 py-2.5 text-xs font-medium text-[#42301D] hover:bg-white transition-colors"
+            >
+              🧳 Demander une démo entreprise
+            </Link>
           </div>
 
-          {/* visage particules à droite */}
-          <div className="relative flex items-center justify-center">
-            <ZenaParticleFace />
+          {/* CTA test direct */}
+          <button
+            onClick={() => {
+              const el = document.getElementById("tester-zena");
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#F6E4C4] px-4 py-2 text-xs text-[#4B3521] hover:bg-[#F9E9CF] transition-colors"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Tester comment ZÉNA parle
+          </button>
+
+          {/* Lien discret Famille */}
+          <div className="mt-3 text-xs text-[#7A6548]">
+            <Link
+              to="https://zena-family.qvtbox.com"
+              className="inline-flex items-center gap-1 hover:text-[#A07B4D] transition-colors"
+            >
+              <span>👨‍👩‍👧</span>
+              <span>Découvrir aussi ZÉNA Famille &amp; Ados</span>
+            </Link>
           </div>
         </section>
 
-        {/* tagline bas de page */}
-        <p className="mt-6 text-center text-[0.8rem] text-[#6B5B49]">
-          «&nbsp;Sortez de votre bulle, on veille sur vous.&nbsp;»
-        </p>
+        {/* Colonne ZÉNA visage particules */}
+        <section className="relative flex w-full flex-1 items-center justify-center lg:justify-end">
+          <div className="relative h-[270px] w-[270px] sm:h-[320px] sm:w-[320px] lg:h-[360px] lg:w-[360px]">
+            <ZenaParticleFace />
+          </div>
+        </section>
       </main>
+
+      {/* DOCK DE TEST – CHAT + VOIX */}
+      <div className="mx-auto max-w-6xl px-6 pb-20">
+        <ZenaChatDock />
+      </div>
+
+      {/* Bas de page */}
+      <div className="pb-8 text-center text-[11px] text-[#8E7454]">
+        « Sortez de votre bulle, on veille sur vous. »
+      </div>
+
+      <Footer />
     </div>
   );
 }
