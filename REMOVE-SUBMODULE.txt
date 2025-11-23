@@ -1,3 +1,0 @@
-git rm -f zena-zeno-qvt-voice-main
-rm -rf .git/modules/zena-zeno-qvt-voice-main
-git commit -m "Remove broken submodule"
