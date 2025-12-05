@@ -197,6 +197,8 @@ export default function ZenaChatDock() {
                 ? "border-[#C0794C] bg-[#FEE4D6] text-[#8A3F22]"
                 : "border-transparent bg-[#F5E4CF] text-[#5A4228]"
             }`}
+            aria-label="Activer ou désactiver l'écoute"
+            title="Activer ou désactiver l'écoute"
           >
             <Mic className="h-3 w-3" />
           </button>
@@ -205,6 +207,8 @@ export default function ZenaChatDock() {
           type="button"
           onClick={handleSend}
           className="inline-flex items-center gap-1 rounded-full bg-[#C58B3B] px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#D79A45] transition-colors"
+          aria-label="Envoyer le message"
+          title="Envoyer le message"
         >
           Envoyer
           <Send className="h-3 w-3" />

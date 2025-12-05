@@ -56,7 +56,7 @@ export default function Navigation() {
             href="https://qvtbox.com"
             className="text-[#2D2620]/70 hover:text-[#C3A878] transition-colors"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
           >
             QVT Box
           </a>
@@ -109,7 +109,7 @@ export default function Navigation() {
             <a
               href="https://qvtbox.com"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="block py-1"
             >
               Voir QVT Box

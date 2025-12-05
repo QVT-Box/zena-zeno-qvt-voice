@@ -46,7 +46,7 @@ export default function ZenaChat() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="p-2 bg-[#E8D9BD] rounded-full">
+          <button className="p-2 bg-[#E8D9BD] rounded-full" aria-label="Activer le micro" title="Activer le micro">
             <Mic className="w-5 h-5" />
           </button>
 
@@ -60,11 +60,13 @@ export default function ZenaChat() {
           <button
             onClick={send}
             className="p-2 bg-[#C3A878] text-[#1B1A18] rounded-full"
+            aria-label="Envoyer le message"
+            title="Envoyer le message"
           >
             <Send className="w-4 h-4" />
           </button>
 
-          <button className="p-2 bg-[#E8D9BD] rounded-full">
+          <button className="p-2 bg-[#E8D9BD] rounded-full" aria-label="Activer le haut-parleur" title="Activer le haut-parleur">
             <Volume2 className="w-5 h-5" />
           </button>
         </div>

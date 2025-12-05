@@ -1,7 +1,7 @@
 {
-  "name": "ZÉNA – L’IA émotionnelle de QVT Box",
-  "short_name": "ZÉNA",
-  "description": "L’avatar IA humanoïde et bienveillant de QVT Box. ZÉNA ou ZÉNO parle, écoute et veille sur votre bien-être émotionnel au travail et à la maison.",
+  "name": "ZENA IA emotionnelle",
+  "short_name": "ZENA",
+  "description": "L'avatar IA humanoide et bienveillant de QVT Box. ZENA ou ZENO parle, ecoute et veille sur votre bien-etre emotionnel au travail et a la maison.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
@@ -10,7 +10,12 @@
   "theme_color": "#5B4B8A",
   "lang": "fr-FR",
   "dir": "ltr",
-  "categories": ["health", "education", "productivity", "wellness"],
+  "categories": [
+    "health",
+    "education",
+    "productivity",
+    "wellness"
+  ],
   "icons": [
     {
       "src": "/images/zena-icon-192.png",
@@ -30,21 +35,39 @@
       "short_name": "Coach IA",
       "description": "Lancer une conversation vocale avec ZÉNA",
       "url": "/zena-chat",
-      "icons": [{ "src": "/images/zena-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/images/zena-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Mes Box Bien-être",
       "short_name": "Box QVT",
       "description": "Découvrir les box bien-être QVT Box",
       "url": "/box",
-      "icons": [{ "src": "/images/zena-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/images/zena-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Mon espace émotionnel",
       "short_name": "Espace QVT",
       "description": "Suivre mes émotions avec ZÉNA",
       "url": "/dashboard",
-      "icons": [{ "src": "/images/zena-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/images/zena-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

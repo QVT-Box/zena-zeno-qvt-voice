@@ -72,10 +72,20 @@ export default function IngestKnowledge() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F2F7F6] to-[#E9F9F5] flex flex-col items-center justify-center p-8">
       <div className="max-w-xl w-full bg-white rounded-2xl shadow-xl p-6">
-        <h1 className="text-2xl font-semibold text-[#005B5F] mb-4">Ingestion de documents — QVT Box</h1>
+        <h1 className="text-2xl font-semibold text-[#005B5F] mb-4">Ingestion de documents – QVT Box</h1>
 
         <div className="border-2 border-dashed border-[#78A085] rounded-lg p-6 text-center mb-4">
-          <input type="file" accept=".pdf,.txt,.md" onChange={(e) => setFile(e.target.files?.[0] || null)} className="w-full cursor-pointer" />
+          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="ingest-file">
+            Sélectionnez un fichier à ingérer (PDF, TXT ou MD)
+          </label>
+          <input
+            id="ingest-file"
+            type="file"
+            accept=".pdf,.txt,.md"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="w-full cursor-pointer"
+            title="Choisir un fichier à ingérer"
+          />
           {file && (
             <p className="text-sm mt-2 text-gray-600">
               Fichier sélectionné : <strong>{file.name}</strong> ({file.type || "type inconnu"})
