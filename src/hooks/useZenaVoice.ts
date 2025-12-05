@@ -44,6 +44,7 @@ export function useZenaVoice({
     interimResults,
     onResult: (text, dl) => {
       // <- TEXTE FINAL du micro
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (text && onFinalResult) onFinalResult(text, (dl as any) || "unknown");
     },
   });
@@ -69,8 +70,16 @@ export function useZenaVoice({
   // Cleanup
   useEffect(() => {
     return () => {
-      try { stopTTS(); } catch {}
-      try { stopListening(); } catch {}
+      try { 
+        stopTTS(); 
+      } catch (err) {
+        // noop
+      }
+      try { 
+        stopListening(); 
+      } catch (err) {
+        // noop
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

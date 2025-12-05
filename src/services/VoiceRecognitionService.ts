@@ -37,6 +37,8 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
   }
 
   private initRecognition() {
+     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -49,7 +51,7 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
     this.recognition.lang = this.options.lang || "fr-FR";
     this.recognition.continuous = this.options.continuous || false;
     this.recognition.interimResults = this.options.interimResults || true;
-    // @ts-ignore
+    // @ts-expect-error: Web Speech API properties not in TS DOM lib
     this.recognition.maxAlternatives = 1;
 
     this.recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -62,6 +64,7 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
       if (transcript.trim()) this.options.onResult?.(transcript.trim(), isFinal);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.recognition.onerror = (event: any) => {
       console.error("❌ SpeechRecognition error:", event.error);
       const messages: Record<string, string> = {
@@ -81,7 +84,7 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
       this.options.onEnd?.();
     };
 
-    // @ts-ignore
+    // @ts-expect-error: Web Speech API events not in TS DOM lib
     this.recognition.onstart = () => {
       this.listening = true;
       this.options.onStart?.();
@@ -89,6 +92,7 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
   }
 
   isSupported(): boolean {
+     
     return !!(
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     );
@@ -131,7 +135,9 @@ export class BrowserVoiceRecognition implements IVoiceRecognitionService {
     if (this.recognition) {
       try {
         this.recognition.stop();
-      } catch {}
+      } catch (err) {
+        // noop
+      }
     }
     this.listening = false;
   }
@@ -220,6 +226,7 @@ export class VoiceRecognitionFactory {
 
   static getBestAvailableMode(): VoiceRecognitionMode {
     const isIOS = /iPhone|iPad|iPod|CriOS|Safari/.test(navigator.userAgent);
+     
     const browserSupported =
       !!(window as any).SpeechRecognition ||
       !!(window as any).webkitSpeechRecognition;

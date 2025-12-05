@@ -1,182 +1,79 @@
-// src/hooks/useZenaZenoBrain.ts
-import { useState, useRef, useEffect } from "react";
-import { useZenaVoice } from "@/hooks/useZenaVoice";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 type Persona = "zena" | "zeno";
-type LangOpt = "auto" | "fr-FR" | "en-US";
-
-interface Message {
-  from: "user" | "zena" | "zeno";
-  text: string;
-}
-
-interface EmotionalState {
-  mood: "positive" | "negative" | "neutral";
-  score: number;
-}
-
-interface RecommendedBox {
-  name: string;
-  theme: string;
-  description: string;
-}
-
-interface SupportResource {
-  id: string;
-  resource_type: string;
-  name: string;
-  phone?: string;
-  url?: string;
-  description: string;
-}
+type Emotion = "positive" | "neutral" | "negative";
 
 interface UseZenaZenoBrainOptions {
-  persona: Persona;
-  language?: LangOpt;
+  persona?: Persona;
+  language?: "auto" | "fr-FR" | "en-US";
 }
 
 /**
- * 🧠 useZenaZenoBrain
- * - Écoute (STT) via useZenaVoice
- * - Génère une réponse émotionnelle (locale)
- * - Parle (TTS) via useZenaVoice
- * - Expose émotions + box recommandée
+ * useZenaZenoBrain (interface pour le chat React classique).
+ * Retourne :
+ *  - emotion: l'état émotionnel détecté
+ *  - isProcessing: booléen pour le loader
+ *  - handleUserMessage: fonction qui renvoie la réponse texte de Zéna
  */
-export function useZenaZenoBrain({
-  persona = "zena",
-  language = "auto",
-}: UseZenaZenoBrainOptions) {
+export function useZenaZenoBrain({ persona = "zena", language = "auto" }: UseZenaZenoBrainOptions = {}) {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [thinking, setThinking] = useState(false);
-  const [emotionalState, setEmotionalState] = useState<EmotionalState>({
-    mood: "neutral",
-    score: 8,
-  });
-  const [recommendedBox, setRecommendedBox] = useState<RecommendedBox | null>(null);
-  const [supportResources, setSupportResources] = useState<SupportResource[]>([]);
-  const currentSessionId = useRef<string | null>(null);
+  const [emotion, setEmotion] = useState<Emotion>("neutral");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const sessionIdRef = useRef<string | null>(null);
 
-  // Créer une session au premier rendu
-  useEffect(() => {
-    const createSession = async () => {
-      const { data, error } = await supabase
-        .from('conversation_sessions')
-        .insert({
-          user_id: user?.id || null,
-          persona,
-          language: language === "auto" ? "fr-FR" : language,
-        })
-        .select('id')
-        .single();
+  async function ensureSession() {
+    if (sessionIdRef.current) return sessionIdRef.current;
 
-      if (!error && data) {
-        currentSessionId.current = data.id;
-        console.log('[useZenaZenoBrain] Session créée:', data.id);
-      }
-    };
+    const { data, error } = await supabase
+      .from("conversation_sessions")
+      .insert({
+        user_id: user?.id ?? null,
+        persona,
+        language: language === "auto" ? "fr-FR" : language,
+      })
+      .select("id")
+      .single();
 
-    createSession();
-  }, [user, persona, language]);
+    if (error || !data) throw error || new Error("Impossible de créer la session");
+    sessionIdRef.current = data.id;
+    return data.id;
+  }
 
-  // Orchestration TTS+STT (anti-écho intégré)
-  const {
-  say,
-  listen,
-  stopListening,
-  isListening,
-  isSpeaking,
-  transcript,
-  detectedLang,
-  audioLevel,
-} = useZenaVoice({
-  lang: language === "auto" ? "fr-FR" : (language as "fr-FR" | "en-US"),
-  gender: persona === "zena" ? "female" : "male",
-  sttLang: language,
-  continuous: true,
-  interimResults: true,
-  onFinalResult: (finalText) => {
-    // 💡 Dès qu’on a un résultat FINAL du micro, on déclenche le cerveau
-    onUserSpeak(finalText);
-  },
-});
+  const handleUserMessage = async (text: string): Promise<string> => {
+    const clean = text.trim();
+    if (!clean) return "";
 
-  // 🧠 Génération de réponse IA via edge function
-  const generateAIResponse = async (userText: string): Promise<string> => {
+    setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-emotional-weather', {
+      const sessionId = await ensureSession();
+      const { data, error } = await supabase.functions.invoke("generate-emotional-weather", {
         body: {
-          text: userText,
+          text: clean,
           persona,
-          language: detectedLang === "fr" ? "fr" : "en",
+          language: language === "auto" ? "fr" : language.startsWith("fr") ? "fr" : "en",
           userId: user?.id,
-          sessionId: currentSessionId.current
-        }
+          sessionId,
+        },
       });
 
       if (error) {
-        console.error('[useZenaZenoBrain] Erreur edge function:', error);
+        console.error("[useZenaZenoBrain] Edge function error:", error);
         throw error;
       }
 
-      // Mise à jour de l'état émotionnel
-      setEmotionalState({ mood: data.mood, score: data.score });
-      
-      // Mise à jour de la box recommandée
-      setRecommendedBox(data.recommendedBox);
-      
-      // Mise à jour des ressources d'aide si disponibles
-      if (data.supportResources && data.supportResources.length > 0) {
-        setSupportResources(data.supportResources);
-        console.log('[useZenaZenoBrain] 🆘 Ressources d\'aide reçues:', data.supportResources.length);
-      }
-
-      return data.reply;
+      if (data?.mood) setEmotion(data.mood as Emotion);
+      return data?.reply ?? "Merci de me l'avoir confié. On va poser ça ensemble.";
     } catch (err) {
-      console.error('[useZenaZenoBrain] Erreur génération:', err);
-      return persona === "zena" 
-        ? "Désolée, je n'ai pas pu analyser ton message pour le moment. 💔"
-        : "Je rencontre une difficulté technique. Peux-tu réessayer ?";
+      console.error("[useZenaZenoBrain] handleUserMessage error:", err);
+      return persona === "zena"
+        ? "Je suis désolée, je n'arrive pas à analyser ton message pour le moment."
+        : "Je rencontre une difficulté technique, peux-tu réessayer ?";
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  // Quand l’utilisateur parle (texte final)
-  const onUserSpeak = async (raw: string) => {
-    const text = (raw || "").trim();
-    if (!text) return;
-
-    setMessages((prev) => [...prev, { from: "user", text }]);
-    setThinking(true);
-
-    const aiResponse = await generateAIResponse(text);
-
-    setThinking(false);
-    setMessages((prev) => [...prev, { from: persona, text: aiResponse }]);
-    say(aiResponse); // l’écoute reprendra automatiquement après le TTS
-  };
-
-  return {
-    // conversation
-    messages,
-    thinking,
-
-    // émotions & reco
-    emotionalState,
-    recommendedBox,
-    supportResources,
-
-    // voix & écoute
-    speaking: isSpeaking,
-    isListening,
-    listen,
-    stopListening,
-    transcript,
-    detectedLang,
-    audioLevel,
-
-    // interaction
-    onUserSpeak,
-  };
+  return { emotion, isProcessing, handleUserMessage };
 }

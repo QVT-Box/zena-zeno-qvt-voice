@@ -40,6 +40,7 @@ export function useSpeechSynthesis(): UseSpeechSynthesis {
 
     const onVoices = () => load();
     // certains navigateurs utilisent encore onvoiceschanged=fn
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window.speechSynthesis as any).onvoiceschanged = onVoices;
     // d’autres préfèrent addEventListener
     window.speechSynthesis.addEventListener?.("voiceschanged", onVoices);
@@ -59,8 +60,11 @@ export function useSpeechSynthesis(): UseSpeechSynthesis {
     return () => {
       try {
         window.speechSynthesis.removeEventListener?.("voiceschanged", onVoices);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window.speechSynthesis as any).onvoiceschanged = null;
-      } catch {}
+      } catch (err) {
+        // noop
+      }
       clearInterval(id);
     };
   }, [isSupported]);

@@ -18,3 +18,28 @@ html, body {
 * {
   box-sizing: border-box;
 }
+.zena-mask {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  -webkit-mask-image: radial-gradient(circle 260px at 50% 50%, #000 60%, transparent 64%);
+  mask-image: radial-gradient(circle 260px at 50% 50%, #000 60%, transparent 64%);
+  background: transparent;
+}
+.zena-mask-dynamic {
+  transform: translate(-50%, -50%) scale(var(--mask-scale, 1));
+  opacity: var(--mask-opacity, 1);
+}
+.zena-particle-canvas {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 0 !important;
+}
+.zena-hero-glow-follow {
+  background: radial-gradient(circle at var(--glow-x,50%) var(--glow-y,50%), rgba(255, 227, 170, 0.16), transparent 38%);
+  mix-blend-mode: screen;
+  transition: background-position 0.12s ease;
+}

@@ -1,166 +1,144 @@
-// src/components/ZenaRippleFace.tsx
+import React from "react";
+import { Link } from "react-router-dom";
+import { motion, useMotionValue, useTransform, MotionValue } from "framer-motion";
+import useZenaPointillism from "@/hooks/useZenaPointillism";
 
-import { motion, useMotionValue, useTransform } from "framer-motion";
-import { useState } from "react";
-
-interface Props {
-  imageUrl: string;
+type Props = {
+  imageUrl?: string;
   size?: number;
   targetUrl?: string;
-}
+};
 
-/**
- * ZenaRippleFace
- * - Visage de Zéna dans une bulle dorée
- * - Nuage de poussière lumineuse autour
- * - Effet eau + zoom 3D au survol
- * - Clic : ouvre la page Zéna (zena-chat)
- */
 export default function ZenaRippleFace({
-  imageUrl,
-  size = 360,
+  imageUrl = "/zena-face-golden.png",
+  size = 420,
   targetUrl = "/zena-chat",
 }: Props) {
-  const [hover, setHover] = useState(false);
+  const { ref, reveal, tiltX, tiltY, isInteracting } = useZenaPointillism<HTMLDivElement>(Math.max(size * 0.9, 360));
 
-  // valeurs pour l'effet 3D (tilt en fonction de la souris)
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
+  const mv = useMotionValue(reveal) as MotionValue<number>;
+  const dotOpacity = useTransform(mv, [0, 1], [0, 1]) as MotionValue<number>;
+  const imageBlur = useTransform(mv, [0, 1], [0, 2.2]) as MotionValue<number>;
 
-  const rotateX = useTransform(y, [-120, 120], [12, -12]);
-  const rotateY = useTransform(x, [-120, 120], [-12, 12]);
-  const scale = useTransform(x, [-100, 100], [1, 1.06]);
+  const rotateY = tiltX * 8;
+  const rotateX = -tiltY * 6;
+  const breathe = isInteracting ? 1.02 : 1.0;
 
-  const handleClick = () => {
-    if (!targetUrl) return;
-    window.location.href = targetUrl;
-  };
+  React.useEffect(() => {
+    mv.set(reveal);
+  }, [reveal, mv]);
 
   return (
-    <motion.div
-      className="relative cursor-pointer select-none"
-      style={{
-        width: size,
-        height: size,
-        rotateX,
-        rotateY,
-        scale,
-      }}
-      onMouseMove={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        x.set(e.clientX - rect.left - rect.width / 2);
-        y.set(e.clientY - rect.top - rect.height / 2);
-      }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => {
-        setHover(false);
-        x.set(0);
-        y.set(0);
-      }}
-      onClick={handleClick}
-    >
-      {/* Aura dorée principale */}
+    <Link to={targetUrl} aria-label="Ouvrir ZÉNA" className="group">
       <motion.div
-        className="absolute inset-0 rounded-full blur-3xl"
-        animate={{
-          opacity: hover ? 0.95 : 0.6,
-          scale: hover ? 1.25 : 1.05,
-        }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-        style={{
-          background:
-            "radial-gradient(circle, rgba(255,236,207,0.95), rgba(214,178,120,0.5), transparent 70%)",
-        }}
-      />
-
-      {/* Bulle douce autour du visage */}
-      <motion.div
-        className="absolute inset-0 rounded-full border border-white/30"
-        animate={{
-          opacity: hover ? 1 : 0.8,
-          boxShadow: hover
-            ? "0 0 40px rgba(255, 220, 160, 0.9)"
-            : "0 0 26px rgba(255, 220, 160, 0.55)",
-        }}
-        transition={{ duration: 0.5 }}
-        style={{
-          background:
-            "radial-gradient(circle at 30% 10%, rgba(255,255,255,0.65), transparent 55%)",
-        }}
-      />
-
-      {/* Effet eau / reflets internes */}
-      <motion.div
-        className="absolute inset-0 rounded-full mix-blend-soft-light"
-        animate={{
-          opacity: hover ? [0.25, 0.55, 0.3] : [0.18, 0.3, 0.2],
-          scale: hover ? [1, 1.04, 1] : [1, 1.02, 1],
-        }}
-        transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-        style={{
-          background:
-            "radial-gradient(circle at 70% 80%, rgba(186,148,255,0.55), transparent 60%)",
-        }}
-      />
-
-      {/* Poussière lumineuse / particules autour */}
-      {Array.from({ length: 40 }).map((_, i) => {
-        // distribution stable des particules
-        const angle = (i / 40) * Math.PI * 2;
-        const radius = size * 0.52 + (i % 5) * 4; // autour de la bulle
-        const baseX = Math.cos(angle) * radius;
-        const baseY = Math.sin(angle) * radius;
-
-        return (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              width: 4 + (i % 3),
-              height: 4 + (i % 3),
-              left: "50%",
-              top: "50%",
-              x: baseX,
-              y: baseY,
-              background:
-                i % 7 === 0
-                  ? "radial-gradient(circle, #ffffff, #ffe9c4)"
-                  : "radial-gradient(circle, #ffe9c4, #f1c27d)",
-              filter: "blur(0.2px)",
-            }}
-            animate={{
-              opacity: hover
-                ? [0.2, 0.8, 0.4]
-                : [0.15, 0.6, 0.25],
-              y: [baseY, baseY - 6, baseY],
-              x: [baseX, baseX + (i % 2 === 0 ? 3 : -3), baseX],
-            }}
-            transition={{
-              duration: 4 + (i % 5) * 0.5,
-              repeat: Infinity,
-              delay: i * 0.07,
-              ease: "easeInOut",
-            }}
-          />
-        );
-      })}
-
-      {/* Visage de Zéna */}
-      <div
-        className="relative overflow-hidden rounded-full shadow-xl"
-        style={{
-          width: size * 0.86,
-          height: size * 0.86,
-          left: size * 0.07,
-          top: size * 0.07,
-        }}
+        ref={ref}
+        className="relative flex items-center justify-center"
+        style={{ width: size, height: size }}
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: breathe }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <img
-          src={imageUrl}
-          alt="Zéna"
-          className="w-full h-full object-cover"
+        {/* Halo */}
+        <div
+          aria-hidden
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: size * 1.42,
+            height: size * 1.42,
+            boxShadow: `0 20px 80px rgba(183,142,68,0.18), 0 6px 30px rgba(183,142,68,0.06)`,
+            filter: "blur(18px)",
+            background: "radial-gradient(closest-side, rgba(183,142,68,0.12), rgba(183,142,68,0.04) 40%, transparent)",
+            transform: `translateY(-6px)`,
+          }}
         />
-      </div>
-    </motion.div>
+
+        {/* Bubble */}
+        <motion.div
+          className="relative rounded-full overflow-hidden shadow-2xl"
+          style={{
+            width: size,
+            height: size,
+            background: "linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0.08))",
+            backdropFilter: "blur(6px) saturate(110%)",
+            transformStyle: "preserve-3d",
+            willChange: "transform, filter",
+          }}
+          animate={{ rotateY, rotateX }}
+          transition={{ type: "spring", stiffness: 90, damping: 14 }}
+        >
+          {/* subtle rotating reflection */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            style={{ mixBlendMode: "soft-light" }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+          />
+
+          {/* face */}
+          <motion.img
+            src={imageUrl}
+            alt="Visage de Zéna"
+            className="w-full h-full object-cover pointer-events-none select-none"
+            style={{
+              WebkitMaskImage: "radial-gradient(circle at 50% 40%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.96) 45%, rgba(0,0,0,0.85) 100%)",
+              filter: imageBlur.to((v) => `blur(${v}px)`),
+              transform: "translateZ(0)",
+            }}
+            draggable={false}
+          />
+
+          {/* dot overlay */}
+          <motion.svg
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            viewBox={`0 0 ${size} ${size}`}
+            preserveAspectRatio="xMidYMid slice"
+            style={{ opacity: dotOpacity } as React.CSSProperties}
+          >
+            <defs>
+              <pattern id="dots" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.2" fill="#B78E44" fillOpacity="0.18" />
+                <circle cx="8" cy="8" r="1" fill="#E9DCC0" fillOpacity="0.12" />
+              </pattern>
+              <radialGradient id="glass" cx="30%" cy="20%" r="70%">
+                <stop offset="0%" stopColor="#fff" stopOpacity="0.42" />
+                <stop offset="40%" stopColor="#fff" stopOpacity="0.1" />
+                <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+
+            <circle cx={size / 2} cy={size / 2} r={size / 2} fill="url(#dots)" />
+            <circle cx={size / 2} cy={size / 2} r={size / 2} fill="url(#glass)" style={{ mixBlendMode: "overlay" }} />
+          </motion.svg>
+
+          {/* simple particles */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute w-full h-full">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <span
+                  key={i}
+                  className="block absolute bg-gradient-to-br from-[#F6E9C6] to-[#EAD9B0] rounded-full opacity-60"
+                  style={{
+                    width: `${Math.random() * 6 + 2}px`,
+                    height: `${Math.random() * 6 + 2}px`,
+                    left: `${Math.random() * 90 + 5}%`,
+                    top: `${Math.random() * 90 + 5}%`,
+                    transform: "translate3d(0,0,0)",
+                    filter: `blur(${Math.random() * 1.6}px)`,
+                    animation: `float-${i} 6s ${Math.random() * 3}s infinite ease-in-out`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        <style>{`
+          @keyframes float-0 { 0% { transform: translateY(0) } 50% { transform: translateY(-6px) } 100% { transform: translateY(0) }}
+          @keyframes float-1 { 0% { transform: translateY(0) } 50% { transform: translateY(-8px) } 100% { transform: translateY(0) }}
+          @keyframes float-2 { 0% { transform: translateY(0) } 50% { transform: translateY(-5px) } 100% { transform: translateY(0) }}
+          @keyframes float-3 { 0% { transform: translateY(0) } 50% { transform: translateY(-7px) } 100% { transform: translateY(0) }}
+        `}</style>
+      </motion.div>
+    </Link>
   );
 }

@@ -1,109 +1,126 @@
-// src/components/ZenaParticleFace.tsx
-import React, { useMemo, useRef } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Points, PointMaterial, OrbitControls } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
+import { AdditiveBlending, Color, ShaderMaterial, Texture } from "three";
+import vertexShader from "@/shaders/zenaGoldenFace.vert.glsl?raw";
+import fragmentShader from "@/shaders/zenaGoldenFace.frag.glsl?raw";
 
-function ZenaParticles() {
-  const ref = useRef<THREE.Points>(null);
+type ParticleFieldProps = {
+  gridSize: number;
+  span: number;
+  positions: Float32Array;
+  opacity: number;
+};
 
-  // Nuage de particules écrasé pour rappeler un visage de face
-  const positions = useMemo(() => {
-    const count = 2500;
-    const arr = new Float32Array(count * 3);
+function useGridPositions(gridSize: number, span: number) {
+  return useMemo(() => {
+    const total = gridSize * gridSize;
+    const positions = new Float32Array(total * 3);
+    let ptr = 0;
 
-    for (let i = 0; i < count; i++) {
-      // coordonnées sphériques
-      const r = 1.25 + Math.random() * 0.35;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-
-      let x = r * Math.sin(phi) * Math.cos(theta);
-      let y = r * Math.cos(phi);
-      let z = r * Math.sin(phi) * Math.sin(theta);
-
-      // on "aplatit" pour rappeler un visage de face
-      x *= 0.65; // un peu plus étroit
-      y *= 1.15; // un peu plus haut
-      z *= 0.35; // peu de profondeur
-
-      // légère zone plus dense au centre (traits du visage)
-      const focus = Math.random();
-      if (focus > 0.7) {
-        x *= 0.5;
-        y *= 0.7;
+    for (let y = 0; y < gridSize; y += 1) {
+      for (let x = 0; x < gridSize; x += 1) {
+        const nx = x / (gridSize - 1);
+        const ny = y / (gridSize - 1);
+        positions[ptr++] = (nx - 0.5) * span;
+        positions[ptr++] = (0.5 - ny) * span;
+        positions[ptr++] = 0;
       }
-
-      arr[i * 3 + 0] = x;
-      arr[i * 3 + 1] = y;
-      arr[i * 3 + 2] = z;
     }
 
-    return arr;
-  }, []);
+    return positions;
+  }, [gridSize, span]);
+}
 
-  useFrame((state) => {
-    if (!ref.current) return;
-    const t = state.clock.getElapsedTime();
-    ref.current.rotation.y = Math.sin(t * 0.15) * 0.25;
-    ref.current.rotation.x = Math.cos(t * 0.12) * 0.1;
+function ParticleField({ gridSize, span, positions, opacity }: ParticleFieldProps) {
+  const texture = useTexture("/zena-face-golden.png") as Texture;
+  const materialRef = useRef<ShaderMaterial | null>(null);
+
+  useEffect(() => {
+    texture.flipY = false;
+    texture.needsUpdate = true;
+  }, [texture]);
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uPointSize: { value: 4.0 },
+      uGridScale: { value: span },
+      uFaceTexture: { value: texture },
+      uThreshold: { value: 0.18 },
+      uColorLight: { value: new Color("#ffe7b8") },
+      uColorDark: { value: new Color("#a96b1f") },
+      uOpacity: { value: opacity },
+    }),
+    [opacity, span, texture]
+  );
+
+  useFrame(({ clock }) => {
+    if (!materialRef.current) return;
+    materialRef.current.uniforms.uTime.value = clock.getElapsedTime();
+    materialRef.current.uniforms.uOpacity.value = opacity;
   });
 
   return (
-    <Points
-      ref={ref}
-      positions={positions}
-      stride={3}
-      frustumCulled
-      rotation={[0, 0, 0]}
-    >
-      <PointMaterial
+    <points frustumCulled={false}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" array={positions} itemSize={3} />
+      </bufferGeometry>
+      <shaderMaterial
+        ref={materialRef}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+        uniforms={uniforms}
         transparent
-        size={0.04}
-        sizeAttenuation
         depthWrite={false}
-        color="#F6D69C" // doré doux
+        blending={AdditiveBlending}
       />
-    </Points>
+    </points>
   );
 }
 
 export default function ZenaParticleFace() {
+  const gridSize = 220;
+  const span = 2.0;
+  const positions = useGridPositions(gridSize, span);
+
+  const [maskScale, setMaskScale] = useState(1);
+  const [shaderOpacity, setShaderOpacity] = useState(1);
+  const maskRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const maxScroll = 600;
+      const progress = Math.max(0, Math.min(1, window.scrollY / maxScroll));
+      setMaskScale(1 + progress * 0.4);
+      setShaderOpacity(1 - progress * 0.6);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const el = maskRef.current;
+    if (!el) return;
+    el.style.setProperty("--mask-scale", `${maskScale}`);
+    el.style.setProperty("--mask-opacity", `${shaderOpacity}`);
+  }, [maskScale, shaderOpacity]);
+
   return (
-    <div className="relative h-full w-full flex items-center justify-center">
-      {/* Halo doré derrière */}
-      <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_10%,#FFF7E3_0,#FDE3B1_28%,#E9C38A_55%,#C59BDC_85%,#00000000_100%)] blur-3xl opacity-90 pointer-events-none" />
-
-      {/* Disque principal (fond) */}
-      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#2A1E14] via-[#120F10] to-[#050308] shadow-[0_30px_90px_rgba(0,0,0,0.55)]" />
-
-      {/* Portrait doré en léger "soft light" */}
-      <img
-        src="/zena-face-golden.jpg"
-        alt="ZÉNA"
-        className="absolute inset-0 m-auto h-[78%] w-[78%] rounded-full object-cover opacity-90 mix-blend-soft-light"
-      />
-
-      {/* Scène 3D */}
+    <>
       <Canvas
-        camera={{ position: [0, 0, 3.4], fov: 45 }}
-        className="relative h-full w-full"
+        className="pointer-events-none zena-particle-canvas"
+        dpr={[1, 2]}
+        camera={{ position: [0, 0, 3], fov: 45, near: 0.1, far: 100 }}
+        gl={{ antialias: true, alpha: true }}
       >
-        <ambientLight intensity={0.8} />
-        <directionalLight position={[2, 3, 4]} intensity={1.1} color="#F9E5B6" />
-        <directionalLight position={[-3, -2, -4]} intensity={0.4} color="#C59BDC" />
-        <ZenaParticles />
-        {/* OrbitControls pour un léger mouvement au survol, désactivé au scroll */}
-        <OrbitControls
-          enableZoom={false}
-          enablePan={false}
-          autoRotate={false}
-          enableDamping
-          dampingFactor={0.08}
-        />
+        <Suspense fallback={null}>
+          <ParticleField gridSize={gridSize} span={span} positions={positions} opacity={shaderOpacity} />
+        </Suspense>
       </Canvas>
 
-      {/* Halo fin autour du disque */}
-      <div className="pointer-events-none absolute inset-[-10px] rounded-full border border-[#F6D69C]/50 shadow-[0_0_40px_rgba(245,218,165,0.8)]" />
-    </div>
+      <div ref={maskRef} className="zena-mask zena-mask-dynamic" />
+    </>
   );
 }

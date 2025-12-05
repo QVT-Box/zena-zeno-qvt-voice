@@ -1,13 +1,18 @@
 // src/pages/ZenaChatPage.tsx
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Mic, SendHorizonal, Volume2 } from "lucide-react";
+import { ArrowLeft, Mic, SendHorizonal, Volume2, Loader } from "lucide-react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import ZenaAvatar from "@/components/ZenaAvatar";
+import { useZenaVoice } from "@/hooks/useZenaVoice";
+import { useZenaZenoBrain } from "@/hooks/useZenaZenoBrain";
 
 type Message = {
   id: number;
   from: "user" | "zena";
   text: string;
+  emotion?: "positive" | "neutral" | "negative";
 };
 
 export default function ZenaChatPage() {
@@ -15,62 +20,48 @@ export default function ZenaChatPage() {
     {
       id: 1,
       from: "zena",
-      text: "Bonjour, je suis ZÉNA. Comment tu te sens vraiment aujourd’hui, entre 0 et 10 ?"
-    }
+      text: "Bonjour, je suis ZÉNA. Comment tu te sens vraiment aujourd'hui, entre 0 et 10 ?",
+      emotion: "neutral",
+    },
   ]);
   const [input, setInput] = useState("");
-  const [speaking, setSpeaking] = useState(false);
+  const [listeningTranscript, setListeningTranscript] = useState("");
   const nextId = useRef(2);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  // Voice hooks
+  const { isListening, isSpeaking, mouthLevel, startListening, stopListening, playText } = useZenaVoice({ autoStop: true });
+
+  const { emotion, isProcessing, handleUserMessage } = useZenaZenoBrain();
 
   // scroll auto en bas
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  function speak(text: string) {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = "fr-FR";
-    utter.rate = 1;
-    utter.pitch = 1.05;
-    setSpeaking(true);
-    utter.onend = () => setSpeaking(false);
-    window.speechSynthesis.speak(utter);
-  }
-
-  function addZenaReply(userText: string) {
-    // logique ultra simple, juste pour le test
-    let reply = "Merci de me le confier. On va poser ça ensemble.";
-    if (userText.match(/\b([0-3])\b/)) {
-      reply =
-        "Merci pour ta sincérité. Un niveau comme ça, c’est un vrai signal. On va ralentir, poser des mots et voir à qui tu peux en parler en confiance.";
-    } else if (userText.match(/\b(4|5|6)\b/)) {
-      reply =
-        "Je comprends, ce n’est ni catastrophique ni confortable. On va regarder ce qui pèse le plus aujourd’hui et ce qui pourrait t’alléger un peu.";
-    } else if (userText.match(/\b(7|8|9|10)\b/)) {
-      reply =
-        "C’est précieux de te sentir plutôt bien. On peut prendre un moment pour consolider ce qui va bien, pour que ça t’aide quand ce sera plus difficile.";
-    }
+  async function addZenaReply(userText: string) {
+    const response = await handleUserMessage(userText);
 
     const newMsg: Message = {
       id: nextId.current++,
       from: "zena",
-      text: reply
+      text: response || "Merci de me le confier. On va poser ça ensemble.",
+      emotion: emotion || "neutral",
     };
     setMessages((prev) => [...prev, newMsg]);
-    speak(reply);
+
+    await playText(newMsg.text);
   }
 
   function handleSend() {
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || isSpeaking || isProcessing) return;
 
     const userMsg: Message = {
       id: nextId.current++,
       from: "user",
-      text: trimmed
+      text: trimmed,
+      emotion: "neutral",
     };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
@@ -84,128 +75,183 @@ export default function ZenaChatPage() {
     }
   }
 
-  // reconnaissance vocale (si dispo)
-  function handleMic() {
-    if (typeof window === "undefined") return;
-    const AnyRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    if (!AnyRecognition) {
-      alert("La reconnaissance vocale n’est pas disponible sur ce navigateur.");
-      return;
+  function handleMicClick() {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening((transcript) => {
+        setListeningTranscript(transcript);
+        if (transcript) {
+          setInput(transcript);
+          setTimeout(() => {
+            const userMsg: Message = {
+              id: nextId.current++,
+              from: "user",
+              text: transcript,
+              emotion: "neutral",
+            };
+            setMessages((prev) => [...prev, userMsg]);
+            setInput("");
+            addZenaReply(transcript);
+          }, 300);
+        }
+      });
     }
-    const recognition = new AnyRecognition();
-    recognition.lang = "fr-FR";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.onresult = (event: any) => {
-      const text = event.results[0][0].transcript;
-      setInput(text);
-    };
-    recognition.start();
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F5E8D4] via-[#F6EBDD] to-[#E7D3B3] flex flex-col">
-      <header className="px-4 md:px-8 py-4 flex items-center gap-3">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-sm text-[#5D4A3B] hover:text-[#3d2b1f]"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Retour à l’accueil
+    <div className="min-h-screen bg-gradient-to-b from-[#FEF8EE] via-[#FBF0E2] to-[#F3E6D6] flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-40 flex items-center justify-between px-6 py-4 bg-white/60 backdrop-blur-md border-b border-white/20">
+        <Link to="/" className="flex items-center gap-2 text-[#24160E] hover:text-[#B78E44] transition">
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-semibold">Retour</span>
         </Link>
+        <h1 className="text-2xl font-semibold text-[#24160E]">ZÉNA</h1>
+        <div className="w-20" />
       </header>
 
-      <main className="flex-1 flex flex-col items-center px-4 pb-6">
-        <div className="w-full max-w-3xl bg-[#FFF7EA] shadow-[0_20px_60px_rgba(140,96,52,0.28)] rounded-[24px] px-4 py-5 md:px-6 md:py-6 flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden border border-[#f0d4ad]">
-              <img src="/zena-face.png" alt="ZÉNA" className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <p className="text-xs tracking-[0.22em] uppercase text-[#B49B7B]">
-                ZÉNA • espace d’échange
-              </p>
-              <p className="text-sm text-[#3f3023]">
-                Ici, on parle comme on est. Pas besoin de faire semblant.
-              </p>
-            </div>
+      {/* Main */}
+      <main className="flex-1 flex flex-col lg:flex-row gap-6 p-6">
+        {/* Left - Avatar and Voice Controls */}
+        <motion.div
+          className="lg:w-1/3 flex flex-col items-center justify-center gap-6"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Avatar */}
+          <div className="relative w-64 h-64 rounded-full overflow-hidden shadow-2xl">
+            <ZenaAvatar
+              emotion={emotion || "neutral"}
+              mouthLevel={mouthLevel}
+              isListening={isListening}
+              isSpeaking={isSpeaking}
+              gender="female"
+            />
           </div>
 
-          {/* zone messages */}
-          <div className="mt-2 flex-1 max-h-[380px] overflow-y-auto space-y-3 pr-1">
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`flex ${
-                  m.from === "user" ? "justify-end" : "justify-start"
-                }`}
+          {/* Voice Indicators */}
+          <div className="flex flex-col gap-3 items-center">
+            {isSpeaking && (
+              <motion.div
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-300/20 text-emerald-700 rounded-full text-sm"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
               >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                    m.from === "user"
-                      ? "bg-[#F0DEC4] text-[#3b2515] rounded-br-sm"
-                      : "bg-[#26221E] text-[#FDEBD0] rounded-bl-sm"
-                  }`}
+                <Volume2 className="w-4 h-4" />
+                <span>En train de parler...</span>
+              </motion.div>
+            )}
+            {isListening && (
+              <motion.div
+                className="flex items-center gap-2 px-4 py-2 bg-blue-300/20 text-blue-700 rounded-full text-sm"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 0.8, repeat: Infinity }}
+              >
+                <Mic className="w-4 h-4" />
+                <span>En écoute...</span>
+              </motion.div>
+            )}
+            {listeningTranscript && (
+              <p className="text-sm text-[#927A5C] italic max-w-xs text-center">{listeningTranscript}</p>
+            )}
+          </div>
+
+          {/* Emotion display */}
+          {emotion && (
+            <div className="text-center">
+              <p className="text-sm text-[#927A5C]">État émotionnel</p>
+              <p className="text-lg font-semibold text-[#B78E44] capitalize">{emotion}</p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Right - Chat Messages */}
+        <motion.div
+          className="lg:w-2/3 flex flex-col bg-white/40 backdrop-blur-md rounded-3xl border border-white/20 overflow-hidden"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <AnimatePresence>
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  {m.text}
+                  <div
+                    className={`max-w-xs md:max-w-md px-4 py-3 rounded-2xl ${
+                      msg.from === "user"
+                        ? "bg-[#20130C] text-white"
+                        : msg.emotion === "positive"
+                        ? "bg-emerald-100 text-emerald-900"
+                        : msg.emotion === "negative"
+                        ? "bg-rose-100 text-rose-900"
+                        : "bg-[#F3E6D6] text-[#24160E]"
+                    }`}
+                  >
+                    <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {isProcessing && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
+                <div className="bg-[#F3E6D6] text-[#24160E] px-4 py-3 rounded-2xl">
+                  <div className="flex items-center gap-2">
+                    <Loader className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">ZÉNA réfléchit...</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              </motion.div>
+            )}
+
             <div ref={bottomRef} />
           </div>
 
-          {/* zone input */}
-          <div className="mt-3 border-t border-[#E4D2B8] pt-3 flex flex-col gap-2">
-            <div className="flex items-center justify-between text-[0.8rem] text-[#7a6753]">
-              <span>
-                Tu peux écrire, ou dicter avec le micro. ZÉNA te répond à voix haute.
-              </span>
+          {/* Input Area */}
+          <div className="border-t border-white/20 p-4 bg-white/20 backdrop-blur-sm">
+            <div className="flex gap-3">
               <button
-                type="button"
-                onClick={() => {
-                  const lastZena = [...messages].reverse().find((m) => m.from === "zena");
-                  if (lastZena) speak(lastZena.text);
-                }}
-                className="hidden md:inline-flex items-center gap-1 text-[#7a5a34] hover:text-[#503519]"
+                onClick={handleMicClick}
+                disabled={isSpeaking || isProcessing}
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition ${
+                  isListening ? "bg-blue-500 text-white" : "bg-white/60 text-[#24160E] hover:bg-white/80 disabled:opacity-50"
+                }`}
+                aria-label={isListening ? "Arrêter l'écoute" : "Démarrer l'écoute"}
               >
-                <Volume2 className="w-4 h-4" />
-                Réécouter ZÉNA
+                <Mic className="w-5 h-5" />
               </button>
-            </div>
 
-            <div className="flex items-end gap-2">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                rows={2}
-                placeholder="Dis-lui par exemple : « Honnêtement, je suis à 4 sur 10, je suis épuisé.e. »"
-                className="flex-1 resize-none rounded-2xl border border-[#E1CCAE] bg-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E6A44B]/60 focus:border-transparent"
+                disabled={isSpeaking || isProcessing}
+                placeholder="Dis-moi ce qui te préoccupe..."
+                className="flex-1 px-4 py-2 bg-white/80 rounded-full text-[#24160E] placeholder-[#927A5C] border-0 focus:outline-none focus:ring-2 focus:ring-[#B78E44] resize-none disabled:opacity-50"
+                rows={1}
               />
+
               <button
-                type="button"
-                onClick={handleMic}
-                className="inline-flex items-center justify-center rounded-full w-9 h-9 bg-[#F6EEE1] text-[#7c5832] hover:bg-[#f1e0c4] transition"
-              >
-                <Mic className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
                 onClick={handleSend}
-                className="inline-flex items-center justify-center rounded-full w-10 h-10 bg-[#E6A44B] text-[#1F1307] shadow-md hover:bg-[#d8953b] transition"
+                disabled={!input.trim() || isSpeaking || isProcessing}
+                className="flex-shrink-0 w-12 h-12 rounded-full bg-[#20130C] text-white flex items-center justify-center hover:brightness-110 transition disabled:opacity-50"
+                aria-label="Envoyer le message"
               >
-                <SendHorizonal className="w-4 h-4" />
+                <SendHorizonal className="w-5 h-5" />
               </button>
             </div>
-
-            {speaking && (
-              <p className="text-[0.75rem] text-[#7a6753] flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#E6A44B] animate-ping" />
-                ZÉNA parle…
-              </p>
-            )}
           </div>
-        </div>
+        </motion.div>
       </main>
     </div>
   );

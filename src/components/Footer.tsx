@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-[#F5D091]">QVT Box</h3>
             <p className="text-sm text-[#FDF3E0]/80 leading-relaxed">
-              ZÉNA est l'IA émotionnelle qui veille sur vos équipes, détecte les signaux faibles et prévient le burn-out.
+              ZÉNA est l&apos;IA émotionnelle qui veille sur vos équipes, détecte les signaux faibles et prévient le burn-out.
             </p>
           </div>
 
@@ -24,7 +24,7 @@ export default function Footer() {
               </li>
               <li>
                 <a href="https://zena-family.qvtbox.com" className="text-[#FDF3E0]/80 hover:text-[#F5D091] transition-colors">
-                  ZÉNA Famille & Ados
+                  ZÉNA Famille &amp; Ados
                 </a>
               </li>
               <li>

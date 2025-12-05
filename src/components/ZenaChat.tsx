@@ -3,6 +3,7 @@ import { Mic, Volume2, Send } from "lucide-react";
 import ZenaFaceParticles from "@/components/ZenaFaceParticles";
 
 export default function ZenaChat() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
 

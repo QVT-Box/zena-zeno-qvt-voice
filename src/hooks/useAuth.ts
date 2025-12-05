@@ -97,6 +97,7 @@ export const useAuth = () => {
 
       return { error: null };
     } catch (error: any) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       console.error("Erreur signup:", error);
       toast.error(error.message || "Erreur lors de l'inscription");
       return { error };
@@ -120,6 +121,7 @@ export const useAuth = () => {
 
       return { error: null };
     } catch (error: any) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (error.message?.includes("Invalid login credentials")) {
         toast.error("Email ou mot de passe incorrect");
       } else {
@@ -139,6 +141,7 @@ export const useAuth = () => {
       navigate("/auth");
       return { error: null };
     } catch (error: any) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       toast.error(error.message || "Erreur lors de la déconnexion");
       return { error };
     }
@@ -176,8 +179,9 @@ export const useAuth = () => {
       });
       return anonId;
     } catch (error: any) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       console.error("Erreur connexion anonyme:", error);
-      toast.error("Impossible d’activer le mode anonyme");
+      toast.error("Impossible d'activer le mode anonyme");
       return null;
     }
   };

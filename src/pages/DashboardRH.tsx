@@ -16,12 +16,14 @@ import { RiskAlerts } from "@/components/dashboard/RiskAlerts";
 import { EmotionalHeatmap } from "@/components/dashboard/EmotionalHeatmap";
 import MagicAmbiance from "@/components/MagicAmbiance";
 
+type AlertRecommendation = string[] | string | null;
+
 interface HRAlert {
   id: string;
   alert_level: string;
   alert_type: string;
   anonymous_count: number;
-  recommendations: any;
+  recommendations: AlertRecommendation;
   acknowledged: boolean;
   created_at: string;
   resolved: boolean;
@@ -299,7 +301,7 @@ export default function DashboardRH() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge variant={getAlertLevelColor(alert.alert_level) as any}>
+                          <Badge variant={getAlertLevelColor(alert.alert_level)}>
                             {alert.alert_level.toUpperCase()}
                           </Badge>
                           <AlertTitle className="mt-0">
@@ -315,12 +317,11 @@ export default function DashboardRH() {
                               <div className="bg-muted/50 p-3 rounded-md">
                                 <p className="text-sm font-medium mb-1">Recommandations :</p>
                                 <ul className="text-sm space-y-1 list-disc list-inside">
-                                  {Array.isArray(alert.recommendations) 
-                                    ? alert.recommendations.map((rec: string, i: number) => (
-                                        <li key={i}>{rec}</li>
-                                      ))
-                                    : <li>{alert.recommendations}</li>
-                                  }
+                                  {Array.isArray(alert.recommendations) ? (
+                                    alert.recommendations.map((rec: string, index: number) => <li key={index}>{rec}</li>)
+                                  ) : (
+                                    <li>{alert.recommendations}</li>
+                                  )}
                                 </ul>
                               </div>
                             )}

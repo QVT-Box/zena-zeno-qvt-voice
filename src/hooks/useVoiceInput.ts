@@ -51,6 +51,7 @@ export function useVoiceInput({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
       onErrorRef.current?.("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
@@ -62,6 +63,7 @@ export function useVoiceInput({
     recognition.continuous = !!optionsRef.current.continuous;
     recognition.interimResults = !!optionsRef.current.interimResults;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
       const lastResult = event.results[event.resultIndex];
       const text = lastResult[0]?.transcript?.trim?.() ?? "";
@@ -80,6 +82,7 @@ export function useVoiceInput({
       }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onerror = (event: any) => {
       const code = event?.error || "speech_error";
       startingRef.current = false;
@@ -113,7 +116,11 @@ export function useVoiceInput({
 
     recognitionRef.current = recognition;
     return () => {
-      try { recognition.stop(); } catch {}
+      try { 
+        recognition.stop(); 
+      } catch {
+        // noop
+      }
       recognitionRef.current = null;
     };
     // IMPORTANT: ne pas dépendre de detectedLang/onResult/onError pour éviter re-instanciation
@@ -136,7 +143,9 @@ export function useVoiceInput({
     try {
       rec.stop();
       await new Promise(r => setTimeout(r, 300)); // Attendre la fin propre
-    } catch {}
+    } catch (e) {
+      // noop
+    }
 
     manualStopRef.current = false;
 

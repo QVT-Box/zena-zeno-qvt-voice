@@ -32,7 +32,9 @@ export function stopSpeaking() {
       currentAudio.src = "";
       currentAudio = null;
     }
-  } catch {}
+  } catch {
+    // noop
+  }
   if (tickTimer) {
     window.clearInterval(tickTimer);
     tickTimer = null;

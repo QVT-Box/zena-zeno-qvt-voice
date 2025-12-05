@@ -10,7 +10,9 @@ type Message = {
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     webkitSpeechRecognition?: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     SpeechRecognition?: any;
   }
 }
@@ -53,6 +55,7 @@ export default function ZenaChatDock() {
   ]);
   const [input, setInput] = useState("");
   const [isListening, setIsListening] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recognition, setRecognition] = useState<any | null>(null);
 
   // Initialise la reconnaissance vocale si dispo
@@ -69,8 +72,9 @@ export default function ZenaChatDock() {
     rec.continuous = false;
     rec.interimResults = false;
 
-    rec.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
+    rec.onresult = (event: unknown) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const transcript = (event as any).results[0][0].transcript;
       setInput((prev) => (prev ? prev + " " + transcript : transcript));
     };
 

@@ -1,24 +1,30 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 
-/**
- *  Onboarding ZÉNA
- * Guidé par les facteurs scientifiques du bien-être :
- * - santé perçue
- * - relations sociales
- * - sommeil
- * - stress
- * - environnement
- * - sens / objectifs
- */
+type QuestionKey = "situation" | "energie" | "sommeil" | "stress" | "soutien" | "environnement" | "objectif";
+
+type ProfileAnswers = Record<QuestionKey, string>;
+
+const questions: { key: QuestionKey; title: string; options: string[] }[] = [
+  { key: "situation", title: "Peux-tu me dire un peu qui tu es ?", options: ["Célibataire", "En couple", "Parent", "Autre"] },
+  { key: "energie", title: " Ton niveau d’énergie en ce moment ?", options: ["Élevé", "Moyen", "Fatigué"] },
+  { key: "sommeil", title: " Comment dors-tu ces derniers temps ?", options: ["Très bien", "Moyennement", "Mal"] },
+  { key: "stress", title: " Ton niveau de stress au quotidien ?", options: ["Faible", "Moyen", "Élevé"] },
+  { key: "soutien", title: " Te sens-tu soutenu(e) par ton entourage ?", options: ["Oui, beaucoup", "Un peu", "Pas vraiment"] },
+  { key: "environnement", title: " Ton cadre de vie t’aide-t-il à te ressourcer ?", options: ["Oui", "Partiellement", "Non"] },
+  {
+    key: "objectif",
+    title: " Que souhaites-tu le plus avec ZÉNA ?",
+    options: ["Retrouver de la sérénité", "Gérer mon stress", "Mieux dormir", "Me motiver"],
+  },
+];
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-
-  const [answers, setAnswers] = useState({
+  const [answers, setAnswers] = useState<ProfileAnswers>({
     situation: "",
     energie: "",
     sommeil: "",
@@ -28,71 +34,25 @@ export default function Onboarding() {
     objectif: "",
   });
 
-  const questions = [
-    {
-      key: "situation",
-      title: "Peux-tu me dire un peu qui tu es ?",
-      options: ["Célibataire", "En couple", "Parent", "Autre"],
-    },
-    {
-      key: "energie",
-      title: " Ton niveau d’énergie en ce moment ?",
-      options: ["Élevé", "Moyen", "Fatigué"],
-    },
-    {
-      key: "sommeil",
-      title: " Comment dors-tu ces derniers temps ?",
-      options: ["Très bien", "Moyennement", "Mal"],
-    },
-    {
-      key: "stress",
-      title: " Ton niveau de stress au quotidien ?",
-      options: ["Faible", "Moyen", "Élevé"],
-    },
-    {
-      key: "soutien",
-      title: " Te sens-tu soutenu(e) par ton entourage ?",
-      options: ["Oui, beaucoup", "Un peu", "Pas vraiment"],
-    },
-    {
-      key: "environnement",
-      title: " Ton cadre de vie t’aide-t-il à te ressourcer ?",
-      options: ["Oui", "Partiellement", "Non"],
-    },
-    {
-      key: "objectif",
-      title: " Que souhaites-tu le plus avec ZÉNA ?",
-      options: [
-        "Retrouver de la sérénité",
-        "Gérer mon stress",
-        "Mieux dormir",
-        "Me motiver",
-      ],
-    },
-  ];
-
   const handleSelect = async (value: string) => {
-    const currentKey = questions[step].key as keyof typeof answers;
-    setAnswers({ ...answers, [currentKey]: value });
+    const currentKey = questions[step].key;
+    const updatedAnswers = { ...answers, [currentKey]: value };
+    setAnswers(updatedAnswers);
 
     if (step < questions.length - 1) {
       setStep(step + 1);
     } else {
-      // ✅ Dernière question : sauvegarde du profil
-      await saveProfile({ ...answers, [currentKey]: value });
+      await saveProfile(updatedAnswers);
     }
   };
 
-  const saveProfile = async (profile: any) => {
+  const saveProfile = async (profile: ProfileAnswers) => {
     setLoading(true);
     try {
-      // Sauvegarde locale
       localStorage.setItem("zena_profile", JSON.stringify(profile));
-
-      // Redirection
       navigate("/zena-chat");
-    } catch (err) {
-      console.error("❌ Erreur onboarding :", err);
+    } catch (error) {
+      console.error("Erreur onboarding :", error);
     } finally {
       setLoading(false);
     }
@@ -109,9 +69,7 @@ export default function Onboarding() {
         transition={{ duration: 0.5 }}
         className="max-w-md bg-white/70 rounded-3xl p-8 shadow-lg backdrop-blur-sm"
       >
-        <h1 className="text-2xl font-semibold text-[#5B4B8A] mb-6">
-          {current.title}
-        </h1>
+        <h1 className="text-2xl font-semibold text-[#5B4B8A] mb-6">{current.title}</h1>
 
         <div className="grid grid-cols-1 gap-3">
           {current.options.map((opt) => (
@@ -132,9 +90,7 @@ export default function Onboarding() {
         </p>
       </motion.div>
 
-      {loading && (
-        <p className="mt-4 text-[#5B4B8A] text-sm"> Création de ton profil...</p>
-      )}
+      {loading && <p className="mt-4 text-[#5B4B8A] text-sm"> Création de ton profil...</p>}
     </div>
   );
 }

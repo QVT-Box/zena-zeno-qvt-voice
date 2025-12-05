@@ -4,9 +4,9 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 
-// --- Point d’entrée principal ---
+// --- Point d'entree principal ---
 const container = document.getElementById("root");
-if (!container) throw new Error("❌ Élément #root introuvable dans index.html");
+if (!container) throw new Error("Element #root introuvable dans index.html");
 
 const root = createRoot(container);
 
@@ -19,25 +19,41 @@ root.render(
   </React.StrictMode>
 );
 
-// --- Enregistrement du Service Worker (PWA) ---
+// --- Service Worker ---
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
+  if (import.meta.env.MODE === "production") {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/service-worker.js", { scope: "/" })
+        .then((registration) => {
+          console.log("Service Worker enregistre :", registration.scope);
+        })
+        .catch((error) => {
+          console.error("Erreur d'enregistrement du SW :", error);
+        });
+    });
+  } else {
     navigator.serviceWorker
-      .register("/service-worker.js", { scope: "/" })
-      .then((registration) => {
-        console.log("✅ Service Worker enregistré :", registration.scope);
-      })
-      .catch((error) => {
-        console.error("❌ Erreur d’enregistrement du SW :", error);
-      });
-  });
+      .getRegistrations()
+      .then((registrations) => registrations.forEach((registration) => registration.unregister()))
+      .catch(() => {});
+
+    navigator.serviceWorker
+      .getRegistration()
+      .then((registration) => registration?.unregister())
+      .catch(() => {});
+
+    navigator.serviceWorker.ready
+      .then((registration) => registration.unregister())
+      .catch(() => {});
+  }
 }
 
 // --- Gestion des erreurs globales ---
 window.addEventListener("error", (event) => {
-  console.error("💥 Erreur globale détectée :", event.message);
+  console.error("Erreur globale detectee :", event.message);
 });
 
 window.addEventListener("unhandledrejection", (event) => {
-  console.error("🚨 Promesse non gérée :", event.reason);
+  console.error("Promesse non geree :", event.reason);
 });

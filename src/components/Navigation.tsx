@@ -9,16 +9,14 @@ export default function Navigation() {
   const [openMobile, setOpenMobile] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
+    const onScroll = () => setScrolled(window.scrollY > 10);
     onScroll();
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
-    // on change de page → on referme le menu mobile
+    // On change de page, on referme le menu mobile
     setOpenMobile(false);
   }, [location.pathname]);
 
@@ -37,18 +35,12 @@ export default function Navigation() {
         {/* Logo + marque */}
         <Link to="/" className="flex items-center gap-2 group">
           <div className="relative h-9 w-9 rounded-full bg-gradient-to-br from-[#F6D38D] via-[#FBE6B5] to-[#E4C28F] shadow-md flex items-center justify-center overflow-hidden">
-            <span className="text-[11px] font-semibold tracking-[0.16em] text-[#3A2617]">
-              Z
-            </span>
+            <span className="text-[11px] font-semibold tracking-[0.16em] text-[#3A2617]">Z</span>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(255,255,255,0.9),transparent_55%)] opacity-80" />
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-[11px] uppercase tracking-[0.18em] text-[#8C7B61]">
-              QVT BOX
-            </span>
-            <span className="text-sm font-medium text-[#221814]">
-              ZÉNA · IA émotionnelle
-            </span>
+            <span className="text-[11px] uppercase tracking-[0.18em] text-[#8C7B61]">QVT BOX</span>
+            <span className="text-sm font-medium text-[#221814]">ZÉNA · IA émotionnelle</span>
           </div>
         </Link>
 
@@ -57,10 +49,7 @@ export default function Navigation() {
           <Link to="/zena-chat" className={isActive("/zena-chat")}>
             Conversation ZÉNA
           </Link>
-          <Link
-            to="/onboarding-company"
-            className={isActive("/onboarding-company")}
-          >
+          <Link to="/onboarding-company" className={isActive("/onboarding-company")}>
             Espace RH
           </Link>
           <a
@@ -112,10 +101,10 @@ export default function Navigation() {
         <div className="fixed top-0 left-0 right-0 pt-20 px-4 pb-6 z-30 md:hidden">
           <div className="mx-auto w-full max-w-5xl rounded-3xl bg-[rgba(15,10,6,0.86)] backdrop-blur-2xl border border-white/10 shadow-[0_28px_80px_rgba(0,0,0,0.65)] p-5 space-y-4 text-sm text-[#FDF2DE]">
             <Link to="/zena-chat" className="block py-1">
-              💬 Conversation ZÉNA
+              Conversation ZÉNA
             </Link>
             <Link to="/onboarding-company" className="block py-1">
-              🏢 Créer mon espace RH
+              Créer mon espace RH
             </Link>
             <a
               href="https://qvtbox.com"
@@ -123,7 +112,7 @@ export default function Navigation() {
               rel="noreferrer"
               className="block py-1"
             >
-              🌐 Voir QVT Box
+              Voir QVT Box
             </a>
             <hr className="border-white/10 my-2" />
             <Link
