@@ -122,6 +122,7 @@ export function useZenaVoice({
   return {
     // actions
     say,
+    playText: say, // backward compatibility
     listen,
     stopListening,
 

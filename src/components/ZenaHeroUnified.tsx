@@ -19,6 +19,7 @@ export default function ZenaHeroUnified() {
     if (!imageEl || !heroEl) return;
 
     let rafId = 0;
+    const isMobile = window.innerWidth < 768;
     const state = {
       progress: 0,
       target: 0,
@@ -28,7 +29,8 @@ export default function ZenaHeroUnified() {
       tiltY: 0,
     };
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const maxScroll = 600;
+    let scrollRange = Math.max(900, window.innerHeight * 1.6);
+    const smoothing = prefersReducedMotion ? 0.18 : 0.12;
 
     const applyTransforms = () => {
       const rect = targetRef.current?.getBoundingClientRect();
@@ -37,9 +39,10 @@ export default function ZenaHeroUnified() {
       const targetX = rect ? rect.left + rect.width / 2 - viewportX : 0;
       const targetY = rect ? rect.top + rect.height / 2 - viewportY : 180;
 
-      const scale = lerp(1.35, 0.18, state.progress);
+      const scale = lerp(1.3, 0.2, state.progress);
       const translateX = lerp(0, targetX, state.progress) + (prefersReducedMotion ? 0 : state.parallaxX);
-      const translateY = lerp(0, targetY, state.progress) + (prefersReducedMotion ? 0 : state.parallaxY);
+      const liftY = lerp(0, -120, state.progress);
+      const translateY = lerp(0, targetY, state.progress) + liftY + (prefersReducedMotion ? 0 : state.parallaxY);
       const translateZ = lerp(0, -560, state.progress);
       // Keep a tiny opacity so the image stays crisp until hidden
       const opacity = lerp(1, 0.02, state.progress);
@@ -50,7 +53,7 @@ export default function ZenaHeroUnified() {
       imageEl.style.transform = `translate3d(-50%, -50%, 0) translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(${scale}) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
       imageEl.style.opacity = opacity.toFixed(3);
       imageEl.style.borderRadius = `${radius}px`;
-      const fullyHidden = state.progress >= 0.98;
+      const fullyHidden = state.progress >= (isMobile ? 1.25 : 1.12);
       if (fullyHidden) {
         imageEl.style.opacity = "0";
         imageEl.style.visibility = "hidden";
@@ -68,14 +71,14 @@ export default function ZenaHeroUnified() {
       }
 
       // Keep the hero layout visible (circle + content) while the panorama fades away
-      const heroHeight = lerp(110, 70, clamp(state.progress, 0, 1));
+      const heroHeight = lerp(110, isMobile ? 95 : 85, clamp(state.progress, 0, 1));
       heroEl.style.height = `${heroHeight}vh`;
       heroEl.style.minHeight = `${heroHeight}vh`;
 
       const contentEl = contentRef.current;
       if (contentEl) {
-        const contentOpacity = clamp((state.progress - 0.25) / 0.25, 0, 1);
-        const contentTranslate = 18 * (1 - contentOpacity);
+        const contentOpacity = clamp((state.progress - 0.18) / 0.24, 0, 1);
+        const contentTranslate = 26 * (1 - contentOpacity);
         contentEl.style.opacity = contentOpacity.toFixed(3);
         contentEl.style.transform = `translate3d(0, ${contentTranslate}px, 0)`;
         contentEl.style.pointerEvents = contentOpacity > 0.1 ? "auto" : "none";
@@ -83,7 +86,7 @@ export default function ZenaHeroUnified() {
     };
 
     const tick = () => {
-      const eased = lerp(state.progress, state.target, 0.12);
+      const eased = lerp(state.progress, state.target, smoothing);
       const delta = Math.abs(eased - state.progress);
       state.progress = eased;
       applyTransforms();
@@ -95,7 +98,8 @@ export default function ZenaHeroUnified() {
     };
 
     const onScroll = () => {
-      state.target = clamp(window.scrollY / maxScroll, 0, 1);
+      state.target = clamp(window.scrollY / scrollRange, 0, 1);
+      scrollRange = Math.max(720, window.innerHeight * 1.25);
       if (!rafId) rafId = requestAnimationFrame(tick);
     };
 
@@ -164,28 +168,29 @@ export default function ZenaHeroUnified() {
           <div className="zena-hero-vignette pointer-events-none" />
           <div
             ref={glowRef}
-            className="pointer-events-none absolute inset-0"
+            className="pointer-events-none absolute inset-0 zena-hero-glow"
             style={{
-              background: "radial-gradient(circle at var(--glow-x,50%) var(--glow-y,50%), rgba(255, 227, 170, 0.16), transparent 38%)",
-              mixBlendMode: "screen",
+              background: "radial-gradient(circle at var(--glow-x,50%) var(--glow-y,50%), rgba(255, 227, 170, 0.18), transparent 42%)",
+              mixBlendMode: "soft-light",
               transition: "background-position 0.12s ease",
             }}
           />
+          <div className="pointer-events-none absolute inset-0 zena-hero-particles" aria-hidden />
         </div>
       </div>
 
-      <div ref={contentRef} className="relative z-10 max-w-6xl mx-auto px-6 pt-48 pb-24 lg:pt-64 lg:pb-28 grid lg:grid-cols-2 gap-12 items-center">
+      <div ref={contentRef} className="relative z-10 max-w-6xl mx-auto px-6 pt-40 pb-20 md:pt-44 md:pb-22 lg:pt-64 lg:pb-28 grid lg:grid-cols-2 gap-12 items-center">
         <motion.div
-          className="space-y-6"
+          className="space-y-6 text-shadow-soft"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.05 }}
         >
-          <p className="text-xs uppercase tracking-[0.24em] text-[#d9c29a]">ZENA - voix doree</p>
-          <h1 className="text-4xl md:text-5xl font-semibold leading-tight text-[#f8efe4] drop-shadow-sm">
+          <p className="text-xs uppercase tracking-[0.24em] text-[#f1dcb6] drop-shadow-[0_1px_6px_rgba(0,0,0,0.32)]">ZENA - voix doree</p>
+          <h1 className="text-4xl md:text-5xl font-semibold leading-tight text-[#fff3df] drop-shadow-[0_2px_12px_rgba(0,0,0,0.38)]">
             ZENA - votre agent emotionnel
           </h1>
-          <p className="text-lg text-[#e4d4be] leading-relaxed max-w-xl">
+          <p className="text-lg text-[#f0e3cf] leading-relaxed max-w-xl drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)]">
             Elle ecoute, protege et eclaire votre quotidien. Un visage de particules dorees qui se revele a votre approche,
             une presence chaleureuse qui guide vos choix QVT en douceur.
           </p>

@@ -28,9 +28,9 @@ export default function Index() {
       <main className="flex-1 relative">
         <ZenaHeroUnified />
 
-        <section className="relative z-10 max-w-6xl mx-auto px-6 pb-14 pt-6 lg:pt-8">
+        <section className="relative z-10 max-w-6xl mx-auto px-4 pb-8 pt-3 md:px-5 md:pb-10 md:pt-5 lg:pt-8">
           <motion.h2
-            className="text-center text-2xl font-semibold text-[#f4e6d3] mb-6"
+            className="text-center text-xl md:text-2xl font-semibold text-[#f4e6d3] mb-4 md:mb-5"
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -38,18 +38,18 @@ export default function Index() {
           >
             Comment elle agit
           </motion.h2>
-          <div className="grid gap-4 md:grid-cols-3 bg-[radial-gradient(circle_at_50%_0%,rgba(255,234,200,0.08),transparent_65%)] p-4 rounded-2xl border border-white/5">
+          <div className="grid gap-2.5 md:gap-4 md:grid-cols-3 bg-[radial-gradient(circle_at_50%_0%,rgba(255,234,200,0.08),transparent_65%)] p-3 md:p-4 rounded-2xl border border-white/5">
             {cards.map((card, idx) => (
               <motion.article
                 key={card.title}
-                className="rounded-2xl bg-[#120d0a]/60 border border-white/10 backdrop-blur-md p-4 shadow-[0_12px_40px_rgba(0,0,0,0.25)]"
+                className="rounded-2xl bg-[#120d0a]/72 border border-white/15 backdrop-blur-md p-3 md:p-4 shadow-[0_12px_40px_rgba(0,0,0,0.25)]"
                 initial={{ opacity: 0, y: 14 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.05 * idx }}
               >
-                <h3 className="text-lg font-semibold text-[#f1d6a0] mb-2">{card.title}</h3>
-                <p className="text-sm text-[#d8c6ae] leading-relaxed">{card.text}</p>
+                <h3 className="text-base md:text-lg font-semibold text-[#f7e1b8] drop-shadow-sm mb-1.5">{card.title}</h3>
+                <p className="text-[13px] md:text-sm text-[#e4d4be] leading-relaxed">{card.text}</p>
               </motion.article>
             ))}
           </div>

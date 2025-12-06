@@ -1,6 +1,6 @@
 // src/pages/ZenaChatPage.tsx
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { ArrowLeft, Mic, SendHorizonal, Volume2, Loader } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,8 +29,29 @@ export default function ZenaChatPage() {
   const nextId = useRef(2);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
+  const handleFinalResult = useCallback(
+    (transcript: string) => {
+      setListeningTranscript(transcript);
+      if (transcript) {
+        setInput(transcript);
+        setTimeout(() => {
+          const userMsg: Message = {
+            id: nextId.current++,
+            from: "user",
+            text: transcript,
+            emotion: "neutral",
+          };
+          setMessages((prev) => [...prev, userMsg]);
+          setInput("");
+          addZenaReply(transcript);
+        }, 300);
+      }
+    },
+    [] // nextId is ref, addZenaReply defined below via hoisting
+  );
+
   // Voice hooks
-  const { isListening, isSpeaking, mouthLevel, startListening, stopListening, playText } = useZenaVoice({ autoStop: true });
+  const { isListening, isSpeaking, audioLevel, listen, stopListening, say } = useZenaVoice({ onFinalResult: handleFinalResult });
 
   const { emotion, isProcessing, handleUserMessage } = useZenaZenoBrain();
 
@@ -50,7 +71,7 @@ export default function ZenaChatPage() {
     };
     setMessages((prev) => [...prev, newMsg]);
 
-    await playText(newMsg.text);
+    say(newMsg.text);
   }
 
   function handleSend() {
@@ -79,23 +100,7 @@ export default function ZenaChatPage() {
     if (isListening) {
       stopListening();
     } else {
-      startListening((transcript) => {
-        setListeningTranscript(transcript);
-        if (transcript) {
-          setInput(transcript);
-          setTimeout(() => {
-            const userMsg: Message = {
-              id: nextId.current++,
-              from: "user",
-              text: transcript,
-              emotion: "neutral",
-            };
-            setMessages((prev) => [...prev, userMsg]);
-            setInput("");
-            addZenaReply(transcript);
-          }, 300);
-        }
-      });
+      listen();
     }
   }
 
@@ -122,13 +127,13 @@ export default function ZenaChatPage() {
         >
           {/* Avatar */}
           <div className="relative w-64 h-64 rounded-full overflow-hidden shadow-2xl">
-            <ZenaAvatar
-              emotion={emotion || "neutral"}
-              mouthLevel={mouthLevel}
-              isListening={isListening}
-              isSpeaking={isSpeaking}
-              gender="female"
-            />
+              <ZenaAvatar
+                emotion={emotion || "neutral"}
+                mouthLevel={audioLevel}
+                isListening={isListening}
+                isSpeaking={isSpeaking}
+                gender="female"
+              />
           </div>
 
           {/* Voice Indicators */}

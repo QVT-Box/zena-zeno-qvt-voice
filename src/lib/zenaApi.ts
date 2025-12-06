@@ -11,6 +11,19 @@ export interface ZenaAIResponse {
   emotion: string;
 }
 
+/**
+ * Exemple d'appel API unifie : emotional-checkin
+ * Stocke texte + scores et renvoie analyse/recos
+ */
+export async function emotionalCheckIn(profileId: string, text: string, scores: Record<string, number>) {
+  const { data, error } = await supabase.functions.invoke("emotional-checkin", {
+    body: { profile_id: profileId, text, scores },
+  });
+
+  if (error) throw error;
+  return data;
+}
+
 const TENANT_ID = import.meta.env.VITE_TENANT_ID || null;
 
 /**

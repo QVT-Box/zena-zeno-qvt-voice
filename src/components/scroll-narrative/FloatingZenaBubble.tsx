@@ -16,14 +16,14 @@ function ZenaSphere() {
   useFrame((state) => {
     if (!meshRef.current) return;
     const t = state.clock.getElapsedTime();
-    
+
     // Breathing animation
     const breathe = 1 + Math.sin(t * 0.8) * 0.05;
     meshRef.current.scale.set(breathe, breathe, breathe);
-    
+
     // Gentle rotation
     meshRef.current.rotation.y = t * 0.2;
-    
+
     // Pulsing light
     if (lightRef.current) {
       lightRef.current.intensity = 1 + Math.sin(t * 2) * 0.3;
@@ -35,13 +35,7 @@ function ZenaSphere() {
       <pointLight ref={lightRef} position={[0, 0, 0]} intensity={1} color="#F5D091" />
       <mesh ref={meshRef}>
         <sphereGeometry args={[1, 64, 64]} />
-        <meshStandardMaterial
-          color="#F5D091"
-          emissive="#C89A53"
-          emissiveIntensity={0.4}
-          roughness={0.2}
-          metalness={0.8}
-        />
+        <meshStandardMaterial color="#F5D091" emissive="#C89A53" emissiveIntensity={0.4} roughness={0.2} metalness={0.8} />
       </mesh>
     </>
   );
@@ -61,7 +55,7 @@ function OrbitalParticles() {
     const radius = 1.8;
     const x = Math.cos(angle) * radius;
     const z = Math.sin(angle) * radius;
-    
+
     particles.push(
       <mesh key={i} position={[x, 0, z]}>
         <sphereGeometry args={[0.08, 16, 16]} />
@@ -73,11 +67,7 @@ function OrbitalParticles() {
   return <group ref={groupRef}>{particles}</group>;
 }
 
-export default function FloatingZenaBubble({
-  currentSection,
-  scrollProgress,
-  onClick,
-}: FloatingZenaBubbleProps) {
+export default function FloatingZenaBubble({ currentSection, scrollProgress, onClick }: FloatingZenaBubbleProps) {
   // Calculate position based on section
   const getPosition = () => {
     switch (currentSection) {
@@ -116,31 +106,36 @@ export default function FloatingZenaBubble({
         transform: "translate(-50%, -50%)",
       }}
     >
-      <motion.div
-        className="relative w-32 h-32 md:w-40 md:h-40 pointer-events-auto cursor-pointer"
-        onClick={onClick}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        {/* Glow effect */}
-        <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,#F5D091_0%,transparent_70%)] opacity-50 blur-2xl" />
-        
-        {/* 3D Canvas */}
-        <Canvas camera={{ position: [0, 0, 3.5], fov: 50 }}>
-          <color attach="background" args={["#00000000"]} />
-          <ambientLight intensity={0.5} />
-          <ZenaSphere />
-          <OrbitalParticles />
-        </Canvas>
+      <div className="flex flex-col items-center gap-3 pointer-events-auto">
+        <motion.div className="relative w-32 h-32 md:w-40 md:h-40 cursor-pointer" onClick={onClick} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+          {/* Glow effect */}
+          <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,#F5D091_0%,transparent_70%)] opacity-50 blur-2xl" />
 
-        {/* Hover tooltip */}
-        <motion.div
-          className="absolute -bottom-12 left-1/2 -translate-x-1/2 px-4 py-2 bg-[#1F1309] text-[#FDF3E0] text-sm rounded-full whitespace-nowrap opacity-0 pointer-events-none"
-          whileHover={{ opacity: 1 }}
-        >
-          Cliquez pour parler à ZÉNA
+          {/* 3D Canvas */}
+          <Canvas camera={{ position: [0, 0, 3.5], fov: 50 }}>
+            <color attach="background" args={["#00000000"]} />
+            <ambientLight intensity={0.5} />
+            <ZenaSphere />
+            <OrbitalParticles />
+          </Canvas>
+
+          {/* Hover tooltip */}
+          <motion.div
+            className="absolute -bottom-12 left-1/2 -translate-x-1/2 px-4 py-2 bg-[#1F1309] text-[#FDF3E0] text-sm rounded-full whitespace-nowrap opacity-0 pointer-events-none"
+            whileHover={{ opacity: 1 }}
+          >
+            Cliquez pour parler à ZÉNA
+          </motion.div>
         </motion.div>
-      </motion.div>
+
+        <button
+          onClick={onClick}
+          className="w-48 md:w-60 py-3 rounded-full bg-gradient-to-r from-[#F5D091] to-[#F2B679] text-[#1F1309] font-semibold text-base md:text-lg shadow-lg shadow-amber-200/40 hover:shadow-amber-200/70 transition-transform duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#F5D091] focus:ring-offset-2 focus:ring-offset-white"
+          aria-label="Parler à ZÉNA"
+        >
+          Parler à ZÉNA
+        </button>
+      </div>
     </motion.div>
   );
 }
