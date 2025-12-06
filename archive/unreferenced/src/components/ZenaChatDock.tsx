@@ -193,6 +193,8 @@ export default function ZenaChatDock() {
                 ? "border-[#C0794C] bg-[#FEE4D6] text-[#8A3F22]"
                 : "border-transparent bg-[#F5E4CF] text-[#5A4228]"
             }`}
+            aria-label={isListening ? "Arrêter l'écoute" : "Activer l'écoute micro"}
+            title={isListening ? "Arrêter l'écoute" : "Activer l'écoute micro"}
           >
             <Mic className="h-3 w-3" />
           </button>

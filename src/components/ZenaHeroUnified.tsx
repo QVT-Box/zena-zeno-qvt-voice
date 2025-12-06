@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 
@@ -8,6 +8,7 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 export default function ZenaHeroUnified() {
   const heroRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+  const fullscreenRef = useRef<HTMLDivElement>(null);
   const targetRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
@@ -27,7 +28,7 @@ export default function ZenaHeroUnified() {
       tiltY: 0,
     };
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const maxScroll = 800;
+    const maxScroll = 600;
 
     const applyTransforms = () => {
       const rect = targetRef.current?.getBoundingClientRect();
@@ -39,7 +40,8 @@ export default function ZenaHeroUnified() {
       const scale = lerp(1.35, 0.18, state.progress);
       const translateX = lerp(0, targetX, state.progress) + (prefersReducedMotion ? 0 : state.parallaxX);
       const translateY = lerp(0, targetY, state.progress) + (prefersReducedMotion ? 0 : state.parallaxY);
-      const translateZ = lerp(0, -320, state.progress);
+      const translateZ = lerp(0, -560, state.progress);
+      // Keep a tiny opacity so the image stays crisp until hidden
       const opacity = lerp(1, 0.02, state.progress);
       const radius = lerp(0, 9999, state.progress);
       const rotX = prefersReducedMotion ? 0 : state.tiltY;
@@ -48,8 +50,36 @@ export default function ZenaHeroUnified() {
       imageEl.style.transform = `translate3d(-50%, -50%, 0) translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(${scale}) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
       imageEl.style.opacity = opacity.toFixed(3);
       imageEl.style.borderRadius = `${radius}px`;
-      const heroRoot = imageEl.parentElement;
-      if (heroRoot) heroRoot.style.opacity = opacity.toFixed(3);
+      const fullyHidden = state.progress >= 0.98;
+      if (fullyHidden) {
+        imageEl.style.opacity = "0";
+        imageEl.style.visibility = "hidden";
+        imageEl.style.display = "none";
+        imageEl.style.pointerEvents = "none";
+        if (fullscreenRef.current) {
+          fullscreenRef.current.style.display = "none";
+        }
+      } else {
+        imageEl.style.visibility = "visible";
+        imageEl.style.display = "block";
+        if (fullscreenRef.current) {
+          fullscreenRef.current.style.display = "block";
+        }
+      }
+
+      // Keep the hero layout visible (circle + content) while the panorama fades away
+      const heroHeight = lerp(110, 70, clamp(state.progress, 0, 1));
+      heroEl.style.height = `${heroHeight}vh`;
+      heroEl.style.minHeight = `${heroHeight}vh`;
+
+      const contentEl = contentRef.current;
+      if (contentEl) {
+        const contentOpacity = clamp((state.progress - 0.25) / 0.25, 0, 1);
+        const contentTranslate = 18 * (1 - contentOpacity);
+        contentEl.style.opacity = contentOpacity.toFixed(3);
+        contentEl.style.transform = `translate3d(0, ${contentTranslate}px, 0)`;
+        contentEl.style.pointerEvents = contentOpacity > 0.1 ? "auto" : "none";
+      }
     };
 
     const tick = () => {
@@ -75,10 +105,10 @@ export default function ZenaHeroUnified() {
       if (!heroRect) return;
       const dx = (event.clientX - (heroRect.left + heroRect.width / 2)) / heroRect.width;
       const dy = (event.clientY - (heroRect.top + heroRect.height / 2)) / heroRect.height;
-      state.parallaxX = dx * 14;
-      state.parallaxY = dy * 16;
-      state.tiltX = dx * 6;
-      state.tiltY = -dy * 6;
+      state.parallaxX = dx * 20;
+      state.parallaxY = dy * 22;
+      state.tiltX = dx * 12;
+      state.tiltY = -dy * 12;
       if (glowRef.current) {
         const gx = clamp((dx + 0.5) * 100, 0, 100);
         const gy = clamp((dy + 0.5) * 100, 0, 100);
@@ -119,10 +149,10 @@ export default function ZenaHeroUnified() {
   }, []);
 
   return (
-    <section ref={heroRef} className="relative w-full h-screen overflow-hidden isolate will-change-transform">
+    <section ref={heroRef} className="relative w-full h-screen overflow-hidden isolate will-change-transform zena-hero-perspective">
       <div className="pointer-events-none absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_20%_20%,rgba(255,238,214,0.08),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(255,214,186,0.06),transparent_30%),radial-gradient(circle_at_50%_80%,rgba(207,164,104,0.12),transparent_45%)]" />
 
-      <div className="zena-hero-fullscreen" aria-hidden>
+      <div ref={fullscreenRef} className="zena-hero-fullscreen" aria-hidden>
         <div ref={imageRef} className="zena-hero-image hero-face-enhance hero-vignette hero-extra-particles absolute inset-0 w-full h-full will-change-transform">
           <img
             src="/zena-face.png"
@@ -144,7 +174,7 @@ export default function ZenaHeroUnified() {
         </div>
       </div>
 
-      <div ref={contentRef} className="relative z-10 max-w-6xl mx-auto px-6 pt-24 pb-14 lg:pt-28 lg:pb-16 grid lg:grid-cols-2 gap-12 items-center">
+      <div ref={contentRef} className="relative z-10 max-w-6xl mx-auto px-6 pt-48 pb-24 lg:pt-64 lg:pb-28 grid lg:grid-cols-2 gap-12 items-center">
         <motion.div
           className="space-y-6"
           initial={{ opacity: 0, y: 20 }}
@@ -190,3 +220,11 @@ export default function ZenaHeroUnified() {
     </section>
   );
 }
+
+
+
+
+
+
+
+

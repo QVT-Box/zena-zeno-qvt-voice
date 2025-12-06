@@ -18,28 +18,30 @@
   ],
   "icons": [
     {
-      "src": "/images/zena-icon-192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/images/zena-icon-512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Parler à ZÉNA",
+      "name": "Parler à ZENA",
       "short_name": "Coach IA",
-      "description": "Lancer une conversation vocale avec ZÉNA",
+      "description": "Lancer une conversation vocale avec ZENA",
       "url": "/zena-chat",
       "icons": [
         {
-          "src": "/images/zena-icon-192.png",
+          "src": "/icons/icon-192x192.png",
           "sizes": "192x192",
-          "type": "image/png"
+          "type": "image/png",
+          "purpose": "any maskable"
         }
       ]
     },
@@ -50,22 +52,24 @@
       "url": "/box",
       "icons": [
         {
-          "src": "/images/zena-icon-192.png",
+          "src": "/icons/icon-192x192.png",
           "sizes": "192x192",
-          "type": "image/png"
+          "type": "image/png",
+          "purpose": "any maskable"
         }
       ]
     },
     {
       "name": "Mon espace émotionnel",
       "short_name": "Espace QVT",
-      "description": "Suivre mes émotions avec ZÉNA",
+      "description": "Suivre mes émotions avec ZENA",
       "url": "/dashboard",
       "icons": [
         {
-          "src": "/images/zena-icon-192.png",
+          "src": "/icons/icon-192x192.png",
           "sizes": "192x192",
-          "type": "image/png"
+          "type": "image/png",
+          "purpose": "any maskable"
         }
       ]
     }

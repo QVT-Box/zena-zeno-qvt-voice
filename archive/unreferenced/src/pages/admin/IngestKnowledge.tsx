@@ -85,11 +85,16 @@ export default function IngestKnowledge() {
 
         {/* Sélection du fichier */}
         <div className="border-2 border-dashed border-[#78A085] rounded-lg p-6 text-center mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="admin-ingest-file">
+            SÇ¸lectionnez un fichier Çÿ ingÇ¸rer (PDF, TXT ou MD)
+          </label>
           <input
+            id="admin-ingest-file"
             type="file"
             accept=".pdf,.txt,.md"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="w-full cursor-pointer"
+            title="Choisir un fichier pour l'analyse"
           />
           {file && (
             <p className="text-sm mt-2 text-gray-600">
