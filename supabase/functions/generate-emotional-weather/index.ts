@@ -2,10 +2,20 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://zena.qvtbox.com',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const allowedOrigins = new Set([
+  "https://zena.qvtbox.com",
+  "http://localhost:5173",
+  "http://localhost:4173",
+]);
+
+const buildCorsHeaders = (origin: string | null) => {
+  const allowOrigin = origin && allowedOrigins.has(origin) ? origin : "https://zena.qvtbox.com";
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Vary": "Origin",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
 };
 
 interface EmotionalAnalysis {
@@ -21,8 +31,9 @@ interface EmotionalAnalysis {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { status: 200, headers: corsHeaders });
+  const corsHeaders = buildCorsHeaders(req.headers.get("origin"));
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
