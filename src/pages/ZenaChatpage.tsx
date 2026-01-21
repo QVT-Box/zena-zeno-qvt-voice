@@ -30,7 +30,7 @@ export default function ZenaChatPage() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const emotionLabels: Record<NonNullable<Message["emotion"]>, string> = {
-    positive: "apais?e",
+    positive: "apaisee",
     neutral: "neutre",
     negative: "sous tension",
   };
@@ -62,12 +62,10 @@ export default function ZenaChatPage() {
     [] // nextId is ref, addZenaReply defined below via hoisting
   );
 
-  // Voice hooks
   const { isListening, isSpeaking, audioLevel, listen, stopListening, say } = useZenaVoice({ onFinalResult: handleFinalResult });
 
   const { emotion, isProcessing, handleUserMessage } = useZenaZenoBrain();
 
-  // scroll auto en bas
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -123,21 +121,16 @@ export default function ZenaChatPage() {
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(rgba(255, 214, 160, 0.18) 1px, transparent 1px)", backgroundSize: "34px 34px" }} />
       </div>
 
-      {/* Header */}
       <header className="sticky top-0 z-40 flex items-center justify-between px-6 py-4 bg-black/40 backdrop-blur-md border-b border-white/5">
         <Link to="/" className="flex items-center gap-2 text-[#f7ede0] hover:text-[#f1d6a0] transition">
           <ArrowLeft className="w-5 h-5" />
           <span className="font-semibold">Retour</span>
         </Link>
-        <h1 className="text-2xl font-semibold text-[#f7ede0] heading-chic tracking-[0.18em]">
-          ZENA
-        </h1>
+        <h1 className="text-2xl font-semibold text-[#f7ede0] heading-chic tracking-[0.18em]">ZENA</h1>
         <div className="w-20" />
       </header>
 
-      {/* Main */}
       <main className="flex-1 flex flex-col lg:flex-row gap-6 p-6">
-        {/* Left - Avatar and Voice Controls */}
         <motion.div
           className="lg:w-[340px] flex flex-col items-center justify-center gap-6"
           initial={{ opacity: 0, x: -20 }}
@@ -151,7 +144,6 @@ export default function ZenaChatPage() {
               <p className="text-sm text-[#c9b495]">Ecoute douce, reponses humaines.</p>
             </div>
 
-            {/* Avatar */}
             <div className="relative mx-auto w-48 h-48 rounded-full overflow-hidden shadow-2xl">
               <div className="absolute inset-0 rounded-full ring-2 ring-[#f1d6a0]/50" />
               <div className="absolute -inset-3 rounded-full bg-gradient-to-br from-[#f1d6a0]/40 via-transparent to-[#7b5fd8]/30 opacity-70 blur-2xl" />
@@ -164,7 +156,6 @@ export default function ZenaChatPage() {
               />
             </div>
 
-            {/* Voice Indicators */}
             <div className="flex flex-col gap-2 items-center mt-5">
               {isSpeaking && (
                 <motion.div
@@ -193,7 +184,6 @@ export default function ZenaChatPage() {
               )}
             </div>
 
-            {/* Emotion display */}
             {emotion && (
               <div className="text-center mt-4">
                 <p className="text-xs uppercase tracking-[0.28em] text-[#c9b495]">Etat emotionnel</p>
@@ -205,7 +195,6 @@ export default function ZenaChatPage() {
           </div>
         </motion.div>
 
-        {/* Right - Chat Messages */}
         <motion.div
           className="flex-1 flex flex-col bg-[#120d0a]/70 backdrop-blur-xl rounded-[32px] border border-white/10 overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.4)]"
           initial={{ opacity: 0, x: 20 }}
@@ -220,7 +209,6 @@ export default function ZenaChatPage() {
             </p>
           </div>
 
-          {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             <AnimatePresence>
               {messages.map((msg) => (
@@ -263,7 +251,6 @@ export default function ZenaChatPage() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Input Area */}
           <div className="border-t border-white/10 p-4 bg-black/30 backdrop-blur-sm">
             <div className="flex gap-3">
               <button
