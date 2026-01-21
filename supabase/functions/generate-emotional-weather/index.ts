@@ -8,8 +8,15 @@ const allowedOrigins = new Set([
   "http://localhost:4173",
 ]);
 
+const isAllowedOrigin = (origin: string | null) => {
+  if (!origin) return false;
+  if (allowedOrigins.has(origin)) return true;
+  if (origin.endsWith(".vercel.app")) return true;
+  return false;
+};
+
 const buildCorsHeaders = (origin: string | null) => {
-  const allowOrigin = origin && allowedOrigins.has(origin) ? origin : "https://zena.qvtbox.com";
+  const allowOrigin = isAllowedOrigin(origin) ? origin! : "https://zena.qvtbox.com";
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Vary": "Origin",
