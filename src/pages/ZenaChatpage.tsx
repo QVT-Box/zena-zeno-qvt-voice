@@ -20,7 +20,7 @@ export default function ZenaChatPage() {
     {
       id: 1,
       from: "zena",
-      text: "Bonjour, je suis Z?NA. Comment tu te sens vraiment aujourd'hui, entre 0 et 10 ?",
+      text: "Bonjour, je suis ZENA. Comment tu te sens vraiment aujourd'hui, entre 0 et 10 ?",
       emotion: "neutral",
     },
   ]);
@@ -30,15 +30,15 @@ export default function ZenaChatPage() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const emotionLabels: Record<NonNullable<Message["emotion"]>, string> = {
-    positive: "sereine",
+    positive: "apais?e",
     neutral: "neutre",
     negative: "sous tension",
   };
 
   const emotionClasses: Record<NonNullable<Message["emotion"]>, string> = {
-    positive: "text-emerald-700",
-    neutral: "text-[#B78E44]",
-    negative: "text-rose-700",
+    positive: "text-emerald-200",
+    neutral: "text-[#f1d6a0]",
+    negative: "text-rose-200",
   };
 
   const handleFinalResult = useCallback(
@@ -78,7 +78,7 @@ export default function ZenaChatPage() {
     const newMsg: Message = {
       id: nextId.current++,
       from: "zena",
-      text: response || "Merci de me le confier. On peut respirer un instant, et tu peux me dire ce qui p?se le plus.",
+      text: response || "Merci de me le confier. On peut respirer un instant, et tu peux me dire ce qui pese le plus.",
       emotion: emotion || "neutral",
     };
     setMessages((prev) => [...prev, newMsg]);
@@ -117,49 +117,20 @@ export default function ZenaChatPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col relative overflow-hidden"
-      style={
-        {
-          "--zena-ink": "#24160E",
-          "--zena-gold": "#C89A49",
-          "--zena-cream": "#FFF6E8",
-          "--zena-sand": "#F4E3CE",
-          "--zena-peach": "#F9E8D2",
-        } as React.CSSProperties
-      }
-    >
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#0b0806] via-[#1b140f] to-[#2d231c] text-[#f7ede0] relative overflow-hidden">
       <div className="absolute inset-0 -z-10" aria-hidden="true">
-        <div
-          className="absolute -top-48 -left-48 h-[520px] w-[520px] rounded-full blur-3xl opacity-70"
-          style={{
-            background: "radial-gradient(circle at 30% 30%, #F5D9B2 0%, rgba(245, 217, 178, 0.2) 50%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute -bottom-56 right-[-160px] h-[560px] w-[560px] rounded-full blur-3xl opacity-70"
-          style={{
-            background: "radial-gradient(circle at 70% 70%, #D7C3F3 0%, rgba(215, 195, 243, 0.25) 50%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute inset-0 opacity-50"
-          style={{
-            backgroundImage:
-              "radial-gradient(rgba(36, 22, 14, 0.06) 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-        />
+        <div className="pointer-events-none absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_20%_20%,rgba(255,238,214,0.12),transparent_42%),radial-gradient(circle_at_80%_10%,rgba(255,214,186,0.1),transparent_45%),radial-gradient(circle_at_50%_80%,rgba(207,164,104,0.16),transparent_55%)]" />
+        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(rgba(255, 214, 160, 0.18) 1px, transparent 1px)", backgroundSize: "34px 34px" }} />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between px-6 py-4 bg-white/60 backdrop-blur-md border-b border-white/30">
-        <Link to="/" className="flex items-center gap-2 text-[#24160E] hover:text-[#B78E44] transition">
+      <header className="sticky top-0 z-40 flex items-center justify-between px-6 py-4 bg-black/40 backdrop-blur-md border-b border-white/5">
+        <Link to="/" className="flex items-center gap-2 text-[#f7ede0] hover:text-[#f1d6a0] transition">
           <ArrowLeft className="w-5 h-5" />
           <span className="font-semibold">Retour</span>
         </Link>
-        <h1 className="text-2xl font-semibold text-[#24160E] heading-chic tracking-[0.08em]">
-          Z?NA
+        <h1 className="text-2xl font-semibold text-[#f7ede0] heading-chic tracking-[0.18em]">
+          ZENA
         </h1>
         <div className="w-20" />
       </header>
@@ -173,17 +144,17 @@ export default function ZenaChatPage() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="w-full max-w-xs rounded-3xl bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_24px_70px_rgba(36,22,14,0.18)] p-6">
+          <div className="w-full max-w-xs rounded-3xl bg-[#120d0a]/80 backdrop-blur-xl border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.45)] p-6">
             <div className="text-center mb-4">
-              <p className="text-xs uppercase tracking-[0.35em] text-[#A27E3E]">Pr?sence</p>
-              <h2 className="heading-chic text-xl text-[#24160E]">Z?NA</h2>
-              <p className="text-sm text-[#7A6348]">?coute douce, r?ponses humaines.</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-[#f1d6a0]">Presence</p>
+              <h2 className="heading-chic text-xl text-[#fff0d9]">ZENA</h2>
+              <p className="text-sm text-[#c9b495]">Ecoute douce, reponses humaines.</p>
             </div>
 
             {/* Avatar */}
             <div className="relative mx-auto w-48 h-48 rounded-full overflow-hidden shadow-2xl">
-              <div className="absolute inset-0 rounded-full ring-2 ring-[#C89A49]/40" />
-              <div className="absolute -inset-3 rounded-full bg-gradient-to-br from-[#F6E1BF] via-transparent to-[#D9C3F3] opacity-60 blur-2xl" />
+              <div className="absolute inset-0 rounded-full ring-2 ring-[#f1d6a0]/50" />
+              <div className="absolute -inset-3 rounded-full bg-gradient-to-br from-[#f1d6a0]/40 via-transparent to-[#7b5fd8]/30 opacity-70 blur-2xl" />
               <ZenaAvatar
                 emotion={emotion || "neutral"}
                 mouthLevel={audioLevel}
@@ -197,27 +168,27 @@ export default function ZenaChatPage() {
             <div className="flex flex-col gap-2 items-center mt-5">
               {isSpeaking && (
                 <motion.div
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-300/30 text-emerald-800 rounded-full text-xs font-semibold tracking-wide"
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-400/20 text-emerald-100 rounded-full text-xs font-semibold tracking-wide"
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 1, repeat: Infinity }}
                 >
                   <Volume2 className="w-4 h-4" />
-                  <span>Elle r?pond</span>
+                  <span>Elle repond</span>
                 </motion.div>
               )}
               {isListening && (
                 <motion.div
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-300/30 text-blue-800 rounded-full text-xs font-semibold tracking-wide"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-400/20 text-blue-100 rounded-full text-xs font-semibold tracking-wide"
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 0.8, repeat: Infinity }}
                 >
                   <Mic className="w-4 h-4" />
-                  <span>En ?coute</span>
+                  <span>En ecoute</span>
                 </motion.div>
               )}
               {listeningTranscript && (
-                <p className="text-xs text-[#7A6348] italic text-center bg-white/70 px-3 py-2 rounded-xl border border-white/60">
-                  ?{listeningTranscript}?
+                <p className="text-xs text-[#e9dcc5] italic text-center bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                  "{listeningTranscript}"
                 </p>
               )}
             </div>
@@ -225,7 +196,7 @@ export default function ZenaChatPage() {
             {/* Emotion display */}
             {emotion && (
               <div className="text-center mt-4">
-                <p className="text-xs uppercase tracking-[0.28em] text-[#927A5C]">?tat ?motionnel</p>
+                <p className="text-xs uppercase tracking-[0.28em] text-[#c9b495]">Etat emotionnel</p>
                 <p className={`text-lg font-semibold capitalize ${emotionClasses[emotion]}`}>
                   {emotionLabels[emotion]}
                 </p>
@@ -236,16 +207,16 @@ export default function ZenaChatPage() {
 
         {/* Right - Chat Messages */}
         <motion.div
-          className="flex-1 flex flex-col bg-white/55 backdrop-blur-xl rounded-[32px] border border-white/40 overflow-hidden shadow-[0_24px_70px_rgba(36,22,14,0.12)]"
+          className="flex-1 flex flex-col bg-[#120d0a]/70 backdrop-blur-xl rounded-[32px] border border-white/10 overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.4)]"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="px-6 pt-6 pb-4 border-b border-white/30">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#A27E3E]">Conversation</p>
-            <h2 className="heading-chic text-xl text-[#24160E]">Un espace pour d?poser ce qui p?se</h2>
-            <p className="text-sm text-[#7A6348] mt-1">
-              Z?NA t??coute sans jugement. Tu peux parler librement, ? ton rythme.
+          <div className="px-6 pt-6 pb-4 border-b border-white/10">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#f1d6a0]">Conversation</p>
+            <h2 className="heading-chic text-xl text-[#fff0d9]">Un espace pour deposer ce qui pese</h2>
+            <p className="text-sm text-[#c9b495] mt-1">
+              ZENA t'ecoute sans jugement. Tu peux parler librement, a ton rythme.
             </p>
           </div>
 
@@ -262,14 +233,14 @@ export default function ZenaChatPage() {
                   className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-xs md:max-w-md px-4 py-3 rounded-2xl ${
+                    className={`max-w-xs md:max-w-md px-4 py-3 rounded-2xl border ${
                       msg.from === "user"
-                        ? "bg-gradient-to-br from-[#1E120B] via-[#2B180F] to-[#1A0F09] text-white shadow-[0_10px_25px_rgba(22,12,6,0.35)]"
+                        ? "bg-gradient-to-br from-[#f1d6a0] via-[#e6c28b] to-[#d8ad6f] text-[#1b130e] border-transparent shadow-[0_10px_25px_rgba(241,214,160,0.25)]"
                         : msg.emotion === "positive"
-                        ? "bg-emerald-100 text-emerald-900"
+                        ? "bg-emerald-900/40 text-emerald-100 border-emerald-400/30"
                         : msg.emotion === "negative"
-                        ? "bg-rose-100 text-rose-900"
-                        : "bg-[#F8ECDD] text-[#24160E]"
+                        ? "bg-rose-900/40 text-rose-100 border-rose-400/30"
+                        : "bg-[#1c140f] text-[#f7ede0] border-white/10"
                     }`}
                   >
                     <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>
@@ -280,10 +251,10 @@ export default function ZenaChatPage() {
 
             {isProcessing && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
-                <div className="bg-[#F8ECDD] text-[#24160E] px-4 py-3 rounded-2xl">
+                <div className="bg-[#1c140f] text-[#f7ede0] px-4 py-3 rounded-2xl border border-white/10">
                   <div className="flex items-center gap-2">
                     <Loader className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Z?NA r?fl?chit...</span>
+                    <span className="text-sm">ZENA reflechit...</span>
                   </div>
                 </div>
               </motion.div>
@@ -293,15 +264,15 @@ export default function ZenaChatPage() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-white/30 p-4 bg-white/30 backdrop-blur-sm">
+          <div className="border-t border-white/10 p-4 bg-black/30 backdrop-blur-sm">
             <div className="flex gap-3">
               <button
                 onClick={handleMicClick}
                 disabled={isSpeaking || isProcessing}
                 className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition ${
-                  isListening ? "bg-blue-500 text-white" : "bg-white/70 text-[#24160E] hover:bg-white/90 disabled:opacity-50"
+                  isListening ? "bg-blue-500 text-white" : "bg-white/10 text-[#f7ede0] hover:bg-white/20 disabled:opacity-50"
                 }`}
-                aria-label={isListening ? "Arr?ter l'?coute" : "D?marrer l'?coute"}
+                aria-label={isListening ? "Arreter l'ecoute" : "Demarrer l'ecoute"}
               >
                 <Mic className="w-5 h-5" />
               </button>
@@ -311,15 +282,15 @@ export default function ZenaChatPage() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isSpeaking || isProcessing}
-                placeholder="Dis-moi ce qui te pr?occupe..."
-                className="flex-1 px-4 py-2 bg-white/90 rounded-full text-[#24160E] placeholder-[#927A5C] border border-white/60 focus:outline-none focus:ring-2 focus:ring-[#B78E44] resize-none disabled:opacity-50"
+                placeholder="Dis-moi ce qui te preoccupe..."
+                className="flex-1 px-4 py-2 bg-white/10 rounded-full text-[#f7ede0] placeholder-[#c9b495] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#f1d6a0] resize-none disabled:opacity-50"
                 rows={1}
               />
 
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isSpeaking || isProcessing}
-                className="flex-shrink-0 w-12 h-12 rounded-full bg-[#20130C] text-white flex items-center justify-center hover:brightness-110 transition disabled:opacity-50"
+                className="flex-shrink-0 w-12 h-12 rounded-full bg-[#f1d6a0] text-[#1b130e] flex items-center justify-center hover:brightness-110 transition disabled:opacity-50"
                 aria-label="Envoyer le message"
               >
                 <SendHorizonal className="w-5 h-5" />
@@ -327,12 +298,12 @@ export default function ZenaChatPage() {
             </div>
 
             <div className="flex flex-wrap gap-2 mt-3">
-              {["Je me sens ?puis?(e)", "Je suis stress?(e)", "J?ai besoin d?en parler"].map((chip) => (
+              {["Je me sens epuise(e)", "Je suis stresse(e)", "J'ai besoin d'en parler"].map((chip) => (
                 <button
                   key={chip}
                   type="button"
                   onClick={() => setInput(chip)}
-                  className="text-xs px-3 py-1 rounded-full bg-white/80 border border-white/60 text-[#7A6348] hover:text-[#24160E] hover:border-[#C89A49]/60 transition"
+                  className="text-xs px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[#e9dcc5] hover:text-white hover:border-[#f1d6a0]/60 transition"
                 >
                   {chip}
                 </button>
