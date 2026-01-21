@@ -20,7 +20,7 @@ export default function ZenaChatPage() {
     {
       id: 1,
       from: "zena",
-      text: "Bonjour, je suis ZENA. Comment tu te sens vraiment aujourd'hui, entre 0 et 10 ?",
+      text: "Bonjour, je suis ZENA. Je suis la pour toi. Comment tu te sens vraiment aujourd'hui, entre 0 et 10 ?",
       emotion: "neutral",
     },
   ]);
@@ -76,7 +76,7 @@ export default function ZenaChatPage() {
     const newMsg: Message = {
       id: nextId.current++,
       from: "zena",
-      text: response || "Merci de me le confier. On peut respirer un instant, et tu peux me dire ce qui pese le plus.",
+      text: response || "Merci de me le confier. On peut respirer un instant ensemble. Qu'est-ce qui te pese le plus, la tout de suite ?",
       emotion: emotion || "neutral",
     };
     setMessages((prev) => [...prev, newMsg]);
@@ -141,7 +141,7 @@ export default function ZenaChatPage() {
             <div className="text-center mb-4">
               <p className="text-xs uppercase tracking-[0.35em] text-[#f1d6a0]">Presence</p>
               <h2 className="heading-chic text-xl text-[#fff0d9]">ZENA</h2>
-              <p className="text-sm text-[#c9b495]">Ecoute douce, reponses humaines.</p>
+              <p className="text-sm text-[#c9b495]">Je suis la pour t'ecouter, sans jugement.</p>
             </div>
 
             <div className="relative mx-auto w-48 h-48 rounded-full overflow-hidden shadow-2xl">
@@ -164,7 +164,7 @@ export default function ZenaChatPage() {
                   transition={{ duration: 1, repeat: Infinity }}
                 >
                   <Volume2 className="w-4 h-4" />
-                  <span>Elle repond</span>
+                  <span>Je te reponds</span>
                 </motion.div>
               )}
               {isListening && (
@@ -174,7 +174,7 @@ export default function ZenaChatPage() {
                   transition={{ duration: 0.8, repeat: Infinity }}
                 >
                   <Mic className="w-4 h-4" />
-                  <span>En ecoute</span>
+                  <span>Je t'ecoute</span>
                 </motion.div>
               )}
               {listeningTranscript && (
@@ -186,7 +186,7 @@ export default function ZenaChatPage() {
 
             {emotion && (
               <div className="text-center mt-4">
-                <p className="text-xs uppercase tracking-[0.28em] text-[#c9b495]">Etat emotionnel</p>
+                <p className="text-xs uppercase tracking-[0.28em] text-[#c9b495]">Ce que je percois</p>
                 <p className={`text-lg font-semibold capitalize ${emotionClasses[emotion]}`}>
                   {emotionLabels[emotion]}
                 </p>
@@ -203,9 +203,9 @@ export default function ZenaChatPage() {
         >
           <div className="px-6 pt-6 pb-4 border-b border-white/10">
             <p className="text-xs uppercase tracking-[0.3em] text-[#f1d6a0]">Conversation</p>
-            <h2 className="heading-chic text-xl text-[#fff0d9]">Un espace pour deposer ce qui pese</h2>
+            <h2 className="heading-chic text-xl text-[#fff0d9]">Un espace pour deposer ce qui pese, sans pression</h2>
             <p className="text-sm text-[#c9b495] mt-1">
-              ZENA t'ecoute sans jugement. Tu peux parler librement, a ton rythme.
+              Ici, tu peux parler librement. Je suis la pour t'accompagner, a ton rythme.
             </p>
           </div>
 
@@ -242,7 +242,7 @@ export default function ZenaChatPage() {
                 <div className="bg-[#1c140f] text-[#f7ede0] px-4 py-3 rounded-2xl border border-white/10">
                   <div className="flex items-center gap-2">
                     <Loader className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">ZENA reflechit...</span>
+                    <span className="text-sm">Je prends un instant pour te repondre...</span>
                   </div>
                 </div>
               </motion.div>
